@@ -38,11 +38,11 @@ export default function Login({ onLogin }) {
           <Box textAlign="center" mb={4}>
             <img src={conectaLogo} alt="Logo de la empresa" style={{ width: '100%' }} />
           </Box>
-          <Typography variant="h4" component="h1" fontWeight={700} align="center">
+          <Typography variant="h4" component="h1" fontWeight={600} align="center">
             ¡Bienvenido!
           </Typography>
           <Typography variant="body1" color="text.secondary" align="center" gutterBottom>
-            Ingresa tus credenciales para continuar
+            
           </Typography>
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
             <TextField
