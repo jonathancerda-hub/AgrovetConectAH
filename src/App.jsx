@@ -51,7 +51,7 @@ const portalComponent = <Portal />;
 const fichaComponent = <MiFicha />;
 
 const vacacionesItems = [
-  { text: 'Contador de Días', icon: <EventAvailableIcon />, component: <AvailableDays available={availableDaysData.available} taken={availableDaysData.taken} /> },
+  { text: 'Dashboard', icon: <EventAvailableIcon />, component: <AvailableDays available={availableDaysData.available} taken={availableDaysData.taken} /> },
   { text: 'Formulario de Solicitud', icon: <AssignmentIcon />, component: <RequestVacationPage /> },
   { text: 'Calendario', icon: <CalendarMonthIcon />, component: <VacationCalendar events={calendarEvents} /> },
   { text: 'Lista de Solicitudes', icon: <ListAltIcon />, component: <RequestsList requests={requestsData} /> },

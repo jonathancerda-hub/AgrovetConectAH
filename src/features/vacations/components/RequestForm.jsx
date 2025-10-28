@@ -98,22 +98,25 @@ const RequestForm = () => {
           />
 
           {/* Fila 2 */}
-          <Box sx={{ gridColumn: 'span 4', justifySelf: 'start' }}>
-            <Grow in={dayCount > 0}>
-              <Chip
-                icon={<EventAvailableIcon />}
-                label={`Total: ${dayCount} día(s) solicitados`}
-                color="primary"
-                variant="filled"
-                sx={{
-                  fontSize: '1rem',
-                  padding: '16px 12px',
-                  fontWeight: 500,
-                  boxShadow: 3,
-                }}
-              />
-            </Grow>
-          </Box>
+          {dayCount > 0 && (
+            <Box sx={{ gridColumn: 'span 4', justifySelf: 'start', my: '20px' }}>
+              <Grow in={true}>
+                <Chip
+                  icon={<EventAvailableIcon />}
+                  label={`Total: ${dayCount} día(s) solicitados`}
+                  sx={{
+                    background: 'linear-gradient(135deg, #28a745, #20c997)',
+                    color: 'white',
+                    padding: '15px',
+                    borderRadius: '12px',
+                    fontSize: '1rem',
+                    fontWeight: 500,
+                    boxShadow: '0 4px 15px rgba(40, 167, 69, 0.3)',
+                  }}
+                />
+              </Grow>
+            </Box>
+          )}
 
           {/* Fila 3 */}
           <TextField
@@ -146,13 +149,47 @@ const RequestForm = () => {
           />
           
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 1, gridColumn: 'span 4' }}>
-            <Button type="submit" variant="contained" sx={{ background: 'linear-gradient(90deg, #7b61ff 0%, #5ee7df 100%)', color: '#fff', fontWeight: 600, px: 4 }} startIcon={<SendIcon />}>
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{
+                background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                border: 'none',
+                color: 'white',
+                fontWeight: 600, px: 4
+              }}
+              startIcon={<SendIcon />}>
               Enviar Solicitud
             </Button>
-            <Button variant="outlined" color="inherit" sx={{ fontWeight: 500 }} startIcon={<ListAltIcon />}>
+            <Button
+              variant="outlined"
+              sx={{
+                fontWeight: 500,
+                color: '#6c757d',
+                borderColor: '#6c757d',
+                '&:hover': {
+                  color: '#fff',
+                  backgroundColor: '#6c757d',
+                  borderColor: '#6c757d',
+                },
+              }}
+              startIcon={<ListAltIcon />}>
               Ver mis solicitudes
             </Button>
-            <Button variant="outlined" color="primary" sx={{ fontWeight: 500 }} startIcon={<HomeIcon />}>
+            <Button
+              variant="outlined"
+              sx={{
+                fontWeight: 500,
+                color: '#0d6efd',
+                borderColor: '#0d6efd',
+                '&:hover': {
+                  color: '#fff',
+                  backgroundColor: '#0d6efd',
+                  borderColor: '#0d6efd',
+                },
+              }}
+              startIcon={<HomeIcon />}
+            >
               Regresar al Inicio
             </Button>
           </Stack>
@@ -167,25 +204,25 @@ const RequestForm = () => {
         <Grid container spacing={2}>
           <Grid item xs={6}>
             <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" color="primary" fontWeight={700}>30</Typography>
+              <Typography variant="h4" sx={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#667eea' }}>30</Typography>
               <Typography variant="body2">Días por Año</Typography>
             </Box>
           </Grid>
           <Grid item xs={6}>
             <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" color="primary" fontWeight={700}>0</Typography>
+              <Typography variant="h4" sx={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#667eea' }}>0</Typography>
               <Typography variant="body2">Días Tomados</Typography>
             </Box>
           </Grid>
           <Grid item xs={6}>
             <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" color="primary" fontWeight={700}>30</Typography>
+              <Typography variant="h4" sx={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#667eea' }}>30</Typography>
               <Typography variant="body2">Días Restantes</Typography>
             </Box>
           </Grid>
           <Grid item xs={6}>
             <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" color="primary" fontWeight={700}>1980</Typography>
+              <Typography variant="h4" sx={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#667eea' }}>1980</Typography>
               <Typography variant="body2">Días Antigüedad</Typography>
             </Box>
           </Grid>
