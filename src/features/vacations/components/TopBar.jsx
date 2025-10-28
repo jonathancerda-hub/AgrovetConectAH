@@ -36,42 +36,35 @@ export default function TopBar({ onMenuClick, title }) {
   const mobileMenuId = 'primary-search-account-menu-mobile';
 
   return (
-    <AppBar
-      position="fixed"
-      sx={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        zIndex: (theme) => theme.zIndex.drawer + 1,
-        boxShadow: 0,
-      }}
-    >
-      <Toolbar sx={{ minHeight: 56, px: 2 }}>
-        <IconButton edge="start" color="inherit" onClick={onMenuClick} sx={{ mr: 2 }}>
+    <React.Fragment>
+      <Toolbar sx={{ minHeight: 56, px: 2, background: '#f7f7f7', color: '#2a3f54' }}>
+        <IconButton edge="start" color="inherit" onClick={onMenuClick} sx={{ mr: 2, color: 'text.primary' }}>
           <MenuIcon />
         </IconButton>
-        <Typography variant="h6" noWrap component="div" sx={{ display: { xs: 'none', sm: 'block' }, flexGrow: 1, color: 'white' }}>
+        <Typography variant="h6" noWrap component="div" sx={{ display: { xs: 'none', sm: 'block' }, flexGrow: 1, color: 'text.primary' }}>
           {title}
         </Typography>
         <Box sx={{ flexGrow: 1 }} />
         <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1 }}>
           <Tooltip title="Guardar">
-            <IconButton color="inherit">
+            <IconButton color="inherit" sx={{ color: 'text.secondary' }}>
               <SaveIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title="Notificaciones">
-            <IconButton color="inherit">
+            <IconButton color="inherit" sx={{ color: 'text.secondary' }}>
               <Badge badgeContent={2} color="error">
                 <NotificationsIcon />
               </Badge>
             </IconButton>
           </Tooltip>
           <Tooltip title="Ayuda">
-            <IconButton color="inherit">
+            <IconButton color="inherit" sx={{ color: 'text.secondary' }}>
               <HelpOutlineIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title="Abrir ajustes">
-            <IconButton onClick={handleOpenUserMenu} sx={{ p: 0, ml: 2 }}>
+            <IconButton onClick={handleOpenUserMenu} sx={{ p: 0, ml: 2, color: 'text.secondary' }}>
               <Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(255,255,255,0.2)' }}>
                 <AccountCircleIcon fontSize="medium" />
               </Avatar>
@@ -155,6 +148,6 @@ export default function TopBar({ onMenuClick, title }) {
           <p>Ayuda</p>
         </MenuItem>
       </Menu>
-    </AppBar>
+    </React.Fragment>
   );
 }
