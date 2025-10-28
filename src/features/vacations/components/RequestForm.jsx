@@ -196,12 +196,15 @@ const RequestForm = () => {
       </Paper>
 
       {/* Columna Derecha: Estado y Políticas */}
-      <Paper elevation={24} sx={{ p: 2, gridColumn: { xs: 'span 5', md: 'span 2' } }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <InfoOutlinedIcon color="primary" sx={{ mr: 1 }} />
-          <Typography variant="h6" fontWeight={700}>Estado de tus Vacaciones</Typography>
+      <Paper elevation={3} sx={{ gridColumn: { xs: 'span 5', md: 'span 2' }, borderRadius: '16px', overflow: 'hidden' }}>
+        <Box sx={{
+          display: 'flex', alignItems: 'center', p: 2,
+          background: 'linear-gradient(135deg, #667eea, #764ba2)', color: '#fff'
+        }}>
+          <InfoOutlinedIcon sx={{ mr: 1 }} />
+          <Typography variant="h6" fontWeight={700} sx={{ color: 'inherit' }}>Estado de tus Vacaciones</Typography>
         </Box>
-        <Grid container spacing={2}>
+        <Grid container spacing={2} sx={{ p: 2 }}>
           <Grid item xs={6}>
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h4" sx={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#667eea' }}>30</Typography>
@@ -229,12 +232,15 @@ const RequestForm = () => {
         </Grid>
       </Paper>
 
-      <Paper elevation={24} sx={{ p: 2, gridColumn: { xs: 'span 5', md: 'span 2' } }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <GavelOutlinedIcon color="primary" sx={{ mr: 1 }} />
-          <Typography variant="h6" fontWeight={700}>Políticas y Reglas</Typography>
+      <Paper elevation={3} sx={{ gridColumn: { xs: 'span 5', md: 'span 2' }, borderRadius: '16px', overflow: 'hidden' }}>
+        <Box sx={{
+          display: 'flex', alignItems: 'center', p: 2,
+          background: 'linear-gradient(135deg, #667eea, #764ba2)', color: '#fff'
+        }}>
+          <GavelOutlinedIcon sx={{ mr: 1 }} />
+          <Typography variant="h6" fontWeight={700} sx={{ color: 'inherit' }}>Políticas y Reglas</Typography>
         </Box>
-        <Stack spacing={1}>
+        <Stack spacing={1} sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <CalendarMonthOutlinedIcon color="action" fontSize="small" />
             <Typography variant="body2"><b>POLÍTICA PRINCIPAL:</b> Cada período anual otorga 30 días. Períodos completos: 5, total otorgado: 150 días</Typography>

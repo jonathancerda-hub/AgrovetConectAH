@@ -23,10 +23,10 @@ export default function NewCollaboratorForm() {
             <Typography variant="subtitle1" fontWeight={600} gutterBottom>Información del Solicitante</Typography>
             <Grid container spacing={2} sx={{ mt: 0 }}>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Área Solicitante" defaultValue="Gerente de Talento Humano y SST | HHR" {...register('area')} />
+                <TextField size="small" fullWidth label="Área Solicitante" defaultValue="Gerente de Talento Humano y SST | HHR" {...register('area')} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Persona Responsable" defaultValue="Ursula Huamancaja" {...register('responsable')} />
+                <TextField size="small" fullWidth label="Persona Responsable" defaultValue="Ursula Huamancaja" {...register('responsable')} />
               </Grid>
             </Grid>
           </Paper>
@@ -37,16 +37,16 @@ export default function NewCollaboratorForm() {
             <Typography variant="subtitle1" fontWeight={600} gutterBottom>Datos del Nuevo Colaborador</Typography>
             <Grid container spacing={2} sx={{ mt: 0 }}>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="DNI del Colaborador" placeholder="12345678" {...register('dni')} />
+                <TextField size="small" fullWidth label="DNI del Colaborador" placeholder="12345678" {...register('dni')} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Nombre del Colaborador" placeholder="Ingrese el nombre completo" {...register('nombre')} />
+                <TextField size="small" fullWidth label="Nombre del Colaborador" placeholder="Ingrese el nombre completo" {...register('nombre')} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Apellido del Colaborador" placeholder="Ingrese los apellidos" {...register('apellido')} />
+                <TextField size="small" fullWidth label="Apellido del Colaborador" placeholder="Ingrese los apellidos" {...register('apellido')} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Email del Colaborador" placeholder="usuario@empresa.com" {...register('email')} />
+                <TextField size="small" fullWidth label="Email del Colaborador" placeholder="usuario@empresa.com" {...register('email')} />
               </Grid>
             </Grid>
           </Paper>
@@ -57,16 +57,16 @@ export default function NewCollaboratorForm() {
             <Typography variant="subtitle1" fontWeight={600} gutterBottom>Detalles del Puesto</Typography>
             <Grid container spacing={2} sx={{ mt: 0 }}>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Fecha de inicio de labores" type="date" InputLabelProps={{ shrink: true }} {...register('fechaInicio')} />
+                <TextField size="small" fullWidth label="Fecha de inicio de labores" type="date" InputLabelProps={{ shrink: true }} {...register('fechaInicio')} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Puesto a Solicitud" {...register('puesto')} />
+                <TextField size="small" fullWidth label="Puesto a Solicitud" {...register('puesto')} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Denominación del Puesto" placeholder="--------" {...register('denominacion')} />
+                <TextField size="small" fullWidth label="Denominación del Puesto" placeholder="--------" {...register('denominacion')} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Grupo Ocupacional" placeholder="--------" {...register('grupo')} />
+                <TextField size="small" fullWidth label="Grupo Ocupacional" placeholder="--------" {...register('grupo')} />
               </Grid>
             </Grid>
           </Paper>
@@ -77,13 +77,13 @@ export default function NewCollaboratorForm() {
             <Typography variant="subtitle1" fontWeight={600} gutterBottom>Detalles de la Contratación</Typography>
             <Grid container spacing={2} sx={{ mt: 0 }}>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Motivo de la contratación" placeholder="--------" {...register('motivo')} />
+                <TextField size="small" fullWidth label="Motivo de la contratación" placeholder="--------" {...register('motivo')} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Modalidad de Contratación" defaultValue="Indefinido" {...register('modalidad')} />
+                <TextField size="small" fullWidth label="Modalidad de Contratación" defaultValue="Indefinido" {...register('modalidad')} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Especificar Tiempo (Meses)" {...register('tiempo')} />
+                <TextField size="small" fullWidth label="Especificar Tiempo (Meses)" {...register('tiempo')} />
               </Grid>
             </Grid>
           </Paper>

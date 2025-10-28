@@ -18,6 +18,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
 import HistoryIcon from '@mui/icons-material/History';
 import GroupsIcon from '@mui/icons-material/Groups';
+import PeopleIcon from '@mui/icons-material/People';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
 import AvailableDays from './features/vacations/components/AvailableDays';
@@ -26,6 +27,8 @@ import RequestForm from './features/vacations/components/RequestForm';
 import VacationCalendar from './features/vacations/components/VacationCalendar';
 import RequestsList from './features/vacations/components/RequestsList';
 import ApprovalDashboard from './features/vacations/components/ApprovalDashboard';
+import ControlVacaciones from './features/vacations/components/ControlVacaciones'; // Import the new component
+import TeamDashboard from './features/vacations/components/TeamDashboard';
 import TopBar from './features/vacations/components/TopBar';
 import { CssBaseline, useTheme, useMediaQuery } from '@mui/material';
 
@@ -64,7 +67,7 @@ const ControlVacacionesComponent = () => <Typography>Página de Control de Vacac
 const HistorialesComponent = () => <Typography>Página de Historiales</Typography>;
 
 const rrhhItems = [
-  { text: 'Control de Vacaciones', icon: <FactCheckIcon />, component: <ControlVacacionesComponent /> },
+  { text: 'Control de Vacaciones', icon: <FactCheckIcon />, component: <ControlVacaciones /> }, // Use the new component
   { text: 'Historiales', icon: <HistoryIcon />, component: <HistorialesComponent /> },
 ];
 
@@ -76,6 +79,7 @@ const SolicitarColaboradorComponent = () => <Typography>Página para Solicitar C
 
 const equipoItems = [
   { text: 'Solicitar Colaborador', icon: <PersonAddIcon />, component: <NewCollaboratorForm /> },
+  { text: 'Equipo', icon: <PeopleIcon />, component: <TeamDashboard /> },
 ];
 
 
