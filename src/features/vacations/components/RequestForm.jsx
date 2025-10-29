@@ -153,9 +153,9 @@ const RequestForm = () => {
               type="submit"
               variant="contained"
               sx={{
-                background: 'linear-gradient(135deg, #2a9d8f 0%, #264653 100%)',
+                background: 'linear-gradient(135deg, #2a9d8f 0%, #264653 100%) !important',
                 border: 'none',
-                color: 'white',
+                color: 'white !important',
                 fontWeight: 600, px: 4
               }}
               startIcon={<SendIcon />}>

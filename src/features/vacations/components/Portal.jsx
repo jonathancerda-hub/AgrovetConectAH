@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Grid, Paper, Typography, Button, Chip, List, ListItem, ListItemIcon, ListItemText, Divider, Avatar, TextField, IconButton, Link } from '@mui/material';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import DescriptionIcon from '@mui/icons-material/Description';
@@ -9,25 +9,13 @@ import ThumbUpAltOutlinedIcon from '@mui/icons-material/ThumbUpAltOutlined';
 import SendIcon from '@mui/icons-material/Send';
 import PersonIcon from '@mui/icons-material/Person';
 
-const publicaciones = [
-  {
-    id: 1,
-    autor: 'Agrovet',
-    fecha: '13 de octubre | 10:35 AM',
-    titulo: '¡Estuvimos presentes en la carrera Perú Champs 10K! 🏃‍♂️🏃‍♀️',
-    contenido: '¡Estuvimos presentes en la carrera Perú Champs 10K! Felicitamos a nuestros corredores: Violeta Balbuena, José Montero, Steyci Lebano, Judith Atencio y Ana Gavidia, quienes representaron de gran forma a toda la empresa, corriendo formidablemente los 10 km de la carrera Perú Champs este último domingo. ¡Muy bien chicos, adelante!',
-    imagen: 'https://i.imgur.com/0y8Ftya.png',
-    reacciones: 9,
-  },
-];
-
 const boletas = [
   { mes: 'Septiembre 2025', url: '#' },
   { mes: 'Agosto 2025', url: '#' },
   { mes: 'Julio 2025', url: '#' },
 ];
 
-export default function Portal() {
+export default function Portal({ publicaciones }) {
   return (
     <Box sx={{ flexGrow: 1, mt: 2, display: 'flex', justifyContent: 'center' }}>
       <Grid container spacing={3} sx={{ maxWidth: 1400, width: '100%', alignItems: 'flex-start' }}>
@@ -51,8 +39,8 @@ export default function Portal() {
               <Typography variant="subtitle1" fontWeight={700} gutterBottom>{pub.titulo}</Typography>
               <Typography variant="body2" gutterBottom>{pub.contenido}</Typography>
               <Box sx={{ my: 2, width: '100%', borderRadius: 2, overflow: 'hidden' }}>
-                <img
-                  src={pub.imagen}
+                {pub.imageUrl && <img
+                  src={pub.imageUrl}
                   alt="Publicación"
                   style={{
                     width: '100%',
@@ -60,7 +48,7 @@ export default function Portal() {
                     objectFit: 'cover',
                     display: 'block',
                   }}
-                />
+                />}
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <FavoriteBorderIcon fontSize="small" />
@@ -116,7 +104,14 @@ export default function Portal() {
           <Paper sx={{ p: 2, mb: 2 }}>
             <Typography variant="subtitle1" fontWeight={700}>Links de interés</Typography>
             <Box sx={{ mt: 2 }}>
-              <Button fullWidth variant="contained" color="secondary" sx={{ mb: 1, borderRadius: 2, textTransform: 'none', fontWeight: 700 }}>
+              <Button 
+                fullWidth 
+                variant="contained" 
+                sx={{ 
+                  mb: 1, 
+                  background: 'linear-gradient(135deg, #2a9d8f 0%, #264653 100%) !important',
+                  color: 'white !important'
+                }}>
                 Mi Marcación
               </Button>
               <Typography variant="caption" color="text.secondary">¡Ya puedes registrar tu asistencia!</Typography>

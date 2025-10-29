@@ -14,10 +14,23 @@ const columns = [
     width: 150,
     renderCell: (params) => (
       <>
-        <Button variant="contained" color="primary" size="small" style={{ marginRight: 8 }}>
+        <Button 
+          variant="contained" 
+          size="small" 
+          sx={{ 
+            mr: 1,
+            background: 'linear-gradient(135deg, #2a9d8f 0%, #264653 100%) !important',
+            color: 'white !important',
+          }}>
           Aprobar
         </Button>
-        <Button variant="contained" color="secondary" size="small">
+        <Button 
+          variant="outlined" 
+          size="small"
+          sx={{
+            color: '#dc3545', borderColor: '#dc3545',
+            '&:hover': { color: '#fff', backgroundColor: '#dc3545', borderColor: '#dc3545' }
+          }}>
           Rechazar
         </Button>
       </>

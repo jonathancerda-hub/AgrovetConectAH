@@ -123,7 +123,18 @@ export default function Login({ onLogin }) {
                     ¿Olvidaste tu contraseña?
                   </Link>
                 </Box>
-                <Button type="submit" fullWidth variant="contained" sx={{ mt: 1 }}>
+                <Button 
+                  type="submit" 
+                  fullWidth 
+                  variant="contained" 
+                  sx={{ 
+                    mt: 1,
+                    background: 'linear-gradient(135deg, #2a9d8f 0%, #264653 100%) !important',
+                    color: 'white !important',
+                    border: 'none',
+                    fontWeight: 600,
+                    px: 4,
+                  }}>
                   Iniciar Sesión
                 </Button>
               </Stack>

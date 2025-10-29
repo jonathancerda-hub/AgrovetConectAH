@@ -3,6 +3,10 @@ import React, { useState } from 'react';
 import { Drawer, List, ListItem, ListItemIcon, ListItemText, AppBar, Toolbar, Typography, Box, Collapse, ListItemButton } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import HomeIcon from '@mui/icons-material/Home';
+import CampaignIcon from '@mui/icons-material/Campaign';
+import AddToPhotosIcon from '@mui/icons-material/AddToPhotos';
+import DynamicFeedIcon from '@mui/icons-material/DynamicFeed';
+
 import MiFicha from './features/vacations/components/MiFicha';
 import Portal from './features/vacations/components/Portal';
 import Login from './features/vacations/components/Login';
@@ -32,6 +36,10 @@ import TeamDashboard from './features/vacations/components/TeamDashboard';
 import TopBar from './features/vacations/components/TopBar';
 import { CssBaseline, useTheme, useMediaQuery } from '@mui/material';
 
+// Importaciones para Boletines
+import NewBulletinForm from '../NewBulletinForm';
+import PortalPage from '../PortalPage';
+
 const drawerWidth = 240;
 
 import GroupIcon from '@mui/icons-material/Group';
@@ -49,6 +57,17 @@ const approvalRequests = [
   { id: 1, employee: 'Pedro', startDate: '2025-12-01', endDate: '2025-12-10' },
 ];
 
+const initialPublicaciones = [
+  {
+    id: 1,
+    autor: 'Agrovet',
+    fecha: '13 de octubre | 10:35 AM',
+    titulo: '¡Estuvimos presentes en la carrera Perú Champs 10K! 🏃‍♂️🏃‍♀️',
+    contenido: '¡Estuvimos presentes en la carrera Perú Champs 10K! Felicitamos a nuestros corredores: Violeta Balbuena, José Montero, Steyci Lebano, Judith Atencio y Ana Gavidia, quienes representaron de gran forma a toda la empresa, corriendo formidablemente los 10 km de la carrera Perú Champs este último domingo. ¡Muy bien chicos, adelante!',
+    imageUrl: 'https://i.imgur.com/0y8Ftya.png',
+    reacciones: 9,
+  },
+];
 
 
 const portalComponent = <Portal />;
@@ -63,16 +82,29 @@ const vacacionesItems = [
 ];
 
 // Placeholder components para el nuevo menú de RRHH
-const ControlVacacionesComponent = () => <Typography>Página de Control de Vacaciones</Typography>;
+const ControlVacacionesComponent = () => (
+  <Box>
+    <Typography>Página de Control de Vacaciones</Typography>
+    <Button variant="contained" sx={{ mt: 2, background: 'linear-gradient(135deg, #2a9d8f 0%, #264653 100%) !important', color: 'white !important' }}>
+      Ejecutar Control
+    </Button>
+  </Box>
+);
 const HistorialesComponent = () => <Typography>Página de Historiales</Typography>;
 
 const rrhhItems = [
   { text: 'Control de Vacaciones', icon: <FactCheckIcon />, component: <ControlVacaciones /> }, // Use the new component
   { text: 'Historiales', icon: <HistoryIcon />, component: <HistorialesComponent /> },
 ];
-
 // Placeholder component para Gestión de Empleados
-const GestionEmpleadosComponent = () => <Typography>Página de Gestión de Empleados</Typography>;
+const GestionEmpleadosComponent = () => (
+  <Box>
+    <Typography>Página de Gestión de Empleados</Typography>
+    <Button variant="contained" sx={{ mt: 2, background: 'linear-gradient(135deg, #2a9d8f 0%, #264653 100%) !important', color: 'white !important' }}>
+      Añadir Empleado
+    </Button>
+  </Box>
+);
 
 // Placeholder component para Mi Equipo
 const SolicitarColaboradorComponent = () => <Typography>Página para Solicitar Colaborador</Typography>;
@@ -82,11 +114,19 @@ const equipoItems = [
   { text: 'Equipo', icon: <PeopleIcon />, component: <TeamDashboard /> },
 ];
 
+// Items para el nuevo menú de Boletines
+const boletinesItems = [
+  { text: 'Crear Boletín', icon: <AddToPhotosIcon />, component: null },
+  { text: 'Vista Preliminar', icon: <DynamicFeedIcon />, component: null },
+];
+
 
 function App() {
   const [selectedMenu, setSelectedMenu] = useState({ main: 'portal', sub: 0 });
   const [drawerOpen, setDrawerOpen] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [stagedBulletins, setStagedBulletins] = useState([]); // Boletines en espera de revisión
+  const [publishedBulletins, setPublishedBulletins] = useState(initialPublicaciones); // Lista de todos los boletines publicados
   const [openSubMenu, setOpenSubMenu] = useState('vacaciones'); // Controla qué submenú está abierto
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -109,10 +149,37 @@ function App() {
     }
   };
 
+  const handleAddBulletin = (newBulletin) => {
+    setStagedBulletins((prevBulletins) => [newBulletin, ...prevBulletins]);
+    // En una app real, aquí también harías una llamada a tu backend.
+    alert('¡Boletín creado! Ahora está en "Vista Preliminar" para su revisión.');
+    handleMenuClick('boletines', 1); // Navega a "Vista Preliminar"
+  };
+
+  const handlePublishBulletin = (bulletinId) => {
+    const bulletinToPublish = stagedBulletins.find(b => b.id === bulletinId);
+    if (bulletinToPublish) {
+      const newPublication = {
+        id: bulletinToPublish.id,
+        autor: 'Portal de Noticias', // O el autor real
+        fecha: new Date(bulletinToPublish.createdAt).toLocaleString(),
+        titulo: bulletinToPublish.title,
+        contenido: bulletinToPublish.content,
+        imageUrl: bulletinToPublish.imageUrl,
+        reacciones: 0,
+      };
+      setPublishedBulletins(prev => [newPublication, ...prev]);
+      setStagedBulletins(prev => prev.filter(b => b.id !== bulletinId));
+      alert('¡Boletín publicado en el portal principal!');
+      handleMenuClick('portal'); // Navega al portal para ver el resultado
+    }
+  };
+
   let mainContent;
   let pageTitle = 'Portal'; // Título por defecto
   if (selectedMenu.main === 'portal') {
-    mainContent = portalComponent;
+    mainContent = <Portal publicaciones={publishedBulletins} />; // Pasamos toda la lista de publicaciones
+    pageTitle = 'Portal';
   } else if (selectedMenu.main === 'ficha') {
     mainContent = fichaComponent;
   } else if (selectedMenu.main === 'vacaciones') {
@@ -127,6 +194,14 @@ function App() {
   } else if (selectedMenu.main === 'equipo') {
     mainContent = equipoItems[selectedMenu.sub].component;
     pageTitle = equipoItems[selectedMenu.sub].text;
+  } else if (selectedMenu.main === 'boletines') {
+    if (selectedMenu.sub === 0) { // Crear Boletín
+      mainContent = <NewBulletinForm onAddBulletin={handleAddBulletin} onGoToPortal={() => handleMenuClick('portal')} />;
+      pageTitle = 'Crear Boletín';
+    } else { // Vista Preliminar
+      mainContent = <PortalPage bulletins={stagedBulletins} onPublish={handlePublishBulletin} />;
+      pageTitle = 'Vista Preliminar de Boletines';
+    }
   }
 
   // Si el usuario no está autenticado, muestra solo el componente Login.
@@ -470,6 +545,66 @@ function App() {
                         }}
                         selected={selectedMenu.main === 'rrhh' && selectedMenu.sub === idx}
                         onClick={() => handleMenuClick('rrhh', idx)}
+                      >
+                        <ListItemIcon sx={{ minWidth: 0, mr: 2, justifyContent: 'center', alignItems: 'center' }}>
+                          <Box sx={{ width: 8, height: 8, bgcolor: 'rgba(255,255,255,0.9)', borderRadius: '50%', boxShadow: '0 0 0 3px rgba(255,255,255,0.04)' }} />
+                        </ListItemIcon>
+                        <ListItemText primary={item.text} primaryTypographyProps={{ style: { fontSize: '0.875rem', color: 'inherit' } }} />
+                      </ListItemButton>
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            </Collapse>
+
+            {/* Menú Boletines */}
+            <ListItem disablePadding sx={{ display: 'block' }}>
+              <ListItemButton
+                onClick={() => handleSubMenuToggle('boletines')}
+                sx={{
+                  minHeight: 48,
+                  mx: 2,
+                  justifyContent: drawerOpen ? 'initial' : 'center',
+                  borderRadius: 1,
+                  backgroundColor: openSubMenu === 'boletines' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                  },
+                  px: 2.5,
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    mr: drawerOpen ? 3 : 'auto',
+                    justifyContent: 'center',
+                  }}>
+                  <CampaignIcon />
+                </ListItemIcon>
+                <ListItemText primary="Boletines" sx={{ opacity: drawerOpen ? 1 : 0, transition: 'opacity 0.3s' }} />
+                {drawerOpen && (openSubMenu === 'boletines' ? <ExpandLess /> : <ExpandMore />)}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={openSubMenu === 'boletines' && drawerOpen} timeout="auto" unmountOnExit>
+              <Box sx={{ position: 'relative', pl: 0 }}>
+                <Box sx={{ position: 'absolute', left: drawerOpen ? 40 : 28, top: 12, bottom: 12, width: 2, bgcolor: 'rgba(255,255,255,0.06)', borderRadius: 1 }} />
+                <List component="div" disablePadding>
+                  {boletinesItems.map((item, idx) => (
+                    <ListItem key={item.text} disablePadding sx={{ display: 'block' }}>
+                      <ListItemButton
+                        sx={{
+                          pl: 4,
+                          minHeight: 40,
+                          '&:hover': {
+                            backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                          },
+                          '&.Mui-selected': {
+                            backgroundColor: 'transparent',
+                            '& .MuiListItemText-primary': { color: '#fff', fontWeight: 600 }
+                          },
+                        }}
+                        selected={selectedMenu.main === 'boletines' && selectedMenu.sub === idx}
+                        onClick={() => handleMenuClick('boletines', idx)}
                       >
                         <ListItemIcon sx={{ minWidth: 0, mr: 2, justifyContent: 'center', alignItems: 'center' }}>
                           <Box sx={{ width: 8, height: 8, bgcolor: 'rgba(255,255,255,0.9)', borderRadius: '50%', boxShadow: '0 0 0 3px rgba(255,255,255,0.04)' }} />
