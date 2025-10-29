@@ -1,6 +1,8 @@
 import React from 'react';
 import {
+  styled,
   Box,
+  Stack,
   Grid,
   Paper,
   Typography,
@@ -19,6 +21,9 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EmailIcon from '@mui/icons-material/Email';
 import HistoryIcon from '@mui/icons-material/History';
+import { tableCellClasses } from '@mui/material/TableCell';
+import FactCheckIcon from '@mui/icons-material/FactCheck';
+import HomeIcon from '@mui/icons-material/Home';
 
 // Dummy Data
 const empleadosVacaciones = [
@@ -124,6 +129,27 @@ const getAlertChipColor = (alerta) => {
   return { bgcolor: '#d4edda', color: '#155724' }; // ok
 };
 
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  [`&.${tableCellClasses.head}`]: {
+    backgroundColor: theme.palette.common.black,
+    color: theme.palette.common.white,
+  },
+  [`&.${tableCellClasses.body}`]: {
+    fontSize: 14,
+  },
+}));
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  '&:nth-of-type(odd)': {
+    backgroundColor: theme.palette.action.hover,
+  },
+  // hide last border
+  '&:last-child td, &:last-child th': {
+    border: 0,
+  },
+}));
+
+
 export default function ControlVacaciones() {
   const theme = useTheme();
 
@@ -133,67 +159,41 @@ export default function ControlVacaciones() {
   const antiguedadMinimaDias = empleadosVacaciones.length > 0 ? Math.min(...empleadosVacaciones.map(ev => ev.antiguedad_dias)) : 0;
 
   return (
-    <Box sx={{ maxWidth: 1400, margin: '32px auto', px: 2 }}>
-      <Paper elevation={3} sx={{ borderRadius: '16px', overflow: 'hidden' }}>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: theme.spacing(1.5),
-            flexWrap: 'wrap',
-            p: 2,
-            background: 'linear-gradient(135deg, #667eea, #764ba2)',
-            color: '#fff',
-          }}
-        >
-          <Typography variant="h6" component="h4" sx={{ mb: 0, color: 'inherit' }}>
-            Control de Vacaciones por Empleado
-          </Typography>
-          <Button
-            variant="contained"
-            sx={{
-              background: theme.palette.background.paper, // White background
-              color: theme.palette.primary.main, // Primary color text
-              '&:hover': {
-                background: theme.palette.grey[100], // Lighter white on hover
-              },
-            }}
-            startIcon={<ArrowBackIcon />}
-            // onClick={() => navigate('/rrhh-dashboard')} // Assuming a navigation function
-          >
-            Regresar al Dashboard
-          </Button>
-        </Box>
+    <Paper elevation={24} sx={{ p: 3 }}>
+      <Typography variant="h5" fontWeight={700} gutterBottom sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <FactCheckIcon sx={{ mr: 1 }} />
+        Control de Vacaciones por Empleado
+      </Typography>
 
-        <Box sx={{ p: 3 }}>
-          <TableContainer component={Paper} variant="outlined">
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+          <TableContainer component={Paper} variant="outlined" sx={{ mt: 2 }}>
             <Table sx={{ minWidth: 650 }} aria-label="control de vacaciones">
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ textTransform: 'uppercase', fontSize: '.8rem', letterSpacing: '.4px', color: 'text.secondary', whiteSpace: 'nowrap' }}>Empleado</TableCell>
-                  <TableCell sx={{ textTransform: 'uppercase', fontSize: '.8rem', letterSpacing: '.4px', color: 'text.secondary', whiteSpace: 'nowrap' }}>Puesto</TableCell> {/* Changed from Area to Puesto */}
-                  <TableCell align="center" sx={{ textTransform: 'uppercase', fontSize: '.8rem', letterSpacing: '.4px', color: 'text.secondary', whiteSpace: 'nowrap' }}>Antigüedad</TableCell>
-                  <TableCell align="center" sx={{ textTransform: 'uppercase', fontSize: '.8rem', letterSpacing: '.4px', color: 'text.secondary', whiteSpace: 'nowrap' }}>Días Disponibles</TableCell>
-                  <TableCell align="center" sx={{ textTransform: 'uppercase', fontSize: '.8rem', letterSpacing: '.4px', color: 'text.secondary', whiteSpace: 'nowrap' }}>Días Tomados</TableCell>
-                  <TableCell align="center" sx={{ textTransform: 'uppercase', fontSize: '.8rem', letterSpacing: '.4px', color: 'text.secondary', whiteSpace: 'nowrap' }}>Días Restantes</TableCell>
-                  <TableCell align="center" sx={{ textTransform: 'uppercase', fontSize: '.8rem', letterSpacing: '.4px', color: 'text.secondary', whiteSpace: 'nowrap' }}>Pendientes</TableCell>
-                  <TableCell align="center" sx={{ textTransform: 'uppercase', fontSize: '.8rem', letterSpacing: '.4px', color: 'text.secondary', whiteSpace: 'nowrap' }}>Última Solicitud</TableCell>
-                  <TableCell sx={{ textTransform: 'uppercase', fontSize: '.8rem', letterSpacing: '.4px', color: 'text.secondary', whiteSpace: 'nowrap' }}>Alertas</TableCell>
-                  <TableCell sx={{ textTransform: 'uppercase', fontSize: '.8rem', letterSpacing: '.4px', color: 'text.secondary', whiteSpace: 'nowrap' }}>Acciones</TableCell>
+                  <StyledTableCell>Empleado</StyledTableCell>
+                  <StyledTableCell>Puesto</StyledTableCell>
+                  <StyledTableCell align="center">Antigüedad</StyledTableCell>
+                  <StyledTableCell align="center">Días Disponibles</StyledTableCell>
+                  <StyledTableCell align="center">Días Tomados</StyledTableCell>
+                  <StyledTableCell align="center">Días Restantes</StyledTableCell>
+                  <StyledTableCell align="center">Pendientes</StyledTableCell>
+                  <StyledTableCell align="center">Última Solicitud</StyledTableCell>
+                  <StyledTableCell>Alertas</StyledTableCell>
+                  <StyledTableCell>Acciones</StyledTableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {empleadosVacaciones.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={10} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                  <StyledTableRow>
+                    <StyledTableCell colSpan={10} align="center" sx={{ py: 4, color: 'text.secondary' }}>
                       No hay empleados registrados
-                    </TableCell>
-                  </TableRow>
+                    </StyledTableCell>
+                  </StyledTableRow>
                 ) : (
                   empleadosVacaciones.map((ev) => (
-                    <TableRow key={ev.id} hover>
-                      <TableCell>
+                    <StyledTableRow key={ev.id}>
+                      <StyledTableCell component="th" scope="row">
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Avatar sx={{ bgcolor: 'primary.main', color: 'white', width: 32, height: 32, fontSize: '.8rem', fontWeight: 600 }}>
                             {ev.empleado.nombre.charAt(0)}{ev.empleado.apellido.charAt(0)}
@@ -203,23 +203,23 @@ export default function ControlVacaciones() {
                             <Typography variant="caption" color="text.secondary">{ev.empleado.email}</Typography>
                           </Box>
                         </Box>
-                      </TableCell>
-                      <TableCell>
+                      </StyledTableCell>
+                      <StyledTableCell>
                         <Typography variant="body2">{ev.empleado.puesto}</Typography>
-                      </TableCell>
-                      <TableCell align="center">
+                      </StyledTableCell>
+                      <StyledTableCell align="center">
                         <Typography variant="body2" fontWeight={600}>{ev.antiguedad_dias}</Typography>
                         <Typography variant="caption" color="text.muted">días</Typography>
-                      </TableCell>
-                      <TableCell align="center">
+                      </StyledTableCell>
+                      <StyledTableCell align="center">
                         <Typography variant="body2" fontWeight={600}>{ev.dias_por_antiguedad}</Typography>
                         <Typography variant="caption" color="text.muted">por año</Typography>
-                      </TableCell>
-                      <TableCell align="center">
+                      </StyledTableCell>
+                      <StyledTableCell align="center">
                         <Typography variant="body2" fontWeight={600}>{ev.dias_tomados}</Typography>
                         <Typography variant="caption" color="text.muted">utilizados</Typography>
-                      </TableCell>
-                      <TableCell align="center">
+                      </StyledTableCell>
+                      <StyledTableCell align="center">
                         <Typography variant="body2" fontWeight={600} color={getProgressColor(ev.dias_restantes)}>
                           {ev.dias_restantes}
                         </Typography>
@@ -233,8 +233,8 @@ export default function ControlVacaciones() {
                             />
                           )}
                         </Box>
-                      </TableCell>
-                      <TableCell align="center">
+                      </StyledTableCell>
+                      <StyledTableCell align="center">
                         {ev.solicitudes_pendientes > 0 ? (
                           <Box>
                             <Typography variant="body2" fontWeight={600} color="warning.main">{ev.solicitudes_pendientes}</Typography>
@@ -243,8 +243,8 @@ export default function ControlVacaciones() {
                         ) : (
                           <Typography variant="body2" color="text.secondary">-</Typography>
                         )}
-                      </TableCell>
-                      <TableCell align="center">
+                      </StyledTableCell>
+                      <StyledTableCell align="center">
                         {ev.ultima_solicitud ? (
                           <Box>
                             <Typography variant="body2" fontWeight={600}>{new Date(ev.ultima_solicitud.fecha_solicitud).toLocaleDateString()}</Typography>
@@ -253,8 +253,8 @@ export default function ControlVacaciones() {
                         ) : (
                           <Typography variant="body2" color="text.secondary">Sin solicitudes</Typography>
                         )}
-                      </TableCell>
-                      <TableCell>
+                      </StyledTableCell>
+                      <StyledTableCell>
                         {ev.alertas && ev.alertas.length > 0 ? (
                           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                             {ev.alertas.slice(0, 3).map((alerta, i) => (
@@ -274,8 +274,8 @@ export default function ControlVacaciones() {
                         ) : (
                           <Chip label="✅ Sin alertas" size="small" sx={{ fontSize: '.75rem', ...getAlertChipColor('✅') }} />
                         )}
-                      </TableCell>
-                      <TableCell>
+                      </StyledTableCell>
+                      <StyledTableCell>
                         <Box sx={{ display: 'flex', gap: 0.5 }}>
                           {ev.alertas && ev.alertas.length > 0 && (
                             <Button variant="contained" size="small" color="warning" title="Notificar al Manager">
@@ -286,8 +286,8 @@ export default function ControlVacaciones() {
                             <HistoryIcon fontSize="small" />
                           </Button>
                         </Box>
-                      </TableCell>
-                    </TableRow>
+                      </StyledTableCell>
+                    </StyledTableRow>
                   ))
                 )}
               </TableBody>
@@ -295,7 +295,9 @@ export default function ControlVacaciones() {
           </TableContainer>
 
           {/* Resumen de Alertas */}
-          <Box sx={{ mt: 4, p: 3, bgcolor: 'action.hover', borderRadius: '12px' }}>
+        </Grid>
+        <Grid item xs={12}>
+          <Paper variant="outlined" sx={{ p: 2 }}>
             <Typography variant="subtitle1" fontWeight={600} mb={2}>📊 Resumen de Alertas</Typography>
             <Grid container spacing={2} textAlign="center">
               <Grid item xs={4}>
@@ -311,9 +313,27 @@ export default function ControlVacaciones() {
                 <Typography variant="caption" color="text.secondary">Antigüedad Mínima (días)</Typography>
               </Grid>
             </Grid>
-          </Box>
-        </Box>
-      </Paper>
-    </Box>
+          </Paper>
+        </Grid>
+      </Grid>
+
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 3 }}>
+        <Button
+          variant="outlined"
+          sx={{
+            fontWeight: 500,
+            color: '#0d6efd',
+            borderColor: '#0d6efd',
+            '&:hover': {
+              color: '#fff',
+              backgroundColor: '#0d6efd',
+              borderColor: '#0d6efd',
+            },
+          }}
+          startIcon={<HomeIcon />}>
+          Regresar al Dashboard
+        </Button>
+      </Stack>
+    </Paper>
   );
 }

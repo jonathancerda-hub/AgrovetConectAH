@@ -137,7 +137,6 @@ function App() {
   // Si el usuario está autenticado, muestra el layout completo de la aplicación.
   return (
     <Box sx={{ display: 'flex' }}>
-      <CssBaseline />
       <AppBar
         position="fixed"
         sx={{

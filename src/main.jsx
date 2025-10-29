@@ -1,48 +1,65 @@
-import React from 'react';
+import React, { useState, useMemo, createContext } from 'react';
 import ReactDOM from 'react-dom/client';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
 import App from './App';
 import './global.css';
 
-const theme = createTheme({
-  palette: {
-    mode: 'light',
-    primary: {
-      main: '#1877F2', // Azul de Facebook
-      dark: '#166FE5',  // Azul de Facebook más oscuro
-    },
-    secondary: {
-      main: '#6b778c', // Usando el color de texto secundario como un gris neutro
-    },
-    success: {
-      main: '#00b96b',
-    },
-    warning: {
-      main: '#ffd600',
-    },
-    error: {
-      main: '#ff3b30',
-    },
-    background: {
-      default: '#ffffff', // Fondo blanco
-      paper: '#ffffff',   // Fondo secundario
-    },
-    text: {
-      primary: '#222b45',
-      secondary: '#6b778c',
-      disabled: '#a0aec0',
-    },
-    divider: '#e4e9f2',
-  },
-  typography: {
-    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'sans-serif'",
-  },
-});
+// Creamos un contexto para el cambio de tema
+export const ThemeContext = createContext({ toggleColorMode: () => {} });
+
+function Main() {
+  const [mode, setMode] = useState('light');
+
+  const colorMode = useMemo(
+    () => ({
+      toggleColorMode: () => {
+        setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
+      },
+    }),
+    [],
+  );
+
+  const theme = useMemo(
+    () =>
+      createTheme({
+        palette: {
+          mode,
+          ...(mode === 'light'
+            ? {
+                // Paleta para modo claro
+                primary: { main: '#1877F2' },
+                secondary: { main: '#6b778c' },
+                background: { default: '#ffffff', paper: '#ffffff' },
+                text: { primary: '#222b45', secondary: '#6b778c' },
+              }
+            : {
+                // Paleta para modo oscuro
+                primary: { main: '#1877F2' },
+                secondary: { main: '#a0aec0' },
+                background: { default: '#1a202c', paper: '#2d3748' },
+                text: { primary: '#ffffff', secondary: '#a0aec0' },
+              }),
+        },
+        typography: {
+          fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'sans-serif'",
+        },
+      }),
+    [mode],
+  );
+
+  return (
+    <ThemeContext.Provider value={colorMode}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <App />
+      </ThemeProvider>
+    </ThemeContext.Provider>
+  );
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <ThemeProvider theme={theme}>
-      <App />
-    </ThemeProvider>
+    <Main />
   </React.StrictMode>
 );
