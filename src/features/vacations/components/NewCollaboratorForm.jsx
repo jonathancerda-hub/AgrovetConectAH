@@ -94,7 +94,7 @@ export default function NewCollaboratorForm() {
           type="submit"
           variant="contained"
           sx={{
-            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+            background: 'linear-gradient(135deg, #2a9d8f 0%, #264653 100%)',
             border: 'none',
             color: 'white',
             fontWeight: 600, px: 4

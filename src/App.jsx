@@ -164,7 +164,7 @@ function App() {
           overflowX: 'hidden',
           transition: 'width 0.2s',
           borderRight: 'none',
-          background: '#2a3f54',
+          background: 'linear-gradient(180deg, #264653 0%, #2a9d8f 100%)',
           color: 'rgba(255, 255, 255, 0.8)',
           '& .MuiListItemIcon-root': {
             color: 'rgba(255, 255, 255, 0.8)',
@@ -529,7 +529,7 @@ function App() {
         component="main"
         sx={theme => ({
           flexGrow: 1,
-          bgcolor: '#f7f7f7',
+          bgcolor: 'background.default',
           p: 3,
           transition: theme.transitions.create('margin', {
             easing: theme.transitions.easing.sharp,

@@ -37,7 +37,7 @@ export default function TopBar({ onMenuClick, title }) {
 
   return (
     <React.Fragment>
-      <Toolbar sx={{ minHeight: 56, px: 2, background: '#f7f7f7', color: '#2a3f54' }}>
+      <Toolbar sx={{ minHeight: 56, px: 2, bgcolor: 'background.paper', color: 'text.primary' }}>
         <IconButton edge="start" color="inherit" onClick={onMenuClick} sx={{ mr: 2, color: 'text.primary' }}>
           <MenuIcon />
         </IconButton>

@@ -28,17 +28,23 @@ function Main() {
           ...(mode === 'light'
             ? {
                 // Paleta para modo claro
-                primary: { main: '#1877F2' },
-                secondary: { main: '#6b778c' },
-                background: { default: '#ffffff', paper: '#ffffff' },
-                text: { primary: '#222b45', secondary: '#6b778c' },
+                primary: { main: '#2a9d8f' }, // Un verde azulado profesional
+                secondary: { main: '#718096' }, // Gris para texto secundario
+                background: { default: '#f8f9fa', paper: '#ffffff' },
+                text: { primary: '#2d3748', secondary: '#718096' },
+                error: { main: '#e53e3e' },
+                warning: { main: '#dd6b20' },
+                info: { main: '#3182ce' },
+                success: { main: '#38a169' },
               }
             : {
                 // Paleta para modo oscuro
-                primary: { main: '#1877F2' },
+                primary: { main: '#2a9d8f' },
                 secondary: { main: '#a0aec0' },
                 background: { default: '#1a202c', paper: '#2d3748' },
-                text: { primary: '#ffffff', secondary: '#a0aec0' },
+                text: { primary: '#e2e8f0', secondary: '#a0aec0' },
+                error: { main: '#fc8181' },
+                warning: { main: '#f6ad55' },
               }),
         },
         typography: {

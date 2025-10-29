@@ -153,7 +153,7 @@ const RequestForm = () => {
               type="submit"
               variant="contained"
               sx={{
-                background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                background: 'linear-gradient(135deg, #2a9d8f 0%, #264653 100%)',
                 border: 'none',
                 color: 'white',
                 fontWeight: 600, px: 4
@@ -198,34 +198,33 @@ const RequestForm = () => {
       {/* Columna Derecha: Estado y Políticas */}
       <Paper elevation={3} sx={{ gridColumn: { xs: 'span 5', md: 'span 2' }, borderRadius: '16px', overflow: 'hidden' }}>
         <Box sx={{
-          display: 'flex', alignItems: 'center', p: 2,
-          background: 'linear-gradient(135deg, #667eea, #764ba2)', color: '#fff'
+          display: 'flex', alignItems: 'center', p: 2, bgcolor: 'primary.main', color: 'white'
         }}>
           <InfoOutlinedIcon sx={{ mr: 1 }} />
-          <Typography variant="h6" fontWeight={700} sx={{ color: 'inherit' }}>Estado de tus Vacaciones</Typography>
+          <Typography variant="h6" fontWeight={600} sx={{ color: 'inherit' }}>Estado de tus Vacaciones</Typography>
         </Box>
         <Grid container spacing={2} sx={{ p: 2 }}>
           <Grid item xs={6}>
             <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" sx={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#667eea' }}>30</Typography>
+              <Typography variant="h4" sx={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'primary.main' }}>30</Typography>
               <Typography variant="body2">Días por Año</Typography>
             </Box>
           </Grid>
           <Grid item xs={6}>
             <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" sx={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#667eea' }}>0</Typography>
+              <Typography variant="h4" sx={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'primary.main' }}>0</Typography>
               <Typography variant="body2">Días Tomados</Typography>
             </Box>
           </Grid>
           <Grid item xs={6}>
             <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" sx={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#667eea' }}>30</Typography>
+              <Typography variant="h4" sx={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'primary.main' }}>30</Typography>
               <Typography variant="body2">Días Restantes</Typography>
             </Box>
           </Grid>
           <Grid item xs={6}>
             <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" sx={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#667eea' }}>1980</Typography>
+              <Typography variant="h4" sx={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'primary.main' }}>1980</Typography>
               <Typography variant="body2">Días Antigüedad</Typography>
             </Box>
           </Grid>
@@ -234,11 +233,10 @@ const RequestForm = () => {
 
       <Paper elevation={3} sx={{ gridColumn: { xs: 'span 5', md: 'span 2' }, borderRadius: '16px', overflow: 'hidden' }}>
         <Box sx={{
-          display: 'flex', alignItems: 'center', p: 2,
-          background: 'linear-gradient(135deg, #667eea, #764ba2)', color: '#fff'
+          display: 'flex', alignItems: 'center', p: 2, bgcolor: 'primary.main', color: 'white'
         }}>
           <GavelOutlinedIcon sx={{ mr: 1 }} />
-          <Typography variant="h6" fontWeight={700} sx={{ color: 'inherit' }}>Políticas y Reglas</Typography>
+          <Typography variant="h6" fontWeight={600} sx={{ color: 'inherit' }}>Políticas y Reglas</Typography>
         </Box>
         <Stack spacing={1} sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
