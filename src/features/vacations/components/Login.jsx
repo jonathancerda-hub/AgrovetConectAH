@@ -1,6 +1,6 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Box, Button, TextField, Typography, Link, Stack, Divider, Checkbox, FormControlLabel, IconButton, useTheme } from '@mui/material';
+import { Box, Button, TextField, Typography, Link, Stack, Divider, Checkbox, FormControlLabel, IconButton, useTheme, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
 import { ThemeContext } from '../../../main'; // Importamos nuestro contexto
 
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
@@ -27,15 +27,19 @@ function ColorSchemeToggle() {
   );
 }
 
-export default function Login({ onLogin }) {
+export default function Login({ onLogin, users }) {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const theme = useTheme();
 
   const onSubmit = (data) => {
-    if (data.email) {
-      onLogin();
+    // Para mantener la funcionalidad de jerarquía, iniciamos sesión como el primer usuario por defecto.
+    // Esto se reemplazará con la lógica de autenticación real.
+    if (data.email && data.password) {
+      const defaultUserId = (users && users.length > 0) ? users[0].id : 1;
+      onLogin(defaultUserId);
     }
   };
+
   return (
     <Box sx={{
       '--Transition-duration': '0.4s',

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Grid, Container, Typography } from '@mui/material';
-import RequestForm from './components/RequestForm';
+import RequestForm from './RequestForm'; // Corregido
 import PostAddIcon from '@mui/icons-material/PostAdd';
 
 const RequestVacationPage = () => {

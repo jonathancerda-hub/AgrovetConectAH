@@ -13,7 +13,7 @@ import SendIcon from '@mui/icons-material/Send';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import HomeIcon from '@mui/icons-material/Home';
 
-const RequestForm = () => {
+const RequestForm = ({ onNewRequest }) => {
   const { register, handleSubmit, watch, formState: { errors } } = useForm();
   const [dayCount, setDayCount] = useState(0);
 

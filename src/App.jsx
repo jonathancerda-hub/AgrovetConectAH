@@ -26,7 +26,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
 import AvailableDays from './features/vacations/components/AvailableDays';
-import RequestVacationPage from './features/vacations/RequestVacationPage';
+import RequestVacationPage from './features/vacations/components/RequestVacationPage'; // Corregido
 import RequestForm from './features/vacations/components/RequestForm';
 import VacationCalendar from './features/vacations/components/VacationCalendar';
 import RequestsList from './features/vacations/components/RequestsList';
@@ -37,12 +37,32 @@ import TopBar from './features/vacations/components/TopBar';
 import { CssBaseline, useTheme, useMediaQuery } from '@mui/material';
 
 // Importaciones para Boletines
-import NewBulletinForm from '../NewBulletinForm';
-import PortalPage from '../PortalPage';
+import NewBulletinForm from './features/vacations/components/NewBulletinForm'; // Corregido
+import PortalPage from './features/vacations/components/PortalPage'; // Corregido
+import ProcessRequestPage from './features/vacations/components/ProcessRequestPage';
 
 const drawerWidth = 240;
 
 import GroupIcon from '@mui/icons-material/Group';
+
+// --- SIMULACIÓN DE BASE DE DATOS DE USUARIOS CON JERARQUÍA ---
+const users = [
+  { id: 1, name: 'Carlos Director', level: 1, supervisorId: null },
+  { id: 2, name: 'Ana Gerente', level: 2, supervisorId: 1 },
+  { id: 3, name: 'Pedro Jefe', level: 4, supervisorId: 2 },
+  { id: 4, name: 'Laura Supervisora', level: 5, supervisorId: 3 },
+  { id: 5, name: 'Juan Coordinador', level: 6, supervisorId: 4 },
+  { id: 6, name: 'Maria Asistente', level: 7, supervisorId: 5 },
+  { id: 7, name: 'Luis Auxiliar', level: 8, supervisorId: 5 },
+  { id: 8, name: 'Sofia Coordinadora', level: 6, supervisorId: 4 },
+];
+
+const initialVacationRequests = [
+  { id: 1, requesterId: 7, approverId: 5, startDate: '2025-11-01', endDate: '2025-11-05', status: 'Pendiente', comments: 'Viaje familiar.' },
+  { id: 2, requesterId: 6, approverId: 5, startDate: '2025-12-22', endDate: '2025-12-26', status: 'Pendiente', comments: 'Fiestas de fin de año.' },
+  { id: 3, requesterId: 5, approverId: 4, startDate: '2025-10-20', endDate: '2025-10-25', status: 'Aprobado', comments: '' },
+];
+// ----------------------------------------------------------------
 
 // Datos de ejemplo para mostrar los componentes
 const availableDaysData = { available: 10, taken: 5 };
@@ -75,10 +95,10 @@ const fichaComponent = <MiFicha />;
 
 const vacacionesItems = [
   { text: 'Dashboard', icon: <EventAvailableIcon />, component: <AvailableDays available={availableDaysData.available} taken={availableDaysData.taken} /> },
-  { text: 'Formulario de Solicitud', icon: <AssignmentIcon />, component: <RequestVacationPage /> },
+  { text: 'Formulario de Solicitud', icon: <AssignmentIcon />, component: null }, // Se manejará dinámicamente
   { text: 'Calendario', icon: <CalendarMonthIcon />, component: <VacationCalendar events={calendarEvents} /> },
   { text: 'Lista de Solicitudes', icon: <ListAltIcon />, component: <RequestsList requests={requestsData} /> },
-  { text: 'Panel de Aprobación', icon: <SupervisorAccountIcon />, component: <ApprovalDashboard requests={approvalRequests} /> },
+  { text: 'Panel de Aprobación', icon: <SupervisorAccountIcon />, component: null }, // Se manejará dinámicamente
 ];
 
 // Placeholder components para el nuevo menú de RRHH
@@ -125,9 +145,12 @@ function App() {
   const [selectedMenu, setSelectedMenu] = useState({ main: 'portal', sub: 0 });
   const [drawerOpen, setDrawerOpen] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null); // Estado para el usuario logueado
+  const [requestToProcess, setRequestToProcess] = useState(null); // Solicitud seleccionada para procesar
   const [stagedBulletins, setStagedBulletins] = useState([]); // Boletines en espera de revisión
+  const [vacationRequests, setVacationRequests] = useState(initialVacationRequests); // Estado para las solicitudes de vacaciones
   const [publishedBulletins, setPublishedBulletins] = useState(initialPublicaciones); // Lista de todos los boletines publicados
-  const [openSubMenu, setOpenSubMenu] = useState('vacaciones'); // Controla qué submenú está abierto
+  const [openSubMenu, setOpenSubMenu] = useState(null); // Controla qué submenú está abierto
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -146,6 +169,14 @@ function App() {
       setOpenSubMenu(menuName);
     } else {
       setOpenSubMenu(prev => (prev === menuName ? null : menuName));
+    }
+  };
+
+  const handleLogin = (userId) => {
+    const user = users.find(u => u.id === parseInt(userId));
+    if (user) {
+      setCurrentUser(user);
+      setIsAuthenticated(true);
     }
   };
 
@@ -175,16 +206,58 @@ function App() {
     }
   };
 
+  const handleNewRequest = (requestData) => {
+    const newRequest = {
+      id: Date.now(),
+      requesterId: currentUser.id,
+      approverId: currentUser.supervisorId, // La solicitud va al supervisor directo
+      days: Math.ceil((new Date(requestData.endDate) - new Date(requestData.startDate)) / (1000 * 60 * 60 * 24)) + 1,
+      status: 'Pendiente',
+      ...requestData,
+    };
+    setVacationRequests(prev => [...prev, newRequest]);
+    alert(`Solicitud enviada a tu supervisor para aprobación.`);
+    handleMenuClick('portal'); // Volver al portal
+  };
+
+  const handleProcessRequest = (requestId, decision, comment) => {
+    setVacationRequests(prev =>
+      prev.map(req =>
+        req.id === requestId ? { ...req, status: decision, approverComment: comment } : req
+      )
+    );
+    alert(`La solicitud ha sido ${decision.toLowerCase()} con éxito.`);
+    setRequestToProcess(null); // Vuelve al panel de aprobación
+    handleMenuClick('vacaciones', 4); // Navega al panel de aprobación
+  };
+
   let mainContent;
   let pageTitle = 'Portal'; // Título por defecto
-  if (selectedMenu.main === 'portal') {
+
+  if (requestToProcess) {
+    const requester = users.find(u => u.id === requestToProcess.requesterId);
+    mainContent = <ProcessRequestPage 
+      request={requestToProcess} 
+      requester={requester}
+      onProcess={handleProcessRequest}
+      onGoBack={() => setRequestToProcess(null)}
+    />;
+    pageTitle = `Procesando Solicitud #${requestToProcess.id}`;
+  } else if (selectedMenu.main === 'portal') {
     mainContent = <Portal publicaciones={publishedBulletins} />; // Pasamos toda la lista de publicaciones
     pageTitle = 'Portal';
   } else if (selectedMenu.main === 'ficha') {
-    mainContent = fichaComponent;
+    mainContent = <MiFicha />;
   } else if (selectedMenu.main === 'vacaciones') {
-    mainContent = vacacionesItems[selectedMenu.sub].component;
-    pageTitle = vacacionesItems[selectedMenu.sub].text;
+    const selectedItem = vacacionesItems[selectedMenu.sub];
+    pageTitle = selectedItem.text;
+    if (selectedItem.text === 'Formulario de Solicitud') {
+      mainContent = <RequestForm onNewRequest={handleNewRequest} />;
+    } else if (selectedItem.text === 'Panel de Aprobación') {
+      mainContent = <ApprovalDashboard currentUser={currentUser} vacationRequests={vacationRequests} users={users} onSelectRequest={setRequestToProcess} />;
+    } else {
+      mainContent = selectedItem.component;
+    }
   } else if (selectedMenu.main === 'rrhh') {
     mainContent = rrhhItems[selectedMenu.sub].component;
     pageTitle = rrhhItems[selectedMenu.sub].text;
@@ -206,7 +279,7 @@ function App() {
 
   // Si el usuario no está autenticado, muestra solo el componente Login.
   if (!isAuthenticated) {
-    return <Login onLogin={() => setIsAuthenticated(true)} />;
+    return <Login onLogin={handleLogin} users={users} />;
   }
 
   // Si el usuario está autenticado, muestra el layout completo de la aplicación.
