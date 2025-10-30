@@ -284,7 +284,7 @@ function App() {
 
   // Si el usuario está autenticado, muestra el layout completo de la aplicación.
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', overflowX: 'hidden' }}>
       <AppBar
         position="fixed"
         sx={{
@@ -309,7 +309,9 @@ function App() {
         '& .MuiDrawer-paper': {
           width: drawerOpen ? drawerWidth : '60px',
           boxSizing: 'border-box',
-          overflowX: 'hidden',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
           transition: 'width 0.2s',
           borderRight: 'none',
           background: 'linear-gradient(180deg, #264653 0%, #2a9d8f 100%)',
@@ -320,18 +322,31 @@ function App() {
         },
       }}
     >
-      <Toolbar />
-      <Box>
+      {/* Top area with sticky logo - the rest of the menu will scroll independently */}
+      <Box sx={{ width: '100%' }}>
         {drawerOpen && (
-          <Box sx={{ textAlign: 'center', p: 2, borderBottom: '1px solid rgba(255, 255, 255, 0.12)' }}>
+          <Box sx={(theme) => ({
+            position: 'sticky',
+            top: 0,
+            zIndex: 3,
+            height: theme.mixins.toolbar.minHeight,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            p: 0,
+            borderBottom: '1px solid rgba(255, 255, 255, 0.12)', // Línea restaurada
+            background: 'transparent',
+            boxSizing: 'border-box',
+          })}>
             <img
               src="/img/conect.png"
               alt="Conecta Logo"
-              style={{ width: '80%', maxWidth: 150 }}
+              style={{ width: '90%', maxWidth: 180, display: 'block' }} // Logo más grande
             />
           </Box>
         )}
-        <List>
+        <Box sx={{ flex: 1, overflowY: 'auto' }}>
+          <List>
           {/* Sección GENERAL */}
           {drawerOpen && (
             <Typography
@@ -386,7 +401,7 @@ function App() {
                   }}>
                   <HomeIcon />
                 </ListItemIcon>
-                <ListItemText primary="Portal" sx={{ opacity: drawerOpen ? 1 : 0, transition: 'opacity 0.3s' }} />
+                {drawerOpen && <ListItemText primary="Portal" sx={{ opacity: drawerOpen ? 1 : 0 }} />}
               </ListItemButton>
             </ListItem>
 
@@ -427,7 +442,7 @@ function App() {
                   }}>
                   <PersonIcon />
                 </ListItemIcon>
-                <ListItemText primary="Mi ficha" sx={{ opacity: drawerOpen ? 1 : 0, transition: 'opacity 0.3s' }} />
+                {drawerOpen && <ListItemText primary="Mi ficha" sx={{ opacity: drawerOpen ? 1 : 0 }} />}
               </ListItemButton>
             </ListItem>
 
@@ -458,7 +473,7 @@ function App() {
                   }}>
                   <GroupsIcon />
                 </ListItemIcon>
-                <ListItemText primary="Mi Equipo" sx={{ opacity: drawerOpen ? 1 : 0, transition: 'opacity 0.3s' }} />
+                {drawerOpen && <ListItemText primary="Mi Equipo" sx={{ opacity: drawerOpen ? 1 : 0 }} />}
                 {drawerOpen && (openSubMenu === 'equipo' ? <ExpandLess /> : <ExpandMore />)}
               </ListItemButton>
             </ListItem>
@@ -525,7 +540,7 @@ function App() {
                   }}>
                   <EventAvailableIcon />
                 </ListItemIcon>
-                <ListItemText primary="Vacaciones" sx={{ opacity: drawerOpen ? 1 : 0, transition: 'opacity 0.3s' }} />
+                {drawerOpen && <ListItemText primary="Vacaciones" sx={{ opacity: drawerOpen ? 1 : 0 }} />}
                 {drawerOpen && (openSubMenu === 'vacaciones' ? <ExpandLess /> : <ExpandMore />)}
               </ListItemButton>
             </ListItem>
@@ -591,7 +606,7 @@ function App() {
                   }}>
                   <DashboardIcon />
                 </ListItemIcon>
-                <ListItemText primary="Dashboard RRHH" sx={{ opacity: drawerOpen ? 1 : 0, transition: 'opacity 0.3s' }} />
+                {drawerOpen && <ListItemText primary="Dashboard RRHH" sx={{ opacity: drawerOpen ? 1 : 0 }} />}
                 {drawerOpen && (openSubMenu === 'rrhh' ? <ExpandLess /> : <ExpandMore />)}
               </ListItemButton>
             </ListItem>
@@ -654,7 +669,7 @@ function App() {
                   }}>
                   <CampaignIcon />
                 </ListItemIcon>
-                <ListItemText primary="Boletines" sx={{ opacity: drawerOpen ? 1 : 0, transition: 'opacity 0.3s' }} />
+                {drawerOpen && <ListItemText primary="Boletines" sx={{ opacity: drawerOpen ? 1 : 0 }} />}
                 {drawerOpen && (openSubMenu === 'boletines' ? <ExpandLess /> : <ExpandMore />)}
               </ListItemButton>
             </ListItem>
@@ -727,11 +742,12 @@ function App() {
                   }}>
                   <GroupIcon />
                 </ListItemIcon>
-                <ListItemText primary="Gestión de Empleados" sx={{ opacity: drawerOpen ? 1 : 0, transition: 'opacity 0.3s' }} />
+                {drawerOpen && <ListItemText primary="Gestión de Empleados" sx={{ opacity: drawerOpen ? 1 : 0 }} />}
               </ListItemButton>
             </ListItem>
           </List>
         </Box>
+      </Box>
       </Drawer>
       <Box
         component="main"

@@ -1,5 +1,32 @@
-html, body {
+html, body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
+  overflow-x: hidden; /* evita scroll horizontal no deseado */
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Reglas específicas para el Drawer y el main layout que previenen overflow horizontal */
+#app-drawer, #app-drawer .MuiDrawer-paper {
+  overflow-x: hidden;
+}
+
+#app-drawer img {
+  max-width: 120px;
+  width: auto;
+  display: block;
+}
+
+main, #root > div {
+  overflow-x: hidden;
 }
