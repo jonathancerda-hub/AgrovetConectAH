@@ -233,6 +233,7 @@ function App() {
 
   let mainContent;
   let pageTitle = 'Portal'; // Título por defecto
+  let breadcrumbs = []; // Breadcrumbs dinámicos
 
   if (requestToProcess) {
     const requester = users.find(u => u.id === requestToProcess.requesterId);
@@ -243,14 +244,18 @@ function App() {
       onGoBack={() => setRequestToProcess(null)}
     />;
     pageTitle = `Procesando Solicitud #${requestToProcess.id}`;
+    breadcrumbs = ['Vacaciones', 'Panel de Aprobación', `Solicitud #${requestToProcess.id}`];
   } else if (selectedMenu.main === 'portal') {
     mainContent = <Portal publicaciones={publishedBulletins} />; // Pasamos toda la lista de publicaciones
     pageTitle = 'Portal';
+    breadcrumbs = ['Portal'];
   } else if (selectedMenu.main === 'ficha') {
     mainContent = <MiFicha />;
+    breadcrumbs = ['Mi Ficha'];
   } else if (selectedMenu.main === 'vacaciones') {
     const selectedItem = vacacionesItems[selectedMenu.sub];
     pageTitle = selectedItem.text;
+    breadcrumbs = ['Vacaciones', selectedItem.text];
     if (selectedItem.text === 'Formulario de Solicitud') {
       mainContent = <RequestForm onNewRequest={handleNewRequest} />;
     } else if (selectedItem.text === 'Panel de Aprobación') {
@@ -261,19 +266,24 @@ function App() {
   } else if (selectedMenu.main === 'rrhh') {
     mainContent = rrhhItems[selectedMenu.sub].component;
     pageTitle = rrhhItems[selectedMenu.sub].text;
+    breadcrumbs = ['Dashboard RRHH', rrhhItems[selectedMenu.sub].text];
   } else if (selectedMenu.main === 'empleados') {
     mainContent = <GestionEmpleadosComponent />;
     pageTitle = 'Gestión de Empleados';
+    breadcrumbs = ['Gestión de Empleados'];
   } else if (selectedMenu.main === 'equipo') {
     mainContent = equipoItems[selectedMenu.sub].component;
     pageTitle = equipoItems[selectedMenu.sub].text;
+    breadcrumbs = ['Mi Equipo', equipoItems[selectedMenu.sub].text];
   } else if (selectedMenu.main === 'boletines') {
     if (selectedMenu.sub === 0) { // Crear Boletín
       mainContent = <NewBulletinForm onAddBulletin={handleAddBulletin} onGoToPortal={() => handleMenuClick('portal')} />;
       pageTitle = 'Crear Boletín';
+      breadcrumbs = ['Boletines', 'Crear Boletín'];
     } else { // Vista Preliminar
       mainContent = <PortalPage bulletins={stagedBulletins} onPublish={handlePublishBulletin} />;
       pageTitle = 'Vista Preliminar de Boletines';
+      breadcrumbs = ['Boletines', 'Vista Preliminar'];
     }
   }
 
@@ -295,7 +305,7 @@ function App() {
             duration: theme.transitions.duration.enteringScreen,
           }),
         }}>
-        <TopBar onMenuClick={handleDrawerToggle} title={pageTitle} />
+        <TopBar onMenuClick={handleDrawerToggle} title={pageTitle} breadcrumbs={breadcrumbs} />
       </AppBar>
     <Drawer
       id="app-drawer"
