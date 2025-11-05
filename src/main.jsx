@@ -64,7 +64,9 @@ function Main() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+// Crear root solo una vez fuera del componente
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
   <React.StrictMode>
     <Main />
   </React.StrictMode>

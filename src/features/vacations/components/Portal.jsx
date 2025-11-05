@@ -18,9 +18,9 @@ const boletas = [
 export default function Portal({ publicaciones }) {
   return (
     <Box sx={{ flexGrow: 1, mt: 2, display: 'flex', justifyContent: 'center' }}>
-      <Grid container spacing={3} sx={{ maxWidth: 1400, width: '100%', alignItems: 'flex-start' }}>
-        {/* Publicaciones */}
-        <Grid xs={12} md="auto" sx={{ display: 'flex', flexDirection: 'column', minWidth: { md: 0, lg: 0 }, maxWidth: 900, flex: '2 1 0%' }}>
+      <Grid container spacing={3} sx={{ maxWidth: 1400, width: '100%' }}>
+        {/* Publicaciones - columna principal */}
+        <Grid size={{ xs: 12, md: 8 }}>
           <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
             <Button variant="outlined" size="small">Todo</Button>
             <Button variant="outlined" size="small">Publicaciones</Button>
@@ -63,8 +63,8 @@ export default function Portal({ publicaciones }) {
             </Paper>
           ))}
         </Grid>
-        {/* Panel lateral */}
-        <Grid xs={12} md="auto" sx={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 280, maxWidth: 340, flex: '0 0 320px' }}>
+        {/* Panel lateral derecho */}
+        <Grid size={{ xs: 12, md: 4 }}>
           <Paper sx={{ p: 2, mb: 2 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant="subtitle1" fontWeight={700}>Tareas Pendientes</Typography>

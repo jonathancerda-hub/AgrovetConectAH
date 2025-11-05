@@ -1,9 +1,9 @@
 import React from 'react';
-import VacationCalendar from './components/VacationCalendar';
-import RequestForm from './components/RequestForm';
-import RequestsList from './components/RequestsList';
-import AvailableDays from './components/AvailableDays';
-import ApprovalDashboard from './components/ApprovalDashboard';
+import VacationCalendar from './VacationCalendar';
+import RequestForm from './RequestForm';
+import RequestsList from './RequestsList';
+import AvailableDays from './AvailableDays';
+import ApprovalDashboard from './ApprovalDashboard';
 import { Grid, Container, Typography, CircularProgress, Alert } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';

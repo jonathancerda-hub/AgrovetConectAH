@@ -322,29 +322,52 @@ function App() {
         },
       }}
     >
-      {/* Top area with sticky logo - the rest of the menu will scroll independently */}
+      {/* Logo sticky - visible tanto abierto como cerrado */}
       <Box sx={{ width: '100%' }}>
-        {drawerOpen && (
-          <Box sx={(theme) => ({
-            position: 'sticky',
-            top: 0,
-            zIndex: 3,
-            height: theme.mixins.toolbar.minHeight,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            p: 0,
-            borderBottom: '1px solid rgba(255, 255, 255, 0.12)', // Línea restaurada
-            background: 'transparent',
-            boxSizing: 'border-box',
-          })}>
+        <Box sx={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 3,
+          height: 64,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          px: drawerOpen ? 3 : 1,
+          py: 0.5,
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          background: 'rgba(38, 70, 83, 0.95)',
+          backdropFilter: 'blur(8px)',
+          boxSizing: 'border-box',
+        }}>
+          {drawerOpen ? (
             <img
               src="/img/conect.png"
               alt="Conecta Logo"
-              style={{ width: '90%', maxWidth: 180, display: 'block' }} // Logo más grande
+              style={{ 
+                height: '100px', 
+                width: 'auto', 
+                maxWidth: '100%', 
+                display: 'block',
+                objectFit: 'contain'
+              }}
             />
-          </Box>
-        )}
+          ) : (
+            <Box sx={{ 
+              width: 36, 
+              height: 36, 
+              borderRadius: '8px',
+              background: 'linear-gradient(135deg, #2a9d8f 0%, #264653 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontWeight: 700,
+              fontSize: '18px'
+            }}>
+              C
+            </Box>
+          )}
+        </Box>
         <Box sx={{ flex: 1, overflowY: 'auto' }}>
           <List>
           {/* Sección GENERAL */}
