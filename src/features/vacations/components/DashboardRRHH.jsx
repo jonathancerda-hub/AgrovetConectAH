@@ -310,7 +310,7 @@ export default function DashboardRRHH() {
         />
       </Paper>
 
-      {/* Tabla de Empleados */}
+      {/* Tabla de Empleados - ACTUALIZADO */}
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
@@ -338,8 +338,7 @@ export default function DashboardRRHH() {
             ) : (
               filteredEmpleados.map((empleado) => {
                 const fechaIngreso = new Date(empleado.fecha_ingreso);
-                const antiguedad = `${fechaIngreso.getFullYear() - new Date().getFullYear()} días`;
-                const diasPorAno = 20; // Asumiendo 20 días por año
+                const diasPorAno = 20;
                 const diasTomados = empleado.dias_vacaciones ? diasPorAno - empleado.dias_vacaciones : diasPorAno;
                 const diasRestantes = empleado.dias_vacaciones || 0;
                 const porcentajeUsado = diasPorAno > 0 ? (diasTomados / diasPorAno) * 100 : 0;
@@ -347,17 +346,9 @@ export default function DashboardRRHH() {
                 return (
                   <TableRow key={empleado.id} hover>
                     <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Avatar 
-                          sx={{ 
-                            bgcolor: 'teal', 
-                            width: 40, 
-                            height: 40,
-                            fontSize: '0.9rem',
-                            fontWeight: 600
-                          }}
-                        >
-                          {empleado.nombres?.substring(0, 2).toUpperCase() || 'EM'}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>
+                          {empleado.nombres?.charAt(0) || 'E'}
                         </Avatar>
                         <Box>
                           <Typography variant="body2" fontWeight={600}>
@@ -369,15 +360,9 @@ export default function DashboardRRHH() {
                         </Box>
                       </Box>
                     </TableCell>
+                    <TableCell>{empleado.puesto}</TableCell>
                     <TableCell>
-                      <Typography variant="body2">
-                        {empleado.puesto}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {Math.abs(new Date().getFullYear() - fechaIngreso.getFullYear()) * 365} días
-                      </Typography>
+                      {Math.abs(new Date().getFullYear() - fechaIngreso.getFullYear()) * 365} días
                     </TableCell>
                     <TableCell align="center">
                       <Typography variant="body2" fontWeight={600}>
@@ -417,16 +402,8 @@ export default function DashboardRRHH() {
                         />
                       </Box>
                     </TableCell>
-                    <TableCell align="center">
-                      <Typography variant="body2" color="text.secondary">
-                        -
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="center">
-                      <Typography variant="body2" fontWeight={600}>
-                        Sin solicitudes
-                      </Typography>
-                    </TableCell>
+                    <TableCell align="center">-</TableCell>
+                    <TableCell align="center">Sin solicitudes</TableCell>
                     <TableCell align="center">
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'center' }}>
                         {getAlertaChip(diasRestantes, diasTomados, diasPorAno)}

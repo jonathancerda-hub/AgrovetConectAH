@@ -24,6 +24,7 @@ postgresql://agrovet_conecta_user:SRRdobWgeKBcsVvV8j6MeVVQxHN7SYP6@dpg-d45ou2f5r
 - `GET /health` - Estado del servidor y BD
 - `POST /api/auth/login` - Login
 - `GET /api/auth/me` - Usuario actual
+- `GET /api/empleados` - Listar todos los empleados (para Dashboard RRHH)
 - `GET /api/publicaciones` - Listar publicaciones
 - `POST /api/publicaciones` - Crear publicación
 - `POST /api/publicaciones/:id/reaccionar` - Reaccionar
@@ -106,17 +107,19 @@ reac/
 │   ├── src/
 │   │   ├── controllers/
 │   │   │   ├── auth.controller.js
+│   │   │   ├── empleados.controller.js (nuevo - Dashboard RRHH)
 │   │   │   ├── publicaciones.controller.js
 │   │   │   └── notificaciones.controller.js
 │   │   ├── middleware/
 │   │   │   └── auth.js
 │   │   ├── routes/
 │   │   │   ├── auth.routes.js
+│   │   │   ├── empleados.routes.js (nuevo)
 │   │   │   ├── publicaciones.routes.js
 │   │   │   └── notificaciones.routes.js
 │   │   ├── db.js
 │   │   └── server.js
-│   ├── .env
+│   ├── .env (CORS_ORIGIN actualizado a localhost:5173)
 │   └── package.json
 ├── database/
 │   ├── migrations/
@@ -129,8 +132,13 @@ reac/
 │   ├── seeds.sql
 │   └── migrate.js
 ├── src/
-│   └── (tu código React)
-└── BACKEND_DATABASE_DESIGN.md
+│   └── features/
+│       └── vacations/
+│           └── components/
+│               ├── DashboardRRHH.jsx (nuevo - consume API empleados)
+│               ├── GestionEmpleados.jsx (referencia de estilo)
+│               └── ...
+└── reglas.md (actualizado con estilo de tablas)
 ```
 
 ---

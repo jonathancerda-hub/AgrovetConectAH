@@ -41,6 +41,26 @@ La aplicación utiliza un ecosistema moderno de React para su desarrollo fronten
     -   Tiempo mínimo de aviso previo para las solicitudes.
     -   Límite máximo de días consecutivos por solicitud.
 
+### 4. Dashboard de Recursos Humanos (RRHH)
+
+-   **Vista de Control:** Panel de control para el rol de RRHH que muestra información consolidada de todos los empleados.
+-   **Información Mostrada:** 
+    -   Empleado (con avatar e inicial)
+    -   Puesto y área de trabajo
+    -   Antigüedad en la empresa
+    -   Días disponibles, tomados y restantes
+    -   Solicitudes pendientes de aprobación
+    -   Última solicitud realizada
+    -   Alertas visuales con código de colores
+-   **Estilo de Tabla:** Sigue el estándar de `GestionEmpleados.jsx` con encabezado gris claro (`grey.100`)
+-   **Buscador:** Campo de búsqueda para filtrar empleados por nombre o puesto
+
+### 5. Gestión de Empleados
+
+-   **CRUD de Empleados:** Interfaz para crear, leer, actualizar y eliminar información de empleados.
+-   **Campos Gestionados:** DNI, nombre, puesto, área, tipo de contrato, días de vacaciones, estado.
+-   **Estilo de Referencia:** Componente `GestionEmpleados.jsx` que define el estándar visual de tablas.
+
 ## Estructura del Proyecto (Fragmentos Relevantes)
 
 El archivo `src/features/vacations/components/RequestForm.jsx` sugiere una estructura de directorios basada en características, donde `vacations` es una característica modular y bien definida.

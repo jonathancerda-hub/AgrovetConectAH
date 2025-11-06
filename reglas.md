@@ -73,6 +73,43 @@ export default function TuFormulario() {
     </Button>
     ```
 
-## 3. Principio de Mínima Modificación
+## 3. Estilo Unificado de Tablas
+
+**Regla:** Todas las tablas de la aplicación deben seguir el estilo visual del componente `GestionEmpleados.jsx`. Este componente sirve como el estándar de referencia para el formato de tablas.
+
+### Características Clave del Estilo de Tablas:
+
+-   **Contenedor:** La tabla debe estar envuelta en un `<TableContainer component={Paper}>` para mantener consistencia visual.
+-   **Encabezado de Tabla:** El `<TableHead>` debe tener un `<TableRow>` con `sx={{ bgcolor: 'grey.100' }}` para el fondo gris claro.
+-   **Celdas de Encabezado:** Los `<TableCell>` del encabezado NO deben tener estilos `sx` adicionales. El color de fondo se hereda del `TableRow`.
+-   **Sin !important:** No usar `!important` en los estilos. Dejar que MUI maneje la cascada de estilos naturalmente.
+
+### Ejemplo de Estructura Base:
+
+```jsx
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
+
+export default function TuTabla() {
+  return (
+    <TableContainer component={Paper}>
+      <Table>
+        <TableHead>
+          <TableRow sx={{ bgcolor: 'grey.100' }}>
+            <TableCell>Columna 1</TableCell>
+            <TableCell>Columna 2</TableCell>
+            <TableCell align="center">Columna 3</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {/* ... Tus filas de datos van aquí ... */}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+}
+```
+
+## 4. Principio de Mínima Modificación
 
 **Regla:** Al responder a una solicitud de cambio, modifica **únicamente** el código necesario para cumplir con lo que se ha pedido. No se deben realizar cambios, refactorizaciones o mejoras adicionales que no hayan sido solicitadas explícitamente. Esto asegura que el alcance de cada cambio sea predecible y fácil de revisar.
+

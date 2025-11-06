@@ -2,11 +2,45 @@
 
 ## 📋 Resumen de Mejoras
 
-Se han implementado **4 mejoras críticas** para mejorar la UX, productividad y navegación de la aplicación ConectAH.
+Se han implementado **5 mejoras críticas** para mejorar la UX, productividad y navegación de la aplicación ConectAH.
 
 ---
 
-## ✨ 1. Sistema de Notificaciones Real en TopBar
+## ✨ 1. Dashboard RRHH - Control de Vacaciones por Empleado
+
+### Características
+- **Vista consolidada** de todos los empleados y su estado de vacaciones
+- **Información completa**: Empleado, puesto, antigüedad, días disponibles/tomados/restantes
+- **Sistema de alertas visuales**:
+  - 🔴 Rojo: Menos de 5 días restantes
+  - 🟡 Amarillo: Entre 5-10 días restantes  
+  - 🟢 Verde: Más de 10 días restantes
+- **Buscador integrado**: Filtrar por nombre o puesto
+- **Avatar con inicial** del empleado
+- **LinearProgress bars** para visualización de días restantes
+- **Última solicitud** con fecha formateada
+- **Solicitudes pendientes** de aprobación resaltadas
+
+### Estilo de Tabla
+- Sigue el estándar de `GestionEmpleados.jsx`
+- Encabezado con `bgcolor: 'grey.100'` (gris claro)
+- Sin estilos adicionales en TableCell
+- Diseño limpio y profesional
+
+### Columnas Mostradas
+1. Empleado (avatar + nombre + email)
+2. Puesto
+3. Antigüedad
+4. Días Disponibles
+5. Días Tomados
+6. Días Restantes (con barra de progreso)
+7. Pendientes
+8. Última Solicitud
+9. Alertas (chip con código de colores)
+
+---
+
+## ✨ 2. Sistema de Notificaciones Real en TopBar
 
 ### Características
 - **Panel de notificaciones interactivo** con Popover
@@ -205,13 +239,16 @@ if (selectedMenu.main === 'vacaciones') {
 
 ### Nuevos Archivos
 - `src/features/vacations/components/NotificationPanel.jsx` ✨
+- `src/features/vacations/components/DashboardRRHH.jsx` ✨
 
 ### Archivos Actualizados
 - `src/features/vacations/components/TopBar.jsx` ✏️
+- `src/features/vacations/components/GestionEmpleados.jsx` ✏️ (referencia de estilo)
 - `src/App.jsx` ✏️
 - `src/global.css` ✏️
 - `src/main.jsx` ✏️ (fix createRoot)
 - `src/features/vacations/components/Portal.jsx` ✏️ (Grid v2)
+- `reglas.md` ✏️ (nueva sección de estilo de tablas)
 
 ---
 
