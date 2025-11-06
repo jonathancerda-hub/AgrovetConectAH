@@ -7,6 +7,7 @@ import pool from './db.js';
 import authRoutes from './routes/auth.routes.js';
 import publicacionesRoutes from './routes/publicaciones.routes.js';
 import notificacionesRoutes from './routes/notificaciones.routes.js';
+import empleadosRoutes from './routes/empleados.routes.js';
 
 // Configuración
 dotenv.config();
@@ -16,7 +17,7 @@ const PORT = process.env.PORT || 3001;
 
 // Middlewares
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5174',
+  origin: process.env.CORS_ORIGIN || 'http://localhost:5175',
   credentials: true
 }));
 app.use(express.json());
@@ -52,6 +53,7 @@ app.get('/health', async (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/publicaciones', publicacionesRoutes);
 app.use('/api/notificaciones', notificacionesRoutes);
+app.use('/api/empleados', empleadosRoutes);
 
 // Ruta 404
 app.use((req, res) => {

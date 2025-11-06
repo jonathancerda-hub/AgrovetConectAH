@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Grid, Paper, Typography, Button, Chip, List, ListItem, ListItemIcon, ListItemText, Divider, Avatar, TextField, IconButton, Link } from '@mui/material';
+import { Box, Grid, Paper, Typography, Button, Chip, List, ListItem, ListItemIcon, ListItemText, Divider, Avatar, TextField, IconButton, Link, CircularProgress, Alert } from '@mui/material';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import DescriptionIcon from '@mui/icons-material/Description';
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
@@ -8,6 +8,7 @@ import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import ThumbUpAltOutlinedIcon from '@mui/icons-material/ThumbUpAltOutlined';
 import SendIcon from '@mui/icons-material/Send';
 import PersonIcon from '@mui/icons-material/Person';
+import { publicacionesService } from '../../../services/publicaciones.service';
 
 const boletas = [
   { mes: 'Septiembre 2025', url: '#' },
@@ -15,7 +16,53 @@ const boletas = [
   { mes: 'Julio 2025', url: '#' },
 ];
 
-export default function Portal({ publicaciones }) {
+export default function Portal() {
+  const [publicaciones, setPublicaciones] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchPublicaciones = async () => {
+      try {
+        setLoading(true);
+        const data = await publicacionesService.getAll();
+        
+        // Formatear las publicaciones para que coincidan con la estructura esperada
+        const formattedData = data.map(pub => ({
+          id: pub.id,
+          autor: `${pub.autor_nombres} ${pub.autor_apellidos}`,
+          fecha: new Date(pub.fecha_publicacion).toLocaleDateString('es-PE', {
+            day: 'numeric',
+            month: 'long',
+            hour: '2-digit',
+            minute: '2-digit'
+          }),
+          titulo: pub.titulo,
+          contenido: pub.contenido,
+          imageUrl: pub.imagen_url,
+          reacciones: pub.total_reacciones || 0,
+        }));
+        
+        setPublicaciones(formattedData);
+      } catch (err) {
+        console.error('Error al cargar publicaciones:', err);
+        setError('No se pudieron cargar las publicaciones. Por favor, intenta de nuevo.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPublicaciones();
+  }, []);
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ flexGrow: 1, mt: 2, display: 'flex', justifyContent: 'center' }}>
       <Grid container spacing={3} sx={{ maxWidth: 1400, width: '100%' }}>
@@ -25,6 +72,19 @@ export default function Portal({ publicaciones }) {
             <Button variant="outlined" size="small">Todo</Button>
             <Button variant="outlined" size="small">Publicaciones</Button>
           </Box>
+          
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          {publicaciones.length === 0 && !error && (
+            <Paper sx={{ p: 4, textAlign: 'center' }}>
+              <Typography color="text.secondary">No hay publicaciones disponibles</Typography>
+            </Paper>
+          )}
+
           {publicaciones.map((pub) => (
             <Paper key={pub.id} sx={{ mb: 3, p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>

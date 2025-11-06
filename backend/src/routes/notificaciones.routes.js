@@ -4,7 +4,8 @@ import {
   getUnread,
   markAsRead,
   markAllAsRead,
-  deleteNotificacion
+  deleteNotificacion,
+  createNotificacion
 } from '../controllers/notificaciones.controller.js';
 import { authMiddleware } from '../middleware/auth.js';
 
@@ -18,6 +19,9 @@ router.get('/', getNotificaciones);
 
 // GET /api/notificaciones/no-leidas
 router.get('/no-leidas', getUnread);
+
+// POST /api/notificaciones
+router.post('/', createNotificacion);
 
 // PUT /api/notificaciones/:id/leer
 router.put('/:id/leer', markAsRead);

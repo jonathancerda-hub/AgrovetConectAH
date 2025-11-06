@@ -5,6 +5,8 @@ import { query } from '../db.js';
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    
+    console.log('🔐 Login attempt:', email);
 
     // Buscar usuario
     const result = await query(
@@ -14,8 +16,11 @@ export const login = async (req, res) => {
        WHERE u.email = $1 AND u.activo = true`,
       [email]
     );
+    
+    console.log('📊 User query result:', result.rows.length > 0 ? 'User found' : 'User not found');
 
     if (result.rows.length === 0) {
+      console.log('❌ Login failed: User not found');
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
@@ -23,9 +28,14 @@ export const login = async (req, res) => {
 
     // Verificar contraseña
     const validPassword = await bcrypt.compare(password, user.password_hash);
+    console.log('🔑 Password validation:', validPassword ? 'Valid' : 'Invalid');
+    
     if (!validPassword) {
+      console.log('❌ Login failed: Invalid password');
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
+    
+    console.log('✅ Login successful for:', email);
 
     // Actualizar último login
     await query(

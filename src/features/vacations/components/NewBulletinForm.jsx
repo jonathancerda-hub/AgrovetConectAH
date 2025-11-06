@@ -1,15 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { Box, Paper, Typography, TextField, Button, Stack, InputAdornment, IconButton } from '@mui/material';
+import { Box, Paper, Typography, TextField, Button, Stack, InputAdornment, IconButton, CircularProgress, Alert } from '@mui/material';
 import CampaignIcon from '@mui/icons-material/Campaign';
 import SendIcon from '@mui/icons-material/Send';
 import CancelIcon from '@mui/icons-material/Cancel';
 import HomeIcon from '@mui/icons-material/Home';
 import ClearIcon from '@mui/icons-material/Clear';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
+import { publicacionesService } from '../../../services/publicaciones.service';
 
 export default function NewBulletinForm({ onAddBulletin, onGoToPortal }) {
-  const { register, handleSubmit, control, watch, setValue, formState: { errors, isValid } } = useForm({
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  
+  const { register, handleSubmit, control, watch, setValue, reset, formState: { errors, isValid } } = useForm({
     mode: 'onTouched',
     defaultValues: {
       title: '',
@@ -18,17 +23,37 @@ export default function NewBulletinForm({ onAddBulletin, onGoToPortal }) {
     }
   });
 
-  const onSubmit = (data) => {
-    const bulletinData = {
-      ...data,
-      id: Date.now(), // ID único simple
-      createdAt: new Date().toISOString(),
-    };
-    // Si hay una imagen, crea una URL para la vista previa
-    if (data.image) {
-      bulletinData.imageUrl = URL.createObjectURL(data.image);
+  const onSubmit = async (data) => {
+    try {
+      setLoading(true);
+      setError('');
+      setSuccess(false);
+      
+      // Crear la publicación en la API
+      const publicacionData = {
+        titulo: data.title,
+        contenido: data.content,
+        tipo: 'boletin',
+        visible: true
+        // TODO: manejar la imagen cuando se implemente la subida de archivos
+      };
+      
+      await publicacionesService.create(publicacionData);
+      
+      setSuccess(true);
+      reset(); // Limpiar el formulario
+      
+      // Redirigir al portal después de 2 segundos
+      setTimeout(() => {
+        onGoToPortal();
+      }, 2000);
+      
+    } catch (err) {
+      console.error('Error al crear boletín:', err);
+      setError(err.response?.data?.error || 'Error al publicar el boletín. Por favor, intenta de nuevo.');
+    } finally {
+      setLoading(false);
     }
-    onAddBulletin(bulletinData);
   };
 
   const selectedImage = watch('image');
@@ -45,6 +70,19 @@ export default function NewBulletinForm({ onAddBulletin, onGoToPortal }) {
         <CampaignIcon sx={{ mr: 1 }} />
         Crear Nuevo Boletín
       </Typography>
+
+      {/* Mensajes de éxito/error */}
+      {success && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          ¡Boletín publicado exitosamente! Redirigiendo al portal...
+        </Alert>
+      )}
+      
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
+          {error}
+        </Alert>
+      )}
 
       <Box sx={{ // Este es el componente que no estaba importado
         display: 'grid',
@@ -130,10 +168,11 @@ export default function NewBulletinForm({ onAddBulletin, onGoToPortal }) {
           }}
           startIcon={<SendIcon />}
         >
-          Crear Boletín
+          {loading ? <CircularProgress size={24} /> : 'Crear Boletín'}
         </Button>
         <Button
           variant="outlined"
+          disabled={loading}
           sx={{
             fontWeight: 500,
             color: '#dc3545',
@@ -145,11 +184,13 @@ export default function NewBulletinForm({ onAddBulletin, onGoToPortal }) {
             },
           }}
           startIcon={<CancelIcon />}
+          onClick={() => reset()}
         >
           Cancelar
         </Button>
         <Button
           variant="outlined"
+          disabled={loading}
           sx={{
             fontWeight: 500,
             color: '#0d6efd',

@@ -1,6 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Drawer, List, ListItem, ListItemIcon, ListItemText, AppBar, Toolbar, Typography, Box, Collapse, ListItemButton } from '@mui/material';
+import { authService } from './services/auth.service';
 import PersonIcon from '@mui/icons-material/Person';
 import HomeIcon from '@mui/icons-material/Home';
 import CampaignIcon from '@mui/icons-material/Campaign';
@@ -11,6 +12,7 @@ import MiFicha from './features/vacations/components/MiFicha';
 import Portal from './features/vacations/components/Portal';
 import Login from './features/vacations/components/Login';
 import NewCollaboratorForm from './features/vacations/components/NewCollaboratorForm';
+import GestionEmpleados from './features/vacations/components/GestionEmpleados';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -116,15 +118,6 @@ const rrhhItems = [
   { text: 'Control de Vacaciones', icon: <FactCheckIcon />, component: <ControlVacaciones /> }, // Use the new component
   { text: 'Historiales', icon: <HistoryIcon />, component: <HistorialesComponent /> },
 ];
-// Placeholder component para Gestión de Empleados
-const GestionEmpleadosComponent = () => (
-  <Box>
-    <Typography>Página de Gestión de Empleados</Typography>
-    <Button variant="contained" sx={{ mt: 2, background: 'linear-gradient(135deg, #2a9d8f 0%, #264653 100%) !important', color: 'white !important' }}>
-      Añadir Empleado
-    </Button>
-  </Box>
-);
 
 // Placeholder component para Mi Equipo
 const SolicitarColaboradorComponent = () => <Typography>Página para Solicitar Colaborador</Typography>;
@@ -154,6 +147,15 @@ function App() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+  // Verificar si hay una sesión activa al cargar la app
+  useEffect(() => {
+    const user = authService.getCurrentUser();
+    if (user && authService.isAuthenticated()) {
+      setCurrentUser(user);
+      setIsAuthenticated(true);
+    }
+  }, []);
+
   const handleDrawerToggle = () => {
     setDrawerOpen((prev) => !prev);
   };
@@ -172,12 +174,17 @@ function App() {
     }
   };
 
-  const handleLogin = (userId) => {
-    const user = users.find(u => u.id === parseInt(userId));
-    if (user) {
-      setCurrentUser(user);
-      setIsAuthenticated(true);
-    }
+  const handleLogin = (user) => {
+    // Ahora recibimos el objeto user directamente del servicio
+    setCurrentUser(user);
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    authService.logout();
+    setCurrentUser(null);
+    setIsAuthenticated(false);
+    setSelectedMenu({ main: 'portal', sub: 0 });
   };
 
   const handleAddBulletin = (newBulletin) => {
@@ -268,7 +275,7 @@ function App() {
     pageTitle = rrhhItems[selectedMenu.sub].text;
     breadcrumbs = ['Dashboard RRHH', rrhhItems[selectedMenu.sub].text];
   } else if (selectedMenu.main === 'empleados') {
-    mainContent = <GestionEmpleadosComponent />;
+    mainContent = <GestionEmpleados />;
     pageTitle = 'Gestión de Empleados';
     breadcrumbs = ['Gestión de Empleados'];
   } else if (selectedMenu.main === 'equipo') {

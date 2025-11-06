@@ -1,7 +1,8 @@
 import React, { useContext, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Box, Button, TextField, Typography, Link, Stack, Divider, Checkbox, FormControlLabel, IconButton, useTheme, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
+import { Box, Button, TextField, Typography, Link, Stack, Divider, Checkbox, FormControlLabel, IconButton, useTheme, Alert, CircularProgress } from '@mui/material';
 import { ThemeContext } from '../../../main'; // Importamos nuestro contexto
+import { authService } from '../../../services/auth.service';
 
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
@@ -30,13 +31,24 @@ function ColorSchemeToggle() {
 export default function Login({ onLogin, users }) {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const theme = useTheme();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const onSubmit = (data) => {
-    // Para mantener la funcionalidad de jerarquía, iniciamos sesión como el primer usuario por defecto.
-    // Esto se reemplazará con la lógica de autenticación real.
-    if (data.email && data.password) {
-      const defaultUserId = (users && users.length > 0) ? users[0].id : 1;
-      onLogin(defaultUserId);
+  const onSubmit = async (data) => {
+    setLoading(true);
+    setError('');
+    
+    try {
+      // Llamar al servicio de autenticación
+      const response = await authService.login(data.email, data.password);
+      
+      // Si el login es exitoso, llamar a onLogin con los datos del usuario
+      onLogin(response.user);
+    } catch (err) {
+      console.error('Error de login:', err);
+      setError(err.response?.data?.error || 'Credenciales incorrectas. Por favor, intenta de nuevo.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -103,13 +115,29 @@ export default function Login({ onLogin, users }) {
               Continuar con Google
             </Button>
             <Divider sx={{ my: 2 }}>o</Divider>
+            
+            {/* Mensaje de error */}
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+            
             <form onSubmit={handleSubmit(onSubmit)} noValidate>
               <Stack gap={2}>
                 <TextField
                   size="small"
                   label="Correo Electrónico"
                   type="email"
-                  {...register('email', { required: 'El correo es obligatorio' })}
+                  placeholder="ejemplo@agrovet.com"
+                  disabled={loading}
+                  {...register('email', { 
+                    required: 'El correo es obligatorio',
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: 'Correo electrónico inválido'
+                    }
+                  })}
                   error={!!errors.email}
                   helperText={errors.email?.message}
                 />
@@ -117,12 +145,16 @@ export default function Login({ onLogin, users }) {
                   size="small"
                   label="Contraseña"
                   type="password"
+                  disabled={loading}
                   {...register('password', { required: 'La contraseña es obligatoria' })}
                   error={!!errors.password}
                   helperText={errors.password?.message}
                 />
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <FormControlLabel control={<Checkbox size="small" name="persistent" />} label={<Typography variant="body2">Recordarme</Typography>} />
+                  <FormControlLabel 
+                    control={<Checkbox size="small" name="persistent" disabled={loading} />} 
+                    label={<Typography variant="body2">Recordarme</Typography>} 
+                  />
                   <Link href="#" variant="body2" fontWeight="bold">
                     ¿Olvidaste tu contraseña?
                   </Link>
@@ -130,7 +162,9 @@ export default function Login({ onLogin, users }) {
                 <Button 
                   type="submit" 
                   fullWidth 
-                  variant="contained" 
+                  variant="contained"
+                  disabled={loading}
+                  startIcon={loading && <CircularProgress size={20} color="inherit" />}
                   sx={{ 
                     mt: 1,
                     background: 'linear-gradient(135deg, #2a9d8f 0%, #264653 100%) !important',
@@ -139,7 +173,7 @@ export default function Login({ onLogin, users }) {
                     fontWeight: 600,
                     px: 4,
                   }}>
-                  Iniciar Sesión
+                  {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
                 </Button>
               </Stack>
             </form>

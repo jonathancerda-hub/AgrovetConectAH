@@ -98,3 +98,29 @@ export const getUnread = async (req, res) => {
     res.status(500).json({ error: 'Error en el servidor' });
   }
 };
+
+// Crear notificación
+export const createNotificacion = async (req, res) => {
+  try {
+    const { usuario_id, titulo, mensaje, tipo } = req.body;
+
+    // Validar campos requeridos
+    if (!usuario_id || !titulo || !mensaje) {
+      return res.status(400).json({ 
+        error: 'Faltan campos requeridos: usuario_id, titulo, mensaje' 
+      });
+    }
+
+    const result = await query(
+      `INSERT INTO notificaciones (usuario_id, titulo, mensaje, tipo, leido, created_at)
+       VALUES ($1, $2, $3, $4, false, NOW())
+       RETURNING *`,
+      [usuario_id, titulo, mensaje, tipo || 'informacion']
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Error al crear notificación:', error);
+    res.status(500).json({ error: 'Error en el servidor' });
+  }
+};

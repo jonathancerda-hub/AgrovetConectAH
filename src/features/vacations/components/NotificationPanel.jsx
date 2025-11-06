@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -11,42 +11,64 @@ import {
   Button,
   IconButton,
   Chip,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import InfoIcon from '@mui/icons-material/Info';
 import DeleteIcon from '@mui/icons-material/Delete';
 import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
-
-const mockNotifications = [
-  {
-    id: 1,
-    type: 'success',
-    title: 'Solicitud aprobada',
-    message: 'Tu solicitud de vacaciones del 15-20 Nov ha sido aprobada',
-    time: 'Hace 5 min',
-    read: false,
-  },
-  {
-    id: 2,
-    type: 'info',
-    title: 'Nuevo boletín publicado',
-    message: 'Se ha publicado: "Beneficios 2025"',
-    time: 'Hace 1 hora',
-    read: false,
-  },
-  {
-    id: 3,
-    type: 'warning',
-    title: 'Solicitud pendiente',
-    message: 'Tienes 2 solicitudes por aprobar',
-    time: 'Hace 3 horas',
-    read: true,
-  },
-];
+import { notificacionesService } from '../../../services/notificaciones.service';
 
 export default function NotificationPanel({ onClose }) {
-  const [notifications, setNotifications] = React.useState(mockNotifications);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      const data = await notificacionesService.getAll();
+      
+      // Formatear notificaciones para que coincidan con la estructura esperada
+      const formattedData = data.map(notif => ({
+        id: notif.id,
+        type: notif.tipo, // 'success', 'info', 'warning', 'error'
+        title: notif.titulo,
+        message: notif.mensaje,
+        time: formatRelativeTime(notif.fecha_creacion),
+        read: notif.leido,
+      }));
+      
+      setNotifications(formattedData);
+    } catch (err) {
+      console.error('Error al cargar notificaciones:', err);
+      setError('No se pudieron cargar las notificaciones');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatRelativeTime = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return 'Ahora';
+    if (diffMins < 60) return `Hace ${diffMins} min`;
+    if (diffHours < 24) return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+    if (diffDays < 7) return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
+    
+    return date.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' });
+  };
 
   const getIcon = (type) => {
     switch (type) {
@@ -61,21 +83,44 @@ export default function NotificationPanel({ onClose }) {
     }
   };
 
-  const handleMarkAsRead = (id) => {
-    setNotifications((prev) =>
-      prev.map((notif) => (notif.id === id ? { ...notif, read: true } : notif))
-    );
+  const handleMarkAsRead = async (id) => {
+    try {
+      await notificacionesService.markAsRead(id);
+      setNotifications((prev) =>
+        prev.map((notif) => (notif.id === id ? { ...notif, read: true } : notif))
+      );
+    } catch (err) {
+      console.error('Error al marcar como leída:', err);
+    }
   };
 
-  const handleDelete = (id) => {
-    setNotifications((prev) => prev.filter((notif) => notif.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      await notificacionesService.delete(id);
+      setNotifications((prev) => prev.filter((notif) => notif.id !== id));
+    } catch (err) {
+      console.error('Error al eliminar notificación:', err);
+    }
   };
 
-  const handleMarkAllAsRead = () => {
-    setNotifications((prev) => prev.map((notif) => ({ ...notif, read: true })));
+  const handleMarkAllAsRead = async () => {
+    try {
+      await notificacionesService.markAllAsRead();
+      setNotifications((prev) => prev.map((notif) => ({ ...notif, read: true })));
+    } catch (err) {
+      console.error('Error al marcar todas como leídas:', err);
+    }
   };
 
   const unreadCount = notifications.filter((n) => !n.read).length;
+
+  if (loading) {
+    return (
+      <Box sx={{ width: 360, p: 4, display: 'flex', justifyContent: 'center' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -118,6 +163,13 @@ export default function NotificationPanel({ onClose }) {
           </Button>
         )}
       </Box>
+
+      {/* Error Alert */}
+      {error && (
+        <Alert severity="error" sx={{ m: 2 }}>
+          {error}
+        </Alert>
+      )}
 
       {/* Lista de notificaciones */}
       <List sx={{ flex: 1, overflow: 'auto', p: 0 }}>
