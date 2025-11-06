@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Box, 
   Typography, 
@@ -23,6 +23,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
   Avatar,
   InputAdornment,
   LinearProgress,
@@ -56,6 +57,45 @@ export default function DashboardRRHH() {
     enVacaciones: 0,
     diasPromedio: 0
   });
+
+  // Sorting state for table
+  const [order, setOrder] = useState('asc');
+  const [orderBy, setOrderBy] = useState('nombres');
+
+  const handleRequestSort = (event, property) => {
+    const isAsc = orderBy === property && order === 'asc';
+    setOrder(isAsc ? 'desc' : 'asc');
+    setOrderBy(property);
+  };
+
+  const descendingComparator = (a, b, orderBy) => {
+    if (!a || !b) return 0;
+    const valA = (a[orderBy] ?? '').toString();
+    const valB = (b[orderBy] ?? '').toString();
+    if (valB < valA) return -1;
+    if (valB > valA) return 1;
+    return 0;
+  };
+
+  const getComparator = (order, orderBy) => {
+    return order === 'desc'
+      ? (a, b) => descendingComparator(a, b, orderBy)
+      : (a, b) => -descendingComparator(a, b, orderBy);
+  };
+
+  const stableSort = (array, comparator) => {
+    const stabilizedThis = array.map((el, index) => [el, index]);
+    stabilizedThis.sort((a, b) => {
+      const order = comparator(a[0], b[0]);
+      if (order !== 0) return order;
+      return a[1] - b[1];
+    });
+    return stabilizedThis.map((el) => el[0]);
+  };
+
+  const sortedEmpleados = useMemo(() => {
+    return stableSort(filteredEmpleados || [], getComparator(order, orderBy));
+  }, [filteredEmpleados, order, orderBy]);
 
   useEffect(() => {
     fetchData();
@@ -315,15 +355,87 @@ export default function DashboardRRHH() {
         <Table>
           <TableHead>
             <TableRow sx={{ bgcolor: 'grey.100' }}>
-              <TableCell>Empleado</TableCell>
-              <TableCell>Puesto</TableCell>
-              <TableCell>Antigüedad</TableCell>
-              <TableCell align="center">Días<br/>Disponibles</TableCell>
-              <TableCell align="center">Días<br/>Tomados</TableCell>
-              <TableCell align="center">Días<br/>Restantes</TableCell>
-              <TableCell align="center">Pendientes</TableCell>
-              <TableCell align="center">Última<br/>Solicitud</TableCell>
-              <TableCell align="center">Alertas</TableCell>
+              <TableCell>
+                <TableSortLabel
+                  active={orderBy === 'nombres'}
+                  direction={orderBy === 'nombres' ? order : 'asc'}
+                  onClick={(e) => handleRequestSort(e, 'nombres')}
+                >
+                  Empleado
+                </TableSortLabel>
+              </TableCell>
+              <TableCell>
+                <TableSortLabel
+                  active={orderBy === 'puesto'}
+                  direction={orderBy === 'puesto' ? order : 'asc'}
+                  onClick={(e) => handleRequestSort(e, 'puesto')}
+                >
+                  Puesto
+                </TableSortLabel>
+              </TableCell>
+              <TableCell>
+                <TableSortLabel
+                  active={orderBy === 'antiguedad'}
+                  direction={orderBy === 'antiguedad' ? order : 'asc'}
+                  onClick={(e) => handleRequestSort(e, 'antiguedad')}
+                >
+                  Antigüedad
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="center">
+                <TableSortLabel
+                  active={orderBy === 'dias_disponibles'}
+                  direction={orderBy === 'dias_disponibles' ? order : 'asc'}
+                  onClick={(e) => handleRequestSort(e, 'dias_disponibles')}
+                >
+                  Días<br/>Disponibles
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="center">
+                <TableSortLabel
+                  active={orderBy === 'dias_tomados'}
+                  direction={orderBy === 'dias_tomados' ? order : 'asc'}
+                  onClick={(e) => handleRequestSort(e, 'dias_tomados')}
+                >
+                  Días<br/>Tomados
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="center">
+                <TableSortLabel
+                  active={orderBy === 'dias_restantes'}
+                  direction={orderBy === 'dias_restantes' ? order : 'asc'}
+                  onClick={(e) => handleRequestSort(e, 'dias_restantes')}
+                >
+                  Días<br/>Restantes
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="center">
+                <TableSortLabel
+                  active={orderBy === 'pendientes'}
+                  direction={orderBy === 'pendientes' ? order : 'asc'}
+                  onClick={(e) => handleRequestSort(e, 'pendientes')}
+                >
+                  Pendientes
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="center">
+                <TableSortLabel
+                  active={orderBy === 'ultima_solicitud'}
+                  direction={orderBy === 'ultima_solicitud' ? order : 'asc'}
+                  onClick={(e) => handleRequestSort(e, 'ultima_solicitud')}
+                >
+                  Última<br/>Solicitud
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="center">
+                <TableSortLabel
+                  active={orderBy === 'alertas'}
+                  direction={orderBy === 'alertas' ? order : 'asc'}
+                  onClick={(e) => handleRequestSort(e, 'alertas')}
+                >
+                  Alertas
+                </TableSortLabel>
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -336,7 +448,7 @@ export default function DashboardRRHH() {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredEmpleados.map((empleado) => {
+              sortedEmpleados.map((empleado) => {
                 const fechaIngreso = new Date(empleado.fecha_ingreso);
                 const diasPorAno = 20;
                 const diasTomados = empleado.dias_vacaciones ? diasPorAno - empleado.dias_vacaciones : diasPorAno;

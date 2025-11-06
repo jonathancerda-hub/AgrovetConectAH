@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Grid, Paper, Typography, Button, Chip, List, ListItem, ListItemIcon, ListItemText, Divider, Avatar, TextField, IconButton, Link, CircularProgress, Alert } from '@mui/material';
+import { Box, Grid, Paper, Typography, Button, Chip, List, ListItem, ListItemIcon, ListItemText, Divider, Avatar, TextField, IconButton, Link, CircularProgress, Alert, Card, CardContent } from '@mui/material';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import DescriptionIcon from '@mui/icons-material/Description';
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
@@ -8,7 +8,12 @@ import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import ThumbUpAltOutlinedIcon from '@mui/icons-material/ThumbUpAltOutlined';
 import SendIcon from '@mui/icons-material/Send';
 import PersonIcon from '@mui/icons-material/Person';
+import BeachAccessIcon from '@mui/icons-material/BeachAccess';
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
+import CakeIcon from '@mui/icons-material/Cake';
 import { publicacionesService } from '../../../services/publicaciones.service';
+import { authService } from '../../../services/auth.service';
+import { empleadosService } from '../../../services/empleados.service';
 
 const boletas = [
   { mes: 'Septiembre 2025', url: '#' },
@@ -20,14 +25,28 @@ export default function Portal() {
   const [publicaciones, setPublicaciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [empleadoInfo, setEmpleadoInfo] = useState(null);
+  const [cumpleaneros, setCumpleaneros] = useState([]);
+  const [tabActual, setTabActual] = useState('todo'); // 'todo', 'publicaciones', 'cumpleanos'
 
   useEffect(() => {
-    const fetchPublicaciones = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
+        
+        // Obtener usuario actual
+        const currentUser = authService.getCurrentUser();
+        
+        // Obtener información del empleado
+        if (currentUser?.empleadoId) {
+          const empleadoData = await empleadosService.getById(currentUser.empleadoId);
+          setEmpleadoInfo(empleadoData);
+        }
+        
+        // Obtener publicaciones
         const data = await publicacionesService.getAll();
         
-        // Formatear las publicaciones para que coincidan con la estructura esperada
+        // Formatear las publicaciones
         const formattedData = data.map(pub => ({
           id: pub.id,
           autor: `${pub.autor_nombres} ${pub.autor_apellidos}`,
@@ -44,15 +63,24 @@ export default function Portal() {
         }));
         
         setPublicaciones(formattedData);
+        
+        // Obtener cumpleañeros del mes (simulado por ahora)
+        // TODO: Implementar endpoint en backend
+        setCumpleaneros([
+          { nombre: 'Carolina Lima', fecha: '8 Enero' },
+          { nombre: 'Fernando Ramírez', fecha: '11 Enero' },
+          { nombre: 'Florencia Soto', fecha: '11 Enero' }
+        ]);
+        
       } catch (err) {
-        console.error('Error al cargar publicaciones:', err);
-        setError('No se pudieron cargar las publicaciones. Por favor, intenta de nuevo.');
+        console.error('Error al cargar datos:', err);
+        setError('No se pudieron cargar los datos. Por favor, intenta de nuevo.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPublicaciones();
+    fetchData();
   }, []);
 
   if (loading) {
@@ -67,10 +95,29 @@ export default function Portal() {
     <Box sx={{ flexGrow: 1, mt: 2, display: 'flex', justifyContent: 'center' }}>
       <Grid container spacing={3} sx={{ maxWidth: 1400, width: '100%' }}>
         {/* Publicaciones - columna principal */}
-        <Grid size={{ xs: 12, md: 8 }}>
+        <Grid size={{ xs: 12, md: 8.5 }}>
           <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-            <Button variant="outlined" size="small">Todo</Button>
-            <Button variant="outlined" size="small">Publicaciones</Button>
+            <Button 
+              variant={tabActual === 'todo' ? 'contained' : 'outlined'} 
+              size="small"
+              onClick={() => setTabActual('todo')}
+            >
+              Todo
+            </Button>
+            <Button 
+              variant={tabActual === 'publicaciones' ? 'contained' : 'outlined'} 
+              size="small"
+              onClick={() => setTabActual('publicaciones')}
+            >
+              Publicaciones
+            </Button>
+            <Button 
+              variant={tabActual === 'cumpleanos' ? 'contained' : 'outlined'} 
+              size="small"
+              onClick={() => setTabActual('cumpleanos')}
+            >
+              Cumpleaños
+            </Button>
           </Box>
           
           {error && (
@@ -79,52 +126,161 @@ export default function Portal() {
             </Alert>
           )}
 
-          {publicaciones.length === 0 && !error && (
-            <Paper sx={{ p: 4, textAlign: 'center' }}>
-              <Typography color="text.secondary">No hay publicaciones disponibles</Typography>
+          {/* Contenido según la pestaña seleccionada */}
+          {tabActual === 'cumpleanos' ? (
+            /* Vista de Cumpleaños */
+            <Paper sx={{ p: 3 }}>
+              <Typography variant="h6" fontWeight={700} gutterBottom>
+                🎂 Cumpleaños de Hoy
+              </Typography>
+              {cumpleaneros.length === 0 ? (
+                <Typography color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+                  No hay cumpleaños hoy
+                </Typography>
+              ) : (
+                <Box sx={{ mt: 2 }}>
+                  {cumpleaneros.map((cumpleanero, index) => (
+                    <Box 
+                      key={index} 
+                      sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 2, 
+                        p: 2, 
+                        mb: 2,
+                        bgcolor: '#fff3e0',
+                        borderRadius: 2
+                      }}
+                    >
+                      <Avatar sx={{ bgcolor: '#f57c00', width: 56, height: 56 }}>
+                        <CakeIcon />
+                      </Avatar>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="h6" fontWeight={600}>
+                          {cumpleanero.nombre}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {cumpleanero.fecha}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <IconButton color="primary" size="small">
+                          <ThumbUpAltOutlinedIcon />
+                        </IconButton>
+                        <IconButton color="error" size="small">
+                          <FavoriteBorderIcon />
+                        </IconButton>
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+              )}
             </Paper>
-          )}
+          ) : (
+            /* Vista de Publicaciones (Todo o Publicaciones) */
+            <>
+              {publicaciones.length === 0 && !error && (
+                <Paper sx={{ p: 4, textAlign: 'center' }}>
+                  <Typography color="text.secondary">No hay publicaciones disponibles</Typography>
+                </Paper>
+              )}
 
-          {publicaciones.map((pub) => (
-            <Paper key={pub.id} sx={{ mb: 3, p: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <Avatar sx={{ mr: 1, bgcolor: 'primary.main' }}>
-                  <PersonIcon />
-                </Avatar>
+              {publicaciones.map((pub) => (
+                <Paper key={pub.id} sx={{ mb: 3, p: 2 }}>
+                  {/* Autor y fecha primero */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <Avatar sx={{ mr: 1, bgcolor: 'primary.main' }}>
+                      <PersonIcon />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="subtitle2" fontWeight={700}>{pub.autor}</Typography>
+                      <Typography variant="caption" color="text.secondary">{pub.fecha}</Typography>
+                    </Box>
+                  </Box>
+                  
+                  {/* Título y contenido */}
+                  <Typography variant="h6" fontWeight={700} gutterBottom>{pub.titulo}</Typography>
+                  <Typography variant="body2" gutterBottom sx={{ mb: 2 }}>{pub.contenido}</Typography>
+                  
+                  {/* Imagen después del texto */}
+                  {pub.imageUrl && (
+                    <Box sx={{ width: '100%', overflow: 'hidden', borderRadius: 2, mb: 2 }}>
+                      <img
+                        src={pub.imageUrl}
+                        alt="Publicación"
+                        style={{
+                          width: '100%',
+                          height: 'auto',
+                          maxHeight: '500px',
+                          objectFit: 'cover',
+                          display: 'block',
+                        }}
+                      />
+                    </Box>
+                  )}
+                    
+                  {/* Reacciones y comentarios */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <FavoriteBorderIcon fontSize="small" />
+                    <ThumbUpAltOutlinedIcon fontSize="small" />
+                    <Typography variant="caption">{pub.reacciones} reacciones</Typography>
+                  </Box>
+                  <Divider sx={{ my: 1 }} />
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <TextField size="small" placeholder="Me gusta" variant="outlined" sx={{ flex: 1 }} />
+                    <IconButton color="primary"><SendIcon /></IconButton>
+                  </Box>
+                </Paper>
+              ))}
+            </>
+          )}
+        </Grid>
+        
+        {/* Panel lateral derecho */}
+        <Grid size={{ xs: 12, md: 3.5 }}>
+          {/* Tarjeta de Vacaciones Disponibles */}
+          <Paper sx={{ p: 2, mb: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <BeachAccessIcon sx={{ fontSize: 32, color: '#1976d2' }} />
                 <Box>
-                  <Typography variant="subtitle2" fontWeight={700}>{pub.autor}</Typography>
-                  <Typography variant="caption" color="text.secondary">{pub.fecha}</Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    Vacaciones disponibles
+                  </Typography>
+                  <Typography variant="h5" fontWeight={700} color="primary">
+                    {empleadoInfo?.dias_vacaciones || 0} días
+                  </Typography>
                 </Box>
               </Box>
-              <Typography variant="subtitle1" fontWeight={700} gutterBottom>{pub.titulo}</Typography>
-              <Typography variant="body2" gutterBottom>{pub.contenido}</Typography>
-              <Box sx={{ my: 2, width: '100%', borderRadius: 2, overflow: 'hidden' }}>
-                {pub.imageUrl && <img
-                  src={pub.imageUrl}
-                  alt="Publicación"
-                  style={{
-                    width: '100%',
-                    height: 'auto',
-                    objectFit: 'cover',
-                    display: 'block',
-                  }}
-                />}
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <FavoriteBorderIcon fontSize="small" />
-                <ThumbUpAltOutlinedIcon fontSize="small" />
-                <Typography variant="caption">{pub.reacciones} reacciones</Typography>
-              </Box>
-              <Divider sx={{ my: 1 }} />
+              <Button size="small" variant="text" color="primary">
+                Solicitar
+              </Button>
+            </Box>
+          </Paper>
+
+          {/* Tarjeta de Cumpleaños */}
+          <Paper sx={{ p: 2, mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <TextField size="small" placeholder="Me gusta" variant="outlined" sx={{ flex: 1 }} />
-                <IconButton color="primary"><SendIcon /></IconButton>
+                <CakeIcon sx={{ fontSize: 32, color: '#f57c00' }} />
+                <Box>
+                  <Typography variant="body2" fontWeight={600}>
+                    Hoy <Typography component="span" variant="h5" fontWeight={700} color="primary">{cumpleaneros.length}</Typography> colaboradores celebran su cumpleaños
+                  </Typography>
+                </Box>
               </Box>
-            </Paper>
-          ))}
-        </Grid>
-        {/* Panel lateral derecho */}
-        <Grid size={{ xs: 12, md: 4 }}>
+              <Link 
+                component="button"
+                variant="body2"
+                onClick={() => setTabActual('cumpleanos')}
+                sx={{ cursor: 'pointer', textDecoration: 'none' }}
+              >
+                Ver
+              </Link>
+            </Box>
+          </Paper>
+
+          {/* Tarjeta de Tareas Pendientes */}
           <Paper sx={{ p: 2, mb: 2 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant="subtitle1" fontWeight={700}>Tareas Pendientes</Typography>
@@ -135,6 +291,18 @@ export default function Portal() {
               <Typography variant="caption">Nada por el momento</Typography>
             </Box>
           </Paper>
+
+          {/* Tarjeta de Solicitar documento */}
+          <Paper sx={{ p: 2, mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <DescriptionIcon sx={{ fontSize: 32, color: '#7b1fa2' }} />
+              <Typography variant="body2" fontWeight={600}>
+                Solicitar certificado o documento
+              </Typography>
+            </Box>
+          </Paper>
+
+          {/* Accesos directos */}
           <Paper sx={{ p: 2, mb: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
               <Typography variant="subtitle1" fontWeight={700} sx={{ flex: 1 }}>Accesos directos</Typography>
@@ -161,6 +329,8 @@ export default function Portal() {
               </ListItem>
             </List>
           </Paper>
+          
+          {/* Links de interés */}
           <Paper sx={{ p: 2, mb: 2 }}>
             <Typography variant="subtitle1" fontWeight={700}>Links de interés</Typography>
             <Box sx={{ mt: 2 }}>

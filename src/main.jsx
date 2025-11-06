@@ -47,6 +47,16 @@ function Main() {
                 warning: { main: '#f6ad55' },
               }),
         },
+        components: {
+          MuiTableCell: {
+            styleOverrides: {
+              head: {
+                backgroundColor: '#f5f5f5',
+                color: '#333'
+              }
+            }
+          }
+        },
         typography: {
           fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'sans-serif'",
         },

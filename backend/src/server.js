@@ -20,8 +20,9 @@ app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   credentials: true
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Aumentar el límite de tamaño del body para soportar imágenes base64
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Logger de requests (desarrollo)
 if (process.env.NODE_ENV === 'development') {

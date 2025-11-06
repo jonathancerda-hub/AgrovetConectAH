@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Drawer, List, ListItem, ListItemIcon, ListItemText, AppBar, Toolbar, Typography, Box, Collapse, ListItemButton } from '@mui/material';
 import { authService } from './services/auth.service';
+import { publicacionesService } from './services/publicaciones.service';
 import PersonIcon from '@mui/icons-material/Person';
 import HomeIcon from '@mui/icons-material/Home';
 import CampaignIcon from '@mui/icons-material/Campaign';
@@ -194,22 +195,32 @@ function App() {
     handleMenuClick('boletines', 1); // Navega a "Vista Preliminar"
   };
 
-  const handlePublishBulletin = (bulletinId) => {
+  const handlePublishBulletin = async (bulletinId) => {
     const bulletinToPublish = stagedBulletins.find(b => b.id === bulletinId);
     if (bulletinToPublish) {
-      const newPublication = {
-        id: bulletinToPublish.id,
-        autor: 'Portal de Noticias', // O el autor real
-        fecha: new Date(bulletinToPublish.createdAt).toLocaleString(),
-        titulo: bulletinToPublish.title,
-        contenido: bulletinToPublish.content,
-        imageUrl: bulletinToPublish.imageUrl,
-        reacciones: 0,
-      };
-      setPublishedBulletins(prev => [newPublication, ...prev]);
-      setStagedBulletins(prev => prev.filter(b => b.id !== bulletinId));
-      alert('¡Boletín publicado en el portal principal!');
-      handleMenuClick('portal'); // Navega al portal para ver el resultado
+      try {
+        // Publicar en la API
+        const publicacionData = {
+          titulo: bulletinToPublish.title,
+          contenido: bulletinToPublish.content,
+          tipo: bulletinToPublish.tipo || 'Noticia',
+          prioridad: bulletinToPublish.prioridad || 'Media',
+          imagenUrl: bulletinToPublish.imageUrl || null,
+          visible: true
+        };
+        
+        const publicacionCreada = await publicacionesService.create(publicacionData);
+        
+        // Actualizar el estado local con la publicación real
+        setPublishedBulletins(prev => [publicacionCreada, ...prev]);
+        setStagedBulletins(prev => prev.filter(b => b.id !== bulletinId));
+        
+        alert('¡Boletín publicado exitosamente en el portal!');
+        handleMenuClick('portal'); // Navega al portal para ver el resultado
+      } catch (error) {
+        console.error('Error al publicar boletín:', error);
+        alert('Error al publicar el boletín. Por favor, intenta de nuevo.');
+      }
     }
   };
 

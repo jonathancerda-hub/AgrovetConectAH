@@ -29,28 +29,39 @@ export default function NewBulletinForm({ onAddBulletin, onGoToPortal }) {
       setError('');
       setSuccess(false);
       
-      // Crear la publicación en la API
-      const publicacionData = {
-        titulo: data.title,
-        contenido: data.content,
-        tipo: 'boletin',
-        visible: true
-        // TODO: manejar la imagen cuando se implemente la subida de archivos
+      // Convertir la imagen a base64 si existe
+      let imageUrl = null;
+      if (data.image) {
+        imageUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(data.image);
+        });
+      }
+      
+      // Crear objeto de boletín para vista preliminar
+      const nuevoBoletin = {
+        id: Date.now(), // ID temporal para la vista preliminar
+        title: data.title, // Mantener el nombre 'title' que espera el Portal
+        content: data.content, // Mantener el nombre 'content' que espera el Portal
+        createdAt: new Date().toISOString(),
+        imageUrl: imageUrl, // Imagen en base64 para vista preliminar
+        // Datos adicionales para cuando se publique
+        tipo: 'Noticia',
+        prioridad: 'Media',
+        esPreview: true // Bandera para indicar que es una vista preliminar
       };
       
-      await publicacionesService.create(publicacionData);
+      // Llamar a onAddBulletin para mostrar vista preliminar
+      onAddBulletin(nuevoBoletin);
       
       setSuccess(true);
       reset(); // Limpiar el formulario
       
-      // Redirigir al portal después de 2 segundos
-      setTimeout(() => {
-        onGoToPortal();
-      }, 2000);
-      
     } catch (err) {
-      console.error('Error al crear boletín:', err);
-      setError(err.response?.data?.error || 'Error al publicar el boletín. Por favor, intenta de nuevo.');
+      console.error('Error al preparar boletín:', err);
+      setError('Error al preparar el boletín. Por favor, intenta de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -74,7 +85,7 @@ export default function NewBulletinForm({ onAddBulletin, onGoToPortal }) {
       {/* Mensajes de éxito/error */}
       {success && (
         <Alert severity="success" sx={{ mb: 2 }}>
-          ¡Boletín publicado exitosamente! Redirigiendo al portal...
+          ¡Boletín creado con imagen! Revisa la vista preliminar en el portal.
         </Alert>
       )}
       
