@@ -1,267 +1,517 @@
 import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { TextField, Button, Box, Grid, Paper, Typography, Stack, Chip, Grow } from '@mui/material';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import GavelOutlinedIcon from '@mui/icons-material/GavelOutlined';
-import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
-import EventAvailableIcon from '@mui/icons-material/EventAvailable';
-import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
-import EditIcon from '@mui/icons-material/Edit';
-import SendIcon from '@mui/icons-material/Send';
-import ListAltIcon from '@mui/icons-material/ListAlt';
-import HomeIcon from '@mui/icons-material/Home';
+import {
+  Box,
+  Paper,
+  Typography,
+  TextField,
+  Button,
+  Alert,
+  AlertTitle,
+  Chip,
+  Stack,
+  Divider,
+  CircularProgress,
+  Card,
+  CardContent,
+  Grid,
+  Snackbar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
+} from '@mui/material';
+import {
+  BeachAccess as VacationIcon,
+  Warning as WarningIcon,
+  Error as ErrorIcon,
+  Info as InfoIcon,
+  CheckCircle as SuccessIcon,
+  CalendarMonth as CalendarIcon,
+  Send as SendIcon
+} from '@mui/icons-material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
+import moment from 'moment';
+import 'moment/locale/es';
+import * as vacacionesService from '../../../services/vacaciones.service';
 
-const RequestForm = ({ onNewRequest }) => {
-  const { register, handleSubmit, watch, formState: { errors } } = useForm();
-  const [dayCount, setDayCount] = useState(0);
+moment.locale('es');
 
-  const startDate = watch('startDate');
-  const endDate = watch('endDate');
-
+const RequestForm = ({ onSuccess }) => {
+  const [fechaInicio, setFechaInicio] = useState(null);
+  const [fechaFin, setFechaFin] = useState(null);
+  const [motivo, setMotivo] = useState('');
+  
+  const [validando, setValidando] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [validacion, setValidacion] = useState(null);
+  const [periodos, setPeriodos] = useState([]);
+  const [resumen, setResumen] = useState(null);
+  
+  // Estados para dialogs y snackbars
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
+  const [dialogExito, setDialogExito] = useState(false);
+  const [dialogError, setDialogError] = useState({ open: false, message: '' });
+  
+  // Cargar datos iniciales
   useEffect(() => {
-    if (startDate && endDate) {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      if (end >= start) {
-        const diffTime = Math.abs(end - start);
-        // Se suma 1 para incluir el día de inicio en el conteo
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-        setDayCount(diffDays);
-      } else {
-        setDayCount(0); // Si la fecha de fin es anterior a la de inicio, se resetea
-      }
-    } else {
-      setDayCount(0);
+    cargarDatos();
+  }, []);
+  
+  const cargarDatos = async () => {
+    try {
+      const [periodosData, resumenData] = await Promise.all([
+        vacacionesService.obtenerPeriodos().catch(() => []),
+        vacacionesService.obtenerResumen().catch(() => ({
+          dias_disponibles: 0,
+          dias_usados: 0,
+          dias_pendientes: 0
+        }))
+      ]);
+      setPeriodos(periodosData);
+      setResumen(resumenData);
+    } catch (error) {
+      console.error('Error al cargar datos:', error);
+      // Datos por defecto si falla
+      setPeriodos([]);
+      setResumen({
+        dias_disponibles: 0,
+        dias_usados: 0,
+        dias_pendientes: 0
+      });
     }
-  }, [startDate, endDate]);
-
-  const onSubmit = (data) => {
-    console.log(data);
-    // Lógica para enviar la solicitud
   };
-
+  
+  // Validar automáticamente cuando cambian las fechas
+  useEffect(() => {
+    if (fechaInicio && fechaFin && fechaInicio.isSameOrBefore(fechaFin)) {
+      validarSolicitud();
+    } else {
+      setValidacion(null);
+    }
+  }, [fechaInicio, fechaFin]);
+  
+  const validarSolicitud = async () => {
+    setValidando(true);
+    try {
+      const resultado = await vacacionesService.validarSolicitud({
+        fecha_inicio: fechaInicio.format('YYYY-MM-DD'),
+        fecha_fin: fechaFin.format('YYYY-MM-DD')
+      });
+      setValidacion(resultado);
+    } catch (error) {
+      console.error('Error al validar:', error);
+      console.error('Error response:', error.response?.data);
+      setValidacion({
+        valida: false,
+        errores: [error.response?.data?.detalles || error.message || 'Error al validar la solicitud. Intente nuevamente.'],
+        advertencias: [],
+        alertas: []
+      });
+    } finally {
+      setValidando(false);
+    }
+  };
+  
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validacion || !validacion.valida) {
+      return;
+    }
+    
+    if (!motivo.trim()) {
+      setDialogError({
+        open: true,
+        message: 'Debe ingresar un motivo para la solicitud'
+      });
+      return;
+    }
+    
+    setEnviando(true);
+    try {
+      await vacacionesService.crearSolicitud({
+        fecha_inicio: fechaInicio.format('YYYY-MM-DD'),
+        fecha_fin: fechaFin.format('YYYY-MM-DD'),
+        motivo: motivo.trim()
+      });
+      
+      // Limpiar formulario
+      setFechaInicio(null);
+      setFechaFin(null);
+      setMotivo('');
+      setValidacion(null);
+      
+      // Mostrar dialog de éxito
+      setDialogExito(true);
+      
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (error) {
+      console.error('Error al crear solicitud:', error);
+      const errorMsg = error.response?.data?.detalles || error.response?.data?.error || error.message;
+      
+      // Si el error es por tablas faltantes, mostrar mensaje específico
+      if (errorMsg && errorMsg.includes('does not exist')) {
+        setDialogError({
+          open: true,
+          message: 'El sistema de vacaciones aún no está configurado en la base de datos. Por favor, contacte al administrador para ejecutar las migraciones.'
+        });
+      } else {
+        setDialogError({
+          open: true,
+          message: errorMsg || 'Error al crear la solicitud. Intente nuevamente.'
+        });
+      }
+    } finally {
+      setEnviando(false);
+    }
+  };
+  
+  const calcularDias = () => {
+    if (!fechaInicio || !fechaFin || !fechaInicio.isSameOrBefore(fechaFin)) {
+      return 0;
+    }
+    return fechaFin.diff(fechaInicio, 'days') + 1;
+  };
+  
   return (
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(5, 1fr)',
-        gridTemplateRows: 'auto',
-        gap: 3,
-      }}
-    >
-      {/* Columna Izquierda: Formulario */}
-      <Paper
-        component="form"
-        elevation={24}
-        onSubmit={handleSubmit(onSubmit)}
-        noValidate
-        sx={{
-          p: 3,
-          gridColumn: { xs: 'span 5', md: 'span 3' },
-          gridRow: { xs: 'auto', md: 'span 2' },
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)', // Cambiado de 5 a 4 columnas para una división equitativa
-          gap: 2,
-          alignItems: 'start',
-        }}
-      >
-          <Typography variant="h5" fontWeight={700} gutterBottom sx={{ display: 'flex', alignItems: 'center', mb: 1, gridColumn: 'span 5' }}>
-            <EditIcon sx={{ mr: 1 }} />Solicitud de Vacaciones
-          </Typography>
+    <LocalizationProvider dateAdapter={AdapterMoment} adapterLocale="es">
+      <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
+        <Grid container spacing={3}>
+          {/* Formulario */}
+          <Grid item xs={12} md={8}>
+            <Paper elevation={3} sx={{ p: 3 }}>
+              <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+                <VacationIcon color="primary" />
+                Nueva Solicitud de Vacaciones
+              </Typography>
+              
+              <form onSubmit={handleSubmit}>
+                <Stack spacing={3}>
+                  {/* Fechas */}
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                    <DatePicker
+                      label="Fecha de Inicio"
+                      value={fechaInicio}
+                      onChange={setFechaInicio}
+                      format="DD/MM/YYYY"
+                      minDate={moment()}
+                      slotProps={{
+                        textField: {
+                          required: true,
+                          fullWidth: true,
+                          error: fechaInicio && fechaFin && fechaInicio.isAfter(fechaFin)
+                        }
+                      }}
+                    />
+                    
+                    <DatePicker
+                      label="Fecha de Fin"
+                      value={fechaFin}
+                      onChange={setFechaFin}
+                      format="DD/MM/YYYY"
+                      minDate={fechaInicio || moment()}
+                      slotProps={{
+                        textField: {
+                          required: true,
+                          fullWidth: true,
+                          error: fechaInicio && fechaFin && fechaFin.isBefore(fechaInicio)
+                        }
+                      }}
+                    />
+                  </Box>
+                  
+                  {/* Días calculados */}
+                  {fechaInicio && fechaFin && fechaInicio.isSameOrBefore(fechaFin) && (
+                    <Card variant="outlined" sx={{ bgcolor: 'primary.50' }}>
+                      <CardContent sx={{ py: 1.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <CalendarIcon color="primary" />
+                          <Box>
+                            <Typography variant="body2" color="text.secondary">
+                              Días solicitados
+                            </Typography>
+                            <Typography variant="h6" color="primary">
+                              {calcularDias()} días
+                            </Typography>
+                          </Box>
+                          {validando && <CircularProgress size={20} sx={{ ml: 'auto' }} />}
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  )}
+                  
+                  {/* Resultados de validación */}
+                  {validacion && !validando && (
+                    <Stack spacing={2}>
+                      {/* Errores */}
+                      {validacion.errores && validacion.errores.length > 0 && (
+                        <Alert severity="error" icon={<ErrorIcon />}>
+                          <AlertTitle>No se puede procesar la solicitud</AlertTitle>
+                          <ul style={{ margin: 0, paddingLeft: 20 }}>
+                            {validacion.errores.map((error, idx) => (
+                              <li key={idx}>{error}</li>
+                            ))}
+                          </ul>
+                        </Alert>
+                      )}
+                      
+                      {/* Advertencias */}
+                      {validacion.advertencias && validacion.advertencias.length > 0 && (
+                        <Alert severity="warning" icon={<WarningIcon />}>
+                          <AlertTitle>Advertencias</AlertTitle>
+                          <ul style={{ margin: 0, paddingLeft: 20 }}>
+                            {validacion.advertencias.map((adv, idx) => (
+                              <li key={idx}>{adv}</li>
+                            ))}
+                          </ul>
+                        </Alert>
+                      )}
+                      
+                      {/* Alertas informativas */}
+                      {validacion.alertas && validacion.alertas.length > 0 && (
+                        <Alert severity="info" icon={<InfoIcon />}>
+                          <AlertTitle>Información</AlertTitle>
+                          <ul style={{ margin: 0, paddingLeft: 20 }}>
+                            {validacion.alertas.map((alerta, idx) => (
+                              <li key={idx}>{alerta}</li>
+                            ))}
+                          </ul>
+                        </Alert>
+                      )}
+                      
+                      {/* Éxito */}
+                      {validacion.valida && (
+                        <Alert severity="success" icon={<SuccessIcon />}>
+                          <AlertTitle>Solicitud válida</AlertTitle>
+                          La solicitud cumple con todas las reglas de negocio
+                        </Alert>
+                      )}
+                    </Stack>
+                  )}
+                  
+                  {/* Motivo */}
+                  <TextField
+                    label="Motivo de la solicitud"
+                    multiline
+                    rows={4}
+                    fullWidth
+                    required
+                    value={motivo}
+                    onChange={(e) => setMotivo(e.target.value)}
+                    placeholder="Describa el motivo de su solicitud de vacaciones..."
+                  />
+                  
+                  <Divider />
+                  
+                  {/* Botón enviar */}
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    size="large"
+                    startIcon={enviando ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
+                    disabled={!validacion || !validacion.valida || enviando || !motivo.trim()}
+                    sx={{ alignSelf: 'flex-start' }}
+                  >
+                    {enviando ? 'Enviando...' : 'Enviar Solicitud'}
+                  </Button>
+                </Stack>
+              </form>
+            </Paper>
+          </Grid>
           
-          {/* Fila 1 */}
-          <TextField
-            required
-            fullWidth
-            id="startDate"
-            label="Fecha de Inicio"
-            type="date"
-            InputLabelProps={{ shrink: true }}
-            {...register('startDate', { required: 'La fecha de inicio es obligatoria' })}
-            error={!!errors.startDate}
-            helperText={errors.startDate?.message}
-            sx={{ gridColumn: { xs: 'span 4', sm: 'span 2' } }} // Ahora ocupa 2 de 4 columnas
-          />
-          <TextField
-            required
-            fullWidth
-            id="endDate"
-            label="Fecha de Fin"
-            type="date"
-            InputLabelProps={{ shrink: true }}
-            {...register('endDate', { required: 'La fecha de fin es obligatoria' })}
-            error={!!errors.endDate}
-            helperText={errors.endDate?.message}
-            sx={{ gridColumn: { xs: 'span 4', sm: 'span 2' } }} // Ahora ocupa 2 de 4 columnas
-          />
-
-          {/* Fila 2 */}
-          {dayCount > 0 && (
-            <Box sx={{ gridColumn: 'span 4', justifySelf: 'start', my: '20px' }}>
-              <Grow in={true}>
-                <Chip
-                  icon={<EventAvailableIcon />}
-                  label={`Total: ${dayCount} día(s) solicitados`}
-                  sx={{
-                    background: 'linear-gradient(135deg, #28a745, #20c997)',
-                    color: 'white',
-                    padding: '15px',
-                    borderRadius: '12px',
-                    fontSize: '1rem',
-                    fontWeight: 500,
-                    boxShadow: '0 4px 15px rgba(40, 167, 69, 0.3)',
-                  }}
-                />
-              </Grow>
-            </Box>
-          )}
-
-          {/* Fila 3 */}
-          <TextField
-            fullWidth
-            id="vacType"
-            label="Tipo de Vacaciones"
-            value="Regulares"
-            InputProps={{ readOnly: true }}
-            sx={{ gridColumn: { xs: 'span 4', sm: 'span 2' } }} // Ahora ocupa 2 de 4 columnas
-          />
-          <TextField
-            fullWidth
-            id="period"
-            label="Período Vacacional"
-            value="2025-2026"
-            InputProps={{ readOnly: true }}
-            sx={{ gridColumn: { xs: 'span 4', sm: 'span 2' } }} // Ahora ocupa 2 de 4 columnas
-          />
-
-          {/* Fila 4 */}
-          <TextField
-            fullWidth
-            id="comments"
-            label="Motivo (opcional)"
-            placeholder="Describe el motivo de tu solicitud de vacaciones..."
-            multiline
-            rows={3}
-            {...register('comments')}
-            sx={{ gridColumn: 'span 4' }} // Ahora ocupa 4 columnas
-          />
-          
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 1, gridColumn: 'span 4' }}>
-            <Button
-              type="submit"
-              variant="contained"
-              sx={{
-                background: 'linear-gradient(135deg, #2a9d8f 0%, #264653 100%) !important',
-                border: 'none',
-                color: 'white !important',
-                fontWeight: 600, px: 4
-              }}
-              startIcon={<SendIcon />}>
-              Enviar Solicitud
-            </Button>
-            <Button
-              variant="outlined"
-              sx={{
-                fontWeight: 500,
-                color: '#6c757d',
-                borderColor: '#6c757d',
-                '&:hover': {
-                  color: '#fff',
-                  backgroundColor: '#6c757d',
-                  borderColor: '#6c757d',
-                },
-              }}
-              startIcon={<ListAltIcon />}>
-              Ver mis solicitudes
-            </Button>
-            <Button
-              variant="outlined"
-              sx={{
-                fontWeight: 500,
-                color: '#0d6efd',
-                borderColor: '#0d6efd',
-                '&:hover': {
-                  color: '#fff',
-                  backgroundColor: '#0d6efd',
-                  borderColor: '#0d6efd',
-                },
-              }}
-              startIcon={<HomeIcon />}
-            >
-              Regresar al Inicio
-            </Button>
-          </Stack>
-      </Paper>
-
-      {/* Columna Derecha: Estado y Políticas */}
-      <Paper elevation={3} sx={{ gridColumn: { xs: 'span 5', md: 'span 2' }, borderRadius: '16px', overflow: 'hidden' }}>
-        <Box sx={{
-          display: 'flex', alignItems: 'center', p: 2, bgcolor: 'primary.main', color: 'white'
-        }}>
-          <InfoOutlinedIcon sx={{ mr: 1 }} />
-          <Typography variant="h6" fontWeight={600} sx={{ color: 'inherit' }}>Estado de tus Vacaciones</Typography>
-        </Box>
-        <Grid container spacing={2} sx={{ p: 2 }}>
-          <Grid item xs={6}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" sx={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'primary.main' }}>30</Typography>
-              <Typography variant="body2">Días por Año</Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={6}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" sx={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'primary.main' }}>0</Typography>
-              <Typography variant="body2">Días Tomados</Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={6}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" sx={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'primary.main' }}>30</Typography>
-              <Typography variant="body2">Días Restantes</Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={6}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" sx={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'primary.main' }}>1980</Typography>
-              <Typography variant="body2">Días Antigüedad</Typography>
-            </Box>
+          {/* Información lateral */}
+          <Grid item xs={12} md={4}>
+            <Stack spacing={2}>
+              {/* Resumen de días */}
+              {resumen && (
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Saldo de Vacaciones
+                    </Typography>
+                    <Divider sx={{ my: 1 }} />
+                    <Stack spacing={1}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Días disponibles:
+                        </Typography>
+                        <Chip 
+                          label={resumen.dias_disponibles || 0} 
+                          color="success" 
+                          size="small" 
+                        />
+                      </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Días tomados:
+                        </Typography>
+                        <Chip 
+                          label={resumen.dias_usados || 0} 
+                          color="default" 
+                          size="small" 
+                        />
+                      </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Pendientes:
+                        </Typography>
+                        <Chip 
+                          label={resumen.dias_pendientes || 0} 
+                          color="warning" 
+                          size="small" 
+                        />
+                      </Box>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              )}
+              
+              {/* Períodos disponibles */}
+              {periodos && periodos.length > 0 && (
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Períodos Activos
+                    </Typography>
+                    <Divider sx={{ my: 1 }} />
+                    <Stack spacing={1.5}>
+                      {periodos.map((periodo) => (
+                        <Box 
+                          key={periodo.id}
+                          sx={{ 
+                            p: 1.5, 
+                            bgcolor: 'grey.50', 
+                            borderRadius: 1,
+                            border: '1px solid',
+                            borderColor: 'grey.200'
+                          }}
+                        >
+                          <Typography variant="body2" fontWeight={600}>
+                            Período {periodo.anio_generacion}
+                          </Typography>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
+                            <Typography variant="caption" color="text.secondary">
+                              Disponibles:
+                            </Typography>
+                            <Typography variant="caption" fontWeight={600}>
+                              {periodo.dias_disponibles} días
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <Typography variant="caption" color="text.secondary">
+                              Viernes usados:
+                            </Typography>
+                            <Typography variant="caption" fontWeight={600}>
+                              {periodo.viernes_usados} de 5
+                            </Typography>
+                          </Box>
+                        </Box>
+                      ))}
+                    </Stack>
+                  </CardContent>
+                </Card>
+              )}
+              
+              {/* Reglas importantes */}
+              <Card sx={{ bgcolor: 'info.50' }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom color="info.main">
+                    <InfoIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                    Reglas Importantes
+                  </Typography>
+                  <Divider sx={{ my: 1 }} />
+                  <Stack spacing={1}>
+                    <Typography variant="caption" color="text.secondary">
+                      • Solicitudes antes del día 20 de cada mes
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      • Máximo 5 viernes por período de 30 días
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      • Si incluye viernes, debe tomar sábado y domingo
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      • Se recomienda tomar al menos 2 bloques de 7 días continuos
+                    </Typography>
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Stack>
           </Grid>
         </Grid>
-      </Paper>
+        
+        {/* Snackbar para notificaciones */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        >
+          <Alert 
+            onClose={() => setSnackbar({ ...snackbar, open: false })} 
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
 
-      <Paper elevation={3} sx={{ gridColumn: { xs: 'span 5', md: 'span 2' }, borderRadius: '16px', overflow: 'hidden' }}>
-        <Box sx={{
-          display: 'flex', alignItems: 'center', p: 2, bgcolor: 'primary.main', color: 'white'
-        }}>
-          <GavelOutlinedIcon sx={{ mr: 1 }} />
-          <Typography variant="h6" fontWeight={600} sx={{ color: 'inherit' }}>Políticas y Reglas</Typography>
-        </Box>
-        <Stack spacing={1} sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <CalendarMonthOutlinedIcon color="action" fontSize="small" />
-            <Typography variant="body2"><b>POLÍTICA PRINCIPAL:</b> Cada período anual otorga 30 días. Períodos completos: 5, total otorgado: 150 días</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <LightbulbOutlinedIcon color="warning" fontSize="small" />
-            <Typography variant="body2"><b>RECOMENDACIÓN:</b> Incluye fines de semana en tus vacaciones para cumplir mejor la política anual</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <CheckCircleOutlineIcon color="success" fontSize="small" />
-            <Typography variant="body2"><b>FLEXIBILIDAD:</b> Puedes elegir cualquier período de fechas</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <CalendarMonthOutlinedIcon color="primary" fontSize="small" />
-            <Typography variant="body2">Mínimo 15 días de aviso previo para solicitudes</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <WarningAmberOutlinedIcon color="warning" fontSize="small" />
-            <Typography variant="body2">Máximo 15 días consecutivos por solicitud</Typography>
-          </Box>
-        </Stack>
-      </Paper>
-    </Box>
+        {/* Dialog de éxito */}
+        <Dialog
+          open={dialogExito}
+          onClose={() => setDialogExito(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'success.main' }}>
+            <SuccessIcon />
+            Solicitud Enviada
+          </DialogTitle>
+          <DialogContent>
+            <Typography>
+              Su solicitud de vacaciones ha sido enviada exitosamente y está pendiente de aprobación.
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+              Recibirá una notificación cuando su solicitud sea revisada.
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDialogExito(false)} variant="contained">
+              Entendido
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Dialog de error */}
+        <Dialog
+          open={dialogError.open}
+          onClose={() => setDialogError({ open: false, message: '' })}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'error.main' }}>
+            <ErrorIcon />
+            Error
+          </DialogTitle>
+          <DialogContent>
+            <Typography>{dialogError.message}</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button 
+              onClick={() => setDialogError({ open: false, message: '' })} 
+              variant="contained"
+              color="error"
+            >
+              Cerrar
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    </LocalizationProvider>
   );
 };
 

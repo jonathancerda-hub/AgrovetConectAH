@@ -1,160 +1,297 @@
 
 import React, { useState } from 'react';
-import { Typography, Paper, Box, Button } from '@mui/material';
+import { Typography, Paper, Box, Button, Card, CardContent, LinearProgress, Chip, Divider } from '@mui/material';
+import BeachAccessIcon from '@mui/icons-material/BeachAccess';
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
+import EventBusyIcon from '@mui/icons-material/EventBusy';
+import PendingActionsIcon from '@mui/icons-material/PendingActions';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import {
   LineChart,
   BarChart,
   PieChart,
   pieArcLabelClasses,
-  ResponsiveChartContainer,
-  ChartsXAxis,
-  ChartsYAxis,
-  ChartsLegend,
-  ChartsTooltip,
-  BarPlot,
-  LinePlot,
-  PiePlot,
 } from '@mui/x-charts';
 
-// Componente de ejemplo para rellenar el grid
-const PlaceholderCard = ({ title, sx, children }) => (
-  <Paper elevation={3} sx={{ p: 2, display: 'flex', flexDirection: 'column', ...sx }}>
-    <Typography variant="h6" gutterBottom>{title}</Typography>
-    {children}
-  </Paper>
+// Componente KPI Card mejorado
+const KPICard = ({ title, value, subtitle, icon: Icon, color, trend }) => (
+  <Card sx={{ 
+    height: '100%',
+    background: `linear-gradient(135deg, ${color}15 0%, ${color}05 100%)`,
+    border: `1px solid ${color}30`,
+    transition: 'transform 0.2s, box-shadow 0.2s',
+    '&:hover': {
+      transform: 'translateY(-4px)',
+      boxShadow: 4
+    }
+  }}>
+    <CardContent>
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
+        <Box>
+          <Typography variant="caption" color="text.secondary" fontWeight={600}>
+            {title}
+          </Typography>
+          <Typography variant="h3" fontWeight={700} color={color} sx={{ my: 1 }}>
+            {value}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {subtitle}
+          </Typography>
+        </Box>
+        <Box sx={{ 
+          bgcolor: `${color}20`, 
+          borderRadius: 2, 
+          p: 1.5,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <Icon sx={{ fontSize: 32, color }} />
+        </Box>
+      </Box>
+      {trend && (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
+          <TrendingUpIcon sx={{ fontSize: 16, color: trend > 0 ? '#4caf50' : '#f44336' }} />
+          <Typography variant="caption" color={trend > 0 ? '#4caf50' : '#f44336'} fontWeight={600}>
+            {trend > 0 ? '+' : ''}{trend}% vs mes anterior
+          </Typography>
+        </Box>
+      )}
+    </CardContent>
+  </Card>
 );
-
-// Datos de ejemplo para los gráficos
-const pData = [2400, 1398, 9800, 3908, 4800, 3800, 4300];
-const uData = [4000, 3000, 2000, 2780, 1890, 2390, 3490];
-const xLabels = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio'
-];
 
 const AvailableDays = ({ available, taken }) => {
   const [rerenderKey, setRerenderKey] = useState(0);
 
+  // Calcular métricas
+  const totalDays = available + taken;
+  const usagePercentage = totalDays > 0 ? ((taken / totalDays) * 100).toFixed(1) : 0;
+  const pendingRequests = 2; // Esto debería venir de props o API
+  const approvedRequests = 5; // Esto debería venir de props o API
+
+  // Datos para el gráfico de pastel
   const pieChartData = [
-    { name: 'Disponibles', value: available },
-    { name: 'Tomados', value: taken },
+    { name: 'Disponibles', value: available, label: `${available} días` },
+    { name: 'Tomados', value: taken, label: `${taken} días` },
+  ];
+
+  // Datos de ejemplo para gráficos de tendencia (deberían venir de la API)
+  const monthlyData = [3, 5, 2, 4, 6, 3, 4, 5, 2, 3, 4, taken];
+  const monthLabels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+  const requestsData = [
+    { month: 'Ene', solicitudes: 8, aprobadas: 7 },
+    { month: 'Feb', solicitudes: 12, aprobadas: 10 },
+    { month: 'Mar', solicitudes: 6, aprobadas: 6 },
+    { month: 'Abr', solicitudes: 10, aprobadas: 9 },
+    { month: 'May', solicitudes: 15, aprobadas: 12 },
+    { month: 'Jun', solicitudes: 18, aprobadas: 16 },
   ];
 
   return (
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(5, 1fr)',
-        gridTemplateRows: 'repeat(5, 1fr)',
-        gap: '8px', // theme.spacing(1)
-        height: 'calc(100vh - 100px)', // Ajusta la altura para ocupar la pantalla
-      }}
-    >
-      <Box sx={{ gridColumn: { xs: 'span 5', md: '1 / span 4' }, gridRow: '1' }}>
-        <Typography variant="h4" fontWeight={700}>Dashboard de Vacaciones</Typography>
+    <Box sx={{ p: 3 }}>
+      {/* Header */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" fontWeight={700} gutterBottom>
+          Dashboard de Vacaciones
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Visualiza y gestiona tu tiempo de descanso
+        </Typography>
       </Box>
 
-      {/* .div5 */}
-      <PlaceholderCard
-        title="Resumen Gráfico"
-        sx={{
-          gridColumn: { xs: 'span 5', md: '1 / span 4' },
-          gridRow: { xs: 'auto', md: '2 / span 2' },
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}
-      >
-        <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 250 }}>
-          <PieChart
-            key={rerenderKey} // Key to force animation restart
-            series={[{
-              data: pieChartData.map((entry, index) => ({
-                ...entry,
-                color: index === 0 ? '#667eea' : '#ff6384', // Colores para Disponibles y Tomados
-              })),
-              arcLabel: (item) => `${item.value}`,
-              outerRadius: 100,
-              innerRadius: 60,
-              paddingAngle: 5,
-              cornerRadius: 5,
-              startAngle: -90,
-              endAngle: 270,
-              highlightScope: { faded: 'global', highlighted: 'item' },
-              faded: { innerRadius: 30, additionalRadius: -30, color: 'grey' },
-            }]}
-            width={300}
-            height={300}
-            slotProps={{
-              legend: { hidden: true }, // hideLegend
-            }}
-            sx={{
-              [`& .${pieArcLabelClasses.root}.${pieArcLabelClasses.animate}`]: {
-                animationDuration: '2s',
-              },
-            }}
-          />
-          <Button onClick={() => setRerenderKey(prev => prev + 1)} sx={{ mt: 2 }}>Restart Animation</Button>
-        </Box>
-      </PlaceholderCard>
+      {/* KPIs Row */}
+      <Box sx={{ 
+        display: 'grid', 
+        gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
+        gap: 2,
+        mb: 3
+      }}>
+        <KPICard
+          title="Días Disponibles"
+          value={available}
+          subtitle="Para solicitar"
+          icon={BeachAccessIcon}
+          color="#1976d2"
+          trend={0}
+        />
+        <KPICard
+          title="Días Tomados"
+          value={taken}
+          subtitle={`${usagePercentage}% utilizado`}
+          icon={EventBusyIcon}
+          color="#f57c00"
+          trend={-15}
+        />
+        <KPICard
+          title="Solicitudes Pendientes"
+          value={pendingRequests}
+          subtitle="En revisión"
+          icon={PendingActionsIcon}
+          color="#9c27b0"
+          trend={null}
+        />
+        <KPICard
+          title="Solicitudes Aprobadas"
+          value={approvedRequests}
+          subtitle="Este año"
+          icon={EventAvailableIcon}
+          color="#4caf50"
+          trend={25}
+        />
+      </Box>
 
-      {/* .div6 */}
-      <PlaceholderCard
-        title="Estado Actual"
-        sx={{
-          gridColumn: { xs: 'span 5', md: '5 / 6' },
-          gridRow: { xs: 'auto', md: '1 / span 3' },
-        }}
-      >
-        <Typography variant="h4" color="primary">Disponibles: {available}</Typography>
-        <Typography variant="h4" color="error">Tomados: {taken}</Typography>
-      </PlaceholderCard>
+      {/* Charts Row */}
+      <Box sx={{ 
+        display: 'grid', 
+        gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+        gap: 3,
+        mb: 3
+      }}>
+        {/* Balance de Vacaciones */}
+        <Card>
+          <CardContent>
+            <Typography variant="h6" fontWeight={700} gutterBottom>
+              Balance de Vacaciones
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 2 }}>
+              <PieChart
+                key={rerenderKey}
+                series={[{
+                  data: pieChartData.map((entry, index) => ({
+                    ...entry,
+                    color: index === 0 ? '#1976d2' : '#f57c00',
+                  })),
+                  arcLabel: (item) => `${item.value}`,
+                  outerRadius: 100,
+                  innerRadius: 60,
+                  paddingAngle: 3,
+                  cornerRadius: 5,
+                  highlightScope: { faded: 'global', highlighted: 'item' },
+                }]}
+                width={350}
+                height={250}
+                slotProps={{
+                  legend: { 
+                    direction: 'row',
+                    position: { vertical: 'bottom', horizontal: 'middle' },
+                    padding: 0,
+                  },
+                }}
+              />
+              <Box sx={{ mt: 2, textAlign: 'center' }}>
+                <Typography variant="h4" fontWeight={700} color="primary">
+                  {totalDays}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Total de días al año
+                </Typography>
+              </Box>
+            </Box>
+            
+            {/* Progress Bar */}
+            <Box sx={{ mt: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Typography variant="body2" color="text.secondary">Uso de vacaciones</Typography>
+                <Typography variant="body2" fontWeight={600}>{usagePercentage}%</Typography>
+              </Box>
+              <LinearProgress 
+                variant="determinate" 
+                value={parseFloat(usagePercentage)} 
+                sx={{ 
+                  height: 8, 
+                  borderRadius: 4,
+                  bgcolor: '#e0e0e0',
+                  '& .MuiLinearProgress-bar': {
+                    borderRadius: 4,
+                    background: 'linear-gradient(90deg, #1976d2 0%, #f57c00 100%)'
+                  }
+                }}
+              />
+            </Box>
+          </CardContent>
+        </Card>
 
-      {/* .div7 */}
-      <PlaceholderCard
-        title="Actividad Mensual"
-        sx={{
-          gridColumn: { xs: 'span 5', md: '1 / span 2' },
-          gridRow: { xs: 'auto', md: '4 / span 2' },
-        }}
-      >
-        <Box sx={{ height: 300, width: '100%' }}>
-          <ResponsiveChartContainer
-            series={[
-              { type: 'bar', data: pData, label: 'Solicitudes', id: 'pvId', color: '#667eea' },
-              { type: 'bar', data: uData, label: 'Aprobaciones', id: 'uvId', color: '#20c997' },
-            ]}
-            xAxis={[{ scaleType: 'band', data: xLabels }]}
-            yAxis={[{ id: 'leftAxis', scaleType: 'linear' }]}
-            margin={{ left: 50 }}
-          >
-            <BarPlot />
-            <ChartsXAxis />
-            <ChartsYAxis axisId="leftAxis" />
-            <ChartsTooltip />
-            <ChartsLegend />
-          </ResponsiveChartContainer>
-        </Box>
-      </PlaceholderCard>
+        {/* Tendencia Mensual */}
+        <Card>
+          <CardContent>
+            <Typography variant="h6" fontWeight={700} gutterBottom>
+              Días Tomados por Mes
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+            <Box sx={{ height: 300, width: '100%' }}>
+              <LineChart
+                series={[
+                  { 
+                    data: monthlyData, 
+                    label: 'Días de vacaciones',
+                    color: '#1976d2',
+                    curve: 'linear',
+                    showMark: true,
+                    area: true,
+                  },
+                ]}
+                xAxis={[{ 
+                  scaleType: 'point', 
+                  data: monthLabels,
+                }]}
+                yAxis={[{ 
+                  min: 0,
+                }]}
+                height={270}
+                margin={{ left: 40, right: 20, top: 20, bottom: 30 }}
+                slotProps={{
+                  legend: { hidden: true }
+                }}
+              />
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
 
-      {/* .div8 */}
-      <PlaceholderCard
-        title="Tendencia Anual"
-        sx={{
-          gridColumn: { xs: 'span 5', md: '3 / span 3' },
-          gridRow: { xs: 'auto', md: '4 / span 2' },
-        }}
-      >
-        <Box sx={{ height: 300, width: '100%' }}>
-          <LineChart
-            series={[
-              { data: pData, label: 'Empleados', color: '#667eea' },
-              { data: uData, label: 'Proyectos', color: '#ff6384' },
-            ]}
-            xAxis={[{ scaleType: 'point', data: xLabels }]}
-            yAxis={[{ width: 50 }]}
-            margin={{ left: 50 }}
-          />
-        </Box>
-      </PlaceholderCard>
+      {/* Solicitudes Chart */}
+      <Card>
+        <CardContent>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box>
+              <Typography variant="h6" fontWeight={700}>
+                Historial de Solicitudes
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Comparación de solicitudes vs aprobaciones
+              </Typography>
+            </Box>
+            <Chip label="Últimos 6 meses" size="small" color="primary" variant="outlined" />
+          </Box>
+          <Divider sx={{ mb: 2 }} />
+          <Box sx={{ height: 300, width: '100%' }}>
+            <BarChart
+              series={[
+                { 
+                  data: requestsData.map(d => d.solicitudes), 
+                  label: 'Solicitudes', 
+                  color: '#1976d2',
+                  stack: 'total',
+                },
+                { 
+                  data: requestsData.map(d => d.aprobadas), 
+                  label: 'Aprobadas', 
+                  color: '#4caf50',
+                  stack: 'total',
+                },
+              ]}
+              xAxis={[{ 
+                scaleType: 'band', 
+                data: requestsData.map(d => d.month),
+              }]}
+              height={270}
+              margin={{ left: 50, right: 20, top: 20, bottom: 30 }}
+            />
+          </Box>
+        </CardContent>
+      </Card>
     </Box>
   );
 };

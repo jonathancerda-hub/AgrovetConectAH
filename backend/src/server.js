@@ -8,6 +8,7 @@ import authRoutes from './routes/auth.routes.js';
 import publicacionesRoutes from './routes/publicaciones.routes.js';
 import notificacionesRoutes from './routes/notificaciones.routes.js';
 import empleadosRoutes from './routes/empleados.routes.js';
+import vacacionesRoutes from './routes/vacaciones.routes.js';
 
 // Configuración
 dotenv.config();
@@ -55,6 +56,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/publicaciones', publicacionesRoutes);
 app.use('/api/notificaciones', notificacionesRoutes);
 app.use('/api/empleados', empleadosRoutes);
+app.use('/api/vacaciones', vacacionesRoutes);
 
 // Ruta 404
 app.use((req, res) => {

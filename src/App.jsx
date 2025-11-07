@@ -100,7 +100,7 @@ const vacacionesItems = [
   { text: 'Dashboard', icon: <EventAvailableIcon />, component: <AvailableDays available={availableDaysData.available} taken={availableDaysData.taken} /> },
   { text: 'Formulario de Solicitud', icon: <AssignmentIcon />, component: null }, // Se manejará dinámicamente
   { text: 'Calendario', icon: <CalendarMonthIcon />, component: <VacationCalendar events={calendarEvents} /> },
-  { text: 'Lista de Solicitudes', icon: <ListAltIcon />, component: <RequestsList requests={requestsData} /> },
+  { text: 'Lista de Solicitudes', icon: <ListAltIcon />, component: <RequestsList /> },
   { text: 'Panel de Aprobación', icon: <SupervisorAccountIcon />, component: null }, // Se manejará dinámicamente
 ];
 
