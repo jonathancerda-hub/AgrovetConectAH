@@ -37,10 +37,15 @@ export default function Portal() {
         // Obtener usuario actual
         const currentUser = authService.getCurrentUser();
         
-        // Obtener información del empleado
+        // Obtener información del empleado (opcional)
         if (currentUser?.empleadoId) {
-          const empleadoData = await empleadosService.getById(currentUser.empleadoId);
-          setEmpleadoInfo(empleadoData);
+          try {
+            const empleadoData = await empleadosService.getById(currentUser.empleadoId);
+            setEmpleadoInfo(empleadoData);
+          } catch (empError) {
+            console.warn('No se pudo cargar información del empleado:', empError);
+            // No mostramos error, simplemente no cargamos la info del empleado
+          }
         }
         
         // Obtener publicaciones
@@ -64,13 +69,14 @@ export default function Portal() {
         
         setPublicaciones(formattedData);
         
-        // Obtener cumpleañeros del mes (simulado por ahora)
-        // TODO: Implementar endpoint en backend
-        setCumpleaneros([
-          { nombre: 'Carolina Lima', fecha: '8 Enero' },
-          { nombre: 'Fernando Ramírez', fecha: '11 Enero' },
-          { nombre: 'Florencia Soto', fecha: '11 Enero' }
-        ]);
+        // Obtener cumpleañeros del día
+        try {
+          const cumpleanerosData = await empleadosService.getCumpleaneros();
+          setCumpleaneros(cumpleanerosData);
+        } catch (cumpleError) {
+          console.warn('No se pudo cargar cumpleañeros:', cumpleError);
+          setCumpleaneros([]);
+        }
         
       } catch (err) {
         console.error('Error al cargar datos:', err);
@@ -139,9 +145,9 @@ export default function Portal() {
                 </Typography>
               ) : (
                 <Box sx={{ mt: 2 }}>
-                  {cumpleaneros.map((cumpleanero, index) => (
+                  {cumpleaneros.map((cumpleanero) => (
                     <Box 
-                      key={index} 
+                      key={cumpleanero.id} 
                       sx={{ 
                         display: 'flex', 
                         alignItems: 'center', 
@@ -149,18 +155,35 @@ export default function Portal() {
                         p: 2, 
                         mb: 2,
                         bgcolor: '#fff3e0',
-                        borderRadius: 2
+                        borderRadius: 2,
+                        transition: 'transform 0.2s',
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          boxShadow: 2
+                        }
                       }}
                     >
-                      <Avatar sx={{ bgcolor: '#f57c00', width: 56, height: 56 }}>
-                        <CakeIcon />
+                      <Avatar 
+                        src={cumpleanero.foto_perfil} 
+                        sx={{ bgcolor: '#f57c00', width: 56, height: 56 }}
+                      >
+                        {!cumpleanero.foto_perfil && <CakeIcon />}
                       </Avatar>
                       <Box sx={{ flex: 1 }}>
                         <Typography variant="h6" fontWeight={600}>
-                          {cumpleanero.nombre}
+                          {cumpleanero.nombre_completo}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {cumpleanero.fecha}
+                        <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <strong>{cumpleanero.puesto || 'Sin puesto'}</strong>
+                          {cumpleanero.area && (
+                            <>
+                              <span>•</span>
+                              <span>{cumpleanero.area}</span>
+                            </>
+                          )}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {cumpleanero.edad && `${cumpleanero.edad} años`}
                         </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', gap: 1 }}>

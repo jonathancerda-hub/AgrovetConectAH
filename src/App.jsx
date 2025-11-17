@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Drawer, List, ListItem, ListItemIcon, ListItemText, AppBar, Toolbar, Typography, Box, Collapse, ListItemButton } from '@mui/material';
+import { Drawer, List, ListItem, ListItemIcon, ListItemText, AppBar, Toolbar, Typography, Box, Collapse, ListItemButton, Button } from '@mui/material';
 import { authService } from './services/auth.service';
 import { publicacionesService } from './services/publicaciones.service';
 import PersonIcon from '@mui/icons-material/Person';
@@ -38,6 +38,11 @@ import ControlVacaciones from './features/vacations/components/ControlVacaciones
 import TeamDashboard from './features/vacations/components/TeamDashboard';
 import TopBar from './features/vacations/components/TopBar';
 import { CssBaseline, useTheme, useMediaQuery } from '@mui/material';
+
+// Importaciones para RRHH
+import DashboardRRHH from './features/vacations/components/DashboardRRHH';
+import ControlVacacionesEmpleado from './features/vacations/components/ControlVacacionesEmpleado';
+import HistorialVacaciones from './features/vacations/components/HistorialVacaciones';
 
 // Importaciones para Boletines
 import NewBulletinForm from './features/vacations/components/NewBulletinForm'; // Corregido
@@ -116,8 +121,9 @@ const ControlVacacionesComponent = () => (
 const HistorialesComponent = () => <Typography>Página de Historiales</Typography>;
 
 const rrhhItems = [
-  { text: 'Control de Vacaciones', icon: <FactCheckIcon />, component: <ControlVacaciones /> }, // Use the new component
-  { text: 'Historiales', icon: <HistoryIcon />, component: <HistorialesComponent /> },
+  { text: 'Dashboard RRHH', icon: <DashboardIcon />, component: <DashboardRRHH /> },
+  { text: 'Control de Vacaciones', icon: <FactCheckIcon />, component: <ControlVacacionesEmpleado /> },
+  { text: 'Historial', icon: <HistoryIcon />, component: <HistorialVacaciones /> },
 ];
 
 // Placeholder component para Mi Equipo
@@ -262,18 +268,22 @@ function App() {
       onGoBack={() => setRequestToProcess(null)}
     />;
     pageTitle = `Procesando Solicitud #${requestToProcess.id}`;
-    breadcrumbs = ['Vacaciones', 'Panel de Aprobación', `Solicitud #${requestToProcess.id}`];
+    breadcrumbs = [
+      { text: 'Vacaciones', action: 'vacaciones' },
+      { text: 'Panel de Aprobación', action: 'vacaciones' },
+      { text: `Solicitud #${requestToProcess.id}` }
+    ];
   } else if (selectedMenu.main === 'portal') {
     mainContent = <Portal publicaciones={publishedBulletins} />; // Pasamos toda la lista de publicaciones
     pageTitle = 'Portal';
-    breadcrumbs = ['Portal'];
+    breadcrumbs = [{ text: 'Portal' }];
   } else if (selectedMenu.main === 'ficha') {
     mainContent = <MiFicha />;
-    breadcrumbs = ['Mi Ficha'];
+    breadcrumbs = [{ text: 'Mi Ficha' }];
   } else if (selectedMenu.main === 'vacaciones') {
     const selectedItem = vacacionesItems[selectedMenu.sub];
     pageTitle = selectedItem.text;
-    breadcrumbs = ['Vacaciones', selectedItem.text];
+    breadcrumbs = [{ text: 'Vacaciones' }];
     if (selectedItem.text === 'Formulario de Solicitud') {
       mainContent = <RequestForm onNewRequest={handleNewRequest} />;
     } else if (selectedItem.text === 'Panel de Aprobación') {
@@ -284,24 +294,24 @@ function App() {
   } else if (selectedMenu.main === 'rrhh') {
     mainContent = rrhhItems[selectedMenu.sub].component;
     pageTitle = rrhhItems[selectedMenu.sub].text;
-    breadcrumbs = ['Dashboard RRHH', rrhhItems[selectedMenu.sub].text];
+    breadcrumbs = [{ text: 'Dashboard RRHH' }];
   } else if (selectedMenu.main === 'empleados') {
     mainContent = <GestionEmpleados />;
     pageTitle = 'Gestión de Empleados';
-    breadcrumbs = ['Gestión de Empleados'];
+    breadcrumbs = [{ text: 'Gestión de Empleados' }];
   } else if (selectedMenu.main === 'equipo') {
     mainContent = equipoItems[selectedMenu.sub].component;
     pageTitle = equipoItems[selectedMenu.sub].text;
-    breadcrumbs = ['Mi Equipo', equipoItems[selectedMenu.sub].text];
+    breadcrumbs = [{ text: 'Mi Equipo' }];
   } else if (selectedMenu.main === 'boletines') {
     if (selectedMenu.sub === 0) { // Crear Boletín
       mainContent = <NewBulletinForm onAddBulletin={handleAddBulletin} onGoToPortal={() => handleMenuClick('portal')} />;
       pageTitle = 'Crear Boletín';
-      breadcrumbs = ['Boletines', 'Crear Boletín'];
+      breadcrumbs = [{ text: 'Boletines' }];
     } else { // Vista Preliminar
       mainContent = <PortalPage bulletins={stagedBulletins} onPublish={handlePublishBulletin} />;
       pageTitle = 'Vista Preliminar de Boletines';
-      breadcrumbs = ['Boletines', 'Vista Preliminar'];
+      breadcrumbs = [{ text: 'Boletines' }];
     }
   }
 
@@ -323,7 +333,13 @@ function App() {
             duration: theme.transitions.duration.enteringScreen,
           }),
         }}>
-        <TopBar onMenuClick={handleDrawerToggle} title={pageTitle} breadcrumbs={breadcrumbs} />
+        <TopBar 
+          onMenuClick={handleDrawerToggle} 
+          title={pageTitle} 
+          breadcrumbs={breadcrumbs}
+          onNavigate={handleMenuClick}
+          onLogout={handleLogout}
+        />
       </AppBar>
     <Drawer
       id="app-drawer"

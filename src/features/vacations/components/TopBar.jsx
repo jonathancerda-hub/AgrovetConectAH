@@ -17,6 +17,14 @@ import {
   Fade,
   Zoom,
   alpha,
+  Divider,
+  ListItemIcon,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import SaveIcon from '@mui/icons-material/Save';
@@ -27,22 +35,34 @@ import MoreIcon from '@mui/icons-material/MoreVert';
 import SearchIcon from '@mui/icons-material/Search';
 import HomeIcon from '@mui/icons-material/Home';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import PersonIcon from '@mui/icons-material/Person';
+import SettingsIcon from '@mui/icons-material/Settings';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import LogoutIcon from '@mui/icons-material/Logout';
 import NotificationPanel from './NotificationPanel';
+import { authService } from '../../../services/auth.service';
 
-const user = {
-  name: 'Jorge Luis Jonathan Cerda Piaca',
-};
+const settings = [
+  { text: 'Mi Perfil', icon: <PersonIcon fontSize="small" />, action: 'profile' },
+  { text: 'Mi Cuenta', icon: <SettingsIcon fontSize="small" />, action: 'account' },
+  { text: 'Dashboard', icon: <DashboardIcon fontSize="small" />, action: 'dashboard' },
+  { text: 'Cerrar Sesión', icon: <LogoutIcon fontSize="small" />, action: 'logout' },
+];
 
-const settings = ['Mi Perfil', 'Mi Cuenta', 'Dashboard', 'Cerrar Sesión'];
-
-export default function TopBar({ onMenuClick, title, breadcrumbs = [] }) {
+export default function TopBar({ onMenuClick, title, breadcrumbs = [], onNavigate, onLogout }) {
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
   const [notificationAnchor, setNotificationAnchor] = React.useState(null);
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState('');
+  const [logoutDialogOpen, setLogoutDialogOpen] = React.useState(false);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
   const isNotificationOpen = Boolean(notificationAnchor);
+
+  // Obtener usuario actual
+  const currentUser = authService.getCurrentUser();
+  const userName = currentUser?.nombre || currentUser?.email || 'Usuario';
+  const userRole = currentUser?.rol || 'Colaborador';
 
   const handleMobileMenuClose = () => {
     setMobileMoreAnchorEl(null);
@@ -60,12 +80,46 @@ export default function TopBar({ onMenuClick, title, breadcrumbs = [] }) {
     setAnchorElUser(null);
   };
 
+  const handleMenuAction = (action) => {
+    handleCloseUserMenu();
+    
+    switch (action) {
+      case 'profile':
+        // Navegar a Mi Ficha
+        if (onNavigate) {
+          onNavigate('ficha');
+        }
+        break;
+      case 'account':
+        // Por ahora, mostrar alert. Después podemos crear un componente de configuración
+        alert('Configuración de cuenta - Próximamente');
+        break;
+      case 'dashboard':
+        // Navegar al portal
+        if (onNavigate) {
+          onNavigate('portal');
+        }
+        break;
+      case 'logout':
+        // Abrir dialog de confirmación
+        setLogoutDialogOpen(true);
+        break;
+      default:
+        break;
+    }
+  };
+
   const handleNotificationClick = (event) => {
     setNotificationAnchor(event.currentTarget);
   };
 
   const handleNotificationClose = () => {
     setNotificationAnchor(null);
+  };
+
+  const handleHelpClick = () => {
+    // Abrir el manual de usuario en una nueva ventana
+    window.open('/docs/manual-usuario.html', '_blank');
   };
 
   const handleSearchToggle = () => {
@@ -78,6 +132,18 @@ export default function TopBar({ onMenuClick, title, breadcrumbs = [] }) {
   const handleSearchChange = (event) => {
     setSearchValue(event.target.value);
     // Aquí puedes implementar la lógica de búsqueda
+  };
+
+  // Funciones para manejar el Dialog de Logout
+  const handleConfirmLogout = () => {
+    setLogoutDialogOpen(false);
+    if (onLogout) {
+      onLogout();
+    }
+  };
+
+  const handleCancelLogout = () => {
+    setLogoutDialogOpen(false);
   };
 
   // Atajo de teclado Ctrl+K para búsqueda
@@ -114,8 +180,17 @@ export default function TopBar({ onMenuClick, title, breadcrumbs = [] }) {
             >
               <Link
                 underline="hover"
-                sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary', cursor: 'pointer' }}
-                onClick={() => {}}
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  color: 'text.secondary', 
+                  cursor: 'pointer',
+                  transition: 'color 0.2s ease',
+                  '&:hover': {
+                    color: 'primary.main',
+                  }
+                }}
+                onClick={() => onNavigate && onNavigate('portal')}
               >
                 <HomeIcon sx={{ mr: 0.5 }} fontSize="small" />
                 Inicio
@@ -124,9 +199,20 @@ export default function TopBar({ onMenuClick, title, breadcrumbs = [] }) {
                 <Typography
                   key={index}
                   color={index === breadcrumbs.length - 1 ? 'text.primary' : 'text.secondary'}
-                  sx={{ fontWeight: index === breadcrumbs.length - 1 ? 600 : 400 }}
+                  sx={{ 
+                    fontWeight: index === breadcrumbs.length - 1 ? 600 : 400,
+                    cursor: index === breadcrumbs.length - 1 ? 'default' : 'pointer',
+                    '&:hover': index === breadcrumbs.length - 1 ? {} : {
+                      color: 'primary.main',
+                    }
+                  }}
+                  onClick={() => {
+                    if (index < breadcrumbs.length - 1 && crumb.action && onNavigate) {
+                      onNavigate(crumb.action);
+                    }
+                  }}
                 >
-                  {crumb}
+                  {crumb.text || crumb}
                 </Typography>
               ))}
             </Breadcrumbs>
@@ -246,6 +332,7 @@ export default function TopBar({ onMenuClick, title, breadcrumbs = [] }) {
                     color: 'primary.main',
                   },
                 }}
+                onClick={handleHelpClick}
               >
                 <HelpOutlineIcon />
               </IconButton>
@@ -284,30 +371,45 @@ export default function TopBar({ onMenuClick, title, breadcrumbs = [] }) {
             open={Boolean(anchorElUser)}
             onClose={handleCloseUserMenu}
             TransitionComponent={Fade}
+            PaperProps={{
+              sx: {
+                minWidth: 220,
+                boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                borderRadius: 2,
+              }
+            }}
           >
-            <Box sx={{ px: 2, py: 1 }}>
+            <Box sx={{ px: 2, py: 1.5 }}>
               <Typography variant="subtitle1" fontWeight="bold" color="primary">
-                {user.name}
+                {userName}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Coordinador de Proyectos
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                {userRole}
               </Typography>
             </Box>
-            <MenuItem divider />
+            <Divider sx={{ my: 1 }} />
             {settings.map((setting) => (
               <MenuItem
-                key={setting}
-                onClick={handleCloseUserMenu}
+                key={setting.text}
+                onClick={() => handleMenuAction(setting.action)}
                 sx={{
+                  py: 1.5,
+                  px: 2,
                   transition: 'all 0.2s ease',
                   '&:hover': {
-                    bgcolor: 'primary.light',
-                    color: 'primary.contrastText',
+                    bgcolor: setting.action === 'logout' ? 'error.light' : 'primary.light',
+                    color: setting.action === 'logout' ? 'error.contrastText' : 'primary.contrastText',
                     transform: 'translateX(4px)',
+                    '& .MuiListItemIcon-root': {
+                      color: setting.action === 'logout' ? 'error.contrastText' : 'primary.contrastText',
+                    }
                   },
                 }}
               >
-                <Typography textAlign="center">{setting}</Typography>
+                <ListItemIcon sx={{ minWidth: 36, color: setting.action === 'logout' ? 'error.main' : 'inherit' }}>
+                  {setting.icon}
+                </ListItemIcon>
+                <Typography>{setting.text}</Typography>
               </MenuItem>
             ))}
           </Menu>
@@ -378,6 +480,121 @@ export default function TopBar({ onMenuClick, title, breadcrumbs = [] }) {
           <p>Ayuda</p>
         </MenuItem>
       </Menu>
+
+      {/* Dialog de Confirmación de Cierre de Sesión */}
+      <Dialog
+        open={logoutDialogOpen}
+        onClose={handleCancelLogout}
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            minWidth: { xs: '90%', sm: 420 },
+            background: 'linear-gradient(135deg, #2a9d8f 0%, #264653 100%)',
+            color: 'white',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+          }
+        }}
+        TransitionComponent={Zoom}
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 2,
+          pb: 1,
+          pt: 3
+        }}>
+          <Box 
+            sx={{ 
+              bgcolor: 'rgba(255,255,255,0.2)', 
+              borderRadius: '50%', 
+              p: 1.5,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <LogoutIcon sx={{ fontSize: 28 }} />
+          </Box>
+          <Typography variant="h6" component="span" fontWeight="600">
+            Cerrar Sesión
+          </Typography>
+        </DialogTitle>
+        <DialogContent sx={{ pb: 2 }}>
+          <DialogContentText sx={{ 
+            color: 'rgba(255,255,255,0.95)', 
+            fontSize: '1.05rem',
+            mb: 2
+          }}>
+            ¿Estás seguro de que deseas cerrar sesión?
+          </DialogContentText>
+          <Box sx={{ 
+            mt: 2, 
+            p: 2, 
+            bgcolor: 'rgba(0,0,0,0.25)', 
+            borderRadius: 2,
+            border: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            <Typography variant="body2" sx={{ 
+              color: 'rgba(255,255,255,0.85)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}>
+              <PersonIcon fontSize="small" />
+              <strong>Usuario:</strong> {userName}
+            </Typography>
+            <Typography variant="body2" sx={{ 
+              color: 'rgba(255,255,255,0.85)', 
+              mt: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}>
+              <SettingsIcon fontSize="small" />
+              <strong>Rol:</strong> {userRole}
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5, pt: 1, gap: 1 }}>
+          <Button 
+            onClick={handleCancelLogout}
+            variant="outlined"
+            sx={{ 
+              color: 'white',
+              borderColor: 'rgba(255,255,255,0.5)',
+              borderWidth: 2,
+              px: 3,
+              fontWeight: 600,
+              '&:hover': {
+                borderColor: 'white',
+                bgcolor: 'rgba(255,255,255,0.15)',
+                borderWidth: 2,
+              }
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleConfirmLogout}
+            variant="contained"
+            startIcon={<LogoutIcon />}
+            sx={{ 
+              bgcolor: 'rgba(255,255,255,0.25)',
+              color: 'white',
+              px: 3,
+              fontWeight: 600,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+              '&:hover': {
+                bgcolor: 'rgba(255,255,255,0.35)',
+                boxShadow: '0 6px 16px rgba(0,0,0,0.3)',
+              }
+            }}
+            autoFocus
+          >
+            Cerrar Sesión
+          </Button>
+        </DialogActions>
+      </Dialog>
     </React.Fragment>
   );
 }

@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Desarrollador - AgrovetConectAH</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+            line-height: 1.6;
+            color: #e0e0e0;
+            background: #1a1a2e;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-bottom: 30px;
+            border: 1px solid #e94560;
+        }
+
+        header h1 {
+            color: #e94560;
+            font-size: 2.8em;
+            margin-bottom: 10px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        header .subtitle {
+            color: #00d9ff;
+            font-size: 1.3em;
+            margin-bottom: 5px;
+        }
+
+        header .tech-stack {
+            color: #a0a0a0;
+            font-size: 0.9em;
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 5px;
+            border-left: 3px solid #00d9ff;
+        }
+
+        nav {
+            background: #16213e;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            position: sticky;
+            top: 20px;
+            border: 1px solid #0f3460;
+        }
+
+        nav h3 {
+            color: #e94560;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+
+        nav ul {
+            list-style: none;
+        }
+
+        nav ul li {
+            margin: 12px 0;
+        }
+
+        nav ul li a {
+            color: #00d9ff;
+            text-decoration: none;
+            padding: 10px 15px;
+            display: block;
+            border-radius: 5px;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        nav ul li a:hover {
+            background: #0f3460;
+            border-left-color: #e94560;
+            transform: translateX(5px);
+        }
+
+        .content {
+            background: #16213e;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-bottom: 30px;
+            border: 1px solid #0f3460;
+        }
+
+        h2 {
+            color: #e94560;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e94560;
+            font-size: 2em;
+        }
+
+        h3 {
+            color: #00d9ff;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        h4 {
+            color: #a0d8ef;
+            margin-top: 20px;
+            margin-bottom: 12px;
+            font-size: 1.2em;
+        }
+
+        .code-box {
+            background: #0f0f23;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #00d9ff;
+            overflow-x: auto;
+        }
+
+        .code-box pre {
+            color: #a9fef7;
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .code-inline {
+            background: #0f0f23;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #00d9ff;
+            border: 1px solid #1a1a2e;
+        }
+
+        .warning-box {
+            background: rgba(255, 152, 0, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #ff9800;
+            margin: 20px 0;
+            color: #ffcc80;
+        }
+
+        .info-box {
+            background: rgba(0, 217, 255, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #00d9ff;
+            margin: 20px 0;
+            color: #a0d8ef;
+        }
+
+        .success-box {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #4caf50;
+            margin: 20px 0;
+            color: #a5d6a7;
+        }
+
+        .feature-box {
+            background: rgba(233, 69, 96, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #e94560;
+        }
+
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+            color: #c0c0c0;
+        }
+
+        li {
+            margin: 10px 0;
+            line-height: 1.8;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            background: #0f0f23;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #2a2a4e;
+        }
+
+        th {
+            background: #e94560;
+            color: white;
+            font-weight: 700;
+        }
+
+        tr:hover {
+            background: rgba(233, 69, 96, 0.1);
+        }
+
+        .tech-card {
+            background: #0f0f23;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #00d9ff;
+            transition: transform 0.3s;
+        }
+
+        .tech-card:hover {
+            transform: translateX(10px);
+            border-left-color: #e94560;
+        }
+
+        .tech-card h4 {
+            color: #e94560;
+            margin-bottom: 10px;
+        }
+
+        .architecture-diagram {
+            background: #0f0f23;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 25px 0;
+            text-align: center;
+            border: 2px dashed #00d9ff;
+        }
+
+        .layer {
+            background: rgba(233, 69, 96, 0.2);
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border: 1px solid #e94560;
+        }
+
+        .layer h4 {
+            color: #e94560;
+            margin-bottom: 12px;
+        }
+
+        .endpoint-card {
+            background: #0f0f23;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #4caf50;
+        }
+
+        .endpoint-card .method {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 0.9em;
+        }
+
+        .method.get { background: #4caf50; color: white; }
+        .method.post { background: #2196f3; color: white; }
+        .method.put { background: #ff9800; color: white; }
+        .method.delete { background: #f44336; color: white; }
+
+        footer {
+            background: #16213e;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+            color: #a0a0a0;
+            border: 1px solid #0f3460;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin: 5px;
+            font-weight: 600;
+        }
+
+        .badge.frontend { background: #61dafb; color: #000; }
+        .badge.backend { background: #68a063; color: #fff; }
+        .badge.database { background: #336791; color: #fff; }
+        .badge.tool { background: #ff9800; color: #fff; }
+
+        @media print {
+            body { background: white; color: black; }
+            .container { max-width: 100%; }
+            nav { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔧 Manual de Desarrollador</h1>
+            <p class="subtitle">AgrovetConectAH - Sistema de Gestión de Recursos Humanos</p>
+            <div class="tech-stack">
+                <strong>Stack Tecnológico:</strong> React 19 • Node.js • Express • PostgreSQL • Material-UI v7 • JWT
+            </div>
+            <p style="margin-top: 15px; color: #888; font-size: 0.9em;">Versión 1.0 | Build 2025.11.17</p>
+        </header>
+
+        <div style="display: grid; grid-template-columns: 280px 1fr; gap: 30px;">
+            <nav>
+                <h3>📑 Índice</h3>
+                <ul>
+                    <li><a href="#stack">Stack Tecnológico</a></li>
+                    <li><a href="#arquitectura">Arquitectura</a></li>
+                    <li><a href="#estructura">Estructura del Proyecto</a></li>
+                    <li><a href="#backend">Backend (API)</a></li>
+                    <li><a href="#frontend">Frontend (React)</a></li>
+                    <li><a href="#database">Base de Datos</a></li>
+                    <li><a href="#apis">APIs y Endpoints</a></li>
+                    <li><a href="#autenticacion">Autenticación</a></li>
+                    <li><a href="#deployment">Deployment</a></li>
+                    <li><a href="#desarrollo">Guía de Desarrollo</a></li>
+                </ul>
+            </nav>
+
+            <main>
+                <div class="content" id="stack">
+                    <h2>🛠️ Stack Tecnológico Completo</h2>
+
+                    <h3>Frontend</h3>
+                    <div class="grid-2">
+                        <div class="tech-card">
+                            <h4>⚛️ React 19.2.0</h4>
+                            <p>Framework principal para la interfaz de usuario</p>
+                            <ul>
+                                <li>Hooks modernos (useState, useEffect, useMemo)</li>
+                                <li>Context API para estado global</li>
+                                <li>React Router para navegación</li>
+                                <li>Componentes funcionales</li>
+                            </ul>
+                        </div>
+
+                        <div class="tech-card">
+                            <h4>🎨 Material-UI v7.3.4</h4>
+                            <p>Librería de componentes UI</p>
+                            <ul>
+                                <li>Theme personalizado</li>
+                                <li>DataGrid para tablas</li>
+                                <li>Date Pickers localizados</li>
+                                <li>Icons Material</li>
+                            </ul>
+                        </div>
+
+                        <div class="tech-card">
+                            <h4>⚡ Vite 7.1.9</h4>
+                            <p>Build tool y dev server</p>
+                            <ul>
+                                <li>Hot Module Replacement (HMR)</li>
+                                <li>Build optimizado</li>
+                                <li>Desarrollo ultra-rápido</li>
+                            </ul>
+                        </div>
+
+                        <div class="tech-card">
+                            <h4>📦 Librerías Adicionales</h4>
+                            <ul>
+                                <li><strong>Axios 1.13.2:</strong> Cliente HTTP</li>
+                                <li><strong>React Hook Form 7.65.0:</strong> Gestión de formularios</li>
+                                <li><strong>Moment.js 2.30.1:</strong> Manejo de fechas</li>
+                                <li><strong>Zustand 5.0.8:</strong> Estado global ligero</li>
+                                <li><strong>React Big Calendar:</strong> Vista de calendario</li>
+                                <li><strong>Recharts 2.12.7:</strong> Gráficos y estadísticas</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <h3>Backend</h3>
+                    <div class="grid-2">
+                        <div class="tech-card">
+                            <h4>🟢 Node.js + Express 4.18.2</h4>
+                            <p>Servidor API RESTful</p>
+                            <ul>
+                                <li>ES Modules (import/export)</li>
+                                <li>Middleware personalizado</li>
+                                <li>Manejo de errores centralizado</li>
+                                <li>CORS configurado</li>
+                            </ul>
+                        </div>
+
+                        <div class="tech-card">
+                            <h4>🔐 Autenticación</h4>
+                            <ul>
+                                <li><strong>JWT 9.0.2:</strong> Tokens de sesión</li>
+                                <li><strong>Bcrypt 5.1.1:</strong> Hash de contraseñas</li>
+                                <li><strong>Express Validator 7.0.1:</strong> Validación de datos</li>
+                            </ul>
+                        </div>
+
+                        <div class="tech-card">
+                            <h4>⚙️ Configuración</h4>
+                            <ul>
+                                <li><strong>Dotenv 16.4.1:</strong> Variables de entorno</li>
+                                <li><strong>CORS 2.8.5:</strong> Seguridad de origen cruzado</li>
+                                <li><strong>Node --watch:</strong> Auto-restart en desarrollo</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <h3>Base de Datos</h3>
+                    <div class="tech-card">
+                        <h4>🐘 PostgreSQL 16</h4>
+                        <p>Base de datos relacional en Render (Oregon)</p>
+                        <ul>
+                            <li><strong>Driver:</strong> node-postgres (pg) 8.11.3</li>
+                            <li><strong>Pool de conexiones:</strong> Máximo 20 conexiones</li>
+                            <li><strong>SSL:</strong> Habilitado con certificado</li>
+                            <li><strong>Migraciones:</strong> Scripts SQL versionados</li>
+                            <li><strong>Tablas:</strong> 19 tablas principales</li>
+                        </ul>
+                    </div>
+
+                    <h3>Herramientas de Desarrollo</h3>
+                    <div class="grid-2">
+                        <div class="tech-card">
+                            <h4>Version Control</h4>
+                            <ul>
+                                <li>Git + GitHub</li>
+                                <li>Branching strategy: main</li>
+                            </ul>
+                        </div>
+
+                        <div class="tech-card">
+                            <h4>IDE & Tools</h4>
+                            <ul>
+                                <li>VS Code</li>
+                                <li>ESLint (linting)</li>
+                                <li>Prettier (formatting)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content" id="arquitectura">
+                    <h2>🏗️ Arquitectura del Software</h2>
+
+                    <div class="info-box">
+                        <strong>Patrón Arquitectónico:</strong> Cliente-Servidor con API RESTful
+                    </div>
+
+                    <div class="architecture-diagram">
+                        <h3 style="color: #00d9ff; margin-bottom: 30px;">Arquitectura de 3 Capas</h3>
+                        
+                        <div class="layer">
+                            <h4>🌐 Capa de Presentación (Frontend)</h4>
+                            <p>React 19 + Material-UI + Vite</p>
+                            <p style="color: #888; margin-top: 10px;">Puerto: 5173 (desarrollo) | Nginx (producción)</p>
+                        </div>
+
+                        <div style="text-align: center; margin: 20px 0;">
+                            <span style="color: #00d9ff; font-size: 1.5em;">⬇️ HTTP/HTTPS ⬇️</span>
+                        </div>
+
+                        <div class="layer">
+                            <h4>⚙️ Capa de Lógica de Negocio (Backend)</h4>
+                            <p>Node.js + Express + JWT</p>
+                            <p style="color: #888; margin-top: 10px;">Puerto: 3001 | API RESTful</p>
+                        </div>
+
+                        <div style="text-align: center; margin: 20px 0;">
+                            <span style="color: #00d9ff; font-size: 1.5em;">⬇️ SQL ⬇️</span>
+                        </div>
+
+                        <div class="layer">
+                            <h4>💾 Capa de Datos (Database)</h4>
+                            <p>PostgreSQL 16 en Render Cloud</p>
+                            <p style="color: #888; margin-top: 10px;">Conexión SSL | Pool de 20 conexiones</p>
+                        </div>
+                    </div>
+
+                    <h3>🔄 Flujo de Datos</h3>
+                    <div class="code-box">
+<pre>
+1. Usuario interactúa con React Component
+   ⬇️
+2. Component ejecuta Service (axios)
+   ⬇️
+3. Service hace HTTP request a API
+   ⬇️
+4. Express Middleware valida JWT
+   ⬇️
+5. Router direcciona a Controller
+   ⬇️
+6. Controller ejecuta lógica de negocio
+   ⬇️
+7. Query a PostgreSQL vía Pool
+   ⬇️
+8. DB retorna datos
+   ⬇️
+9. Controller formatea respuesta JSON
+   ⬇️
+10. Service recibe data
+   ⬇️
+11. Component actualiza estado (useState)
+   ⬇️
+12. React re-renderiza UI
+</pre>
+                    </div>
+
+                    <h3>📂 Patrón MVC Adaptado</h3>
+                    <table>
+                        <tr>
+                            <th>Capa</th>
+                            <th>Ubicación</th>
+                            <th>Responsabilidad</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Model</strong></td>
+                            <td>Database (PostgreSQL)</td>
+                            <td>Esquema de datos, relaciones, constraints</td>
+                        </tr>
+                        <tr>
+                            <td><strong>View</strong></td>
+                            <td>src/features/*/components/*.jsx</td>
+                            <td>UI, rendering, eventos de usuario</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Controller</strong></td>
+                            <td>backend/src/controllers/*.js</td>
+                            <td>Lógica de negocio, validaciones, respuestas</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Routes</strong></td>
+                            <td>backend/src/routes/*.js</td>
+                            <td>Mapeo de endpoints a controllers</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Services</strong></td>
+                            <td>src/services/*.service.js</td>
+                            <td>Comunicación HTTP, transformación de datos</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="content" id="estructura">
+                    <h2>📁 Estructura del Proyecto</h2>
+
+                    <h3>Frontend Structure</h3>
+                    <div class="code-box">
+<pre>
+reac/
+├── public/                    # Assets estáticos
+├── src/
+│   ├── components/            # Componentes compartidos
+│   │   ├── Sidebar.jsx
+│   │   ├── TopBar.jsx
+│   │   └── Layout.jsx
+│   ├── features/              # Módulos por funcionalidad
+│   │   ├── auth/
+│   │   │   ├── Login.jsx
+│   │   │   └── Register.jsx
+│   │   ├── vacations/
+│   │   │   ├── VacationsPage.jsx
+│   │   │   └── components/
+│   │   │       ├── RequestForm.jsx
+│   │   │       ├── RequestsList.jsx
+│   │   │       ├── AvailableDays.jsx
+│   │   │       ├── VacationCalendar.jsx
+│   │   │       ├── ApprovalDashboard.jsx
+│   │   │       ├── DashboardRRHH.jsx
+│   │   │       ├── ControlVacacionesEmpleado.jsx
+│   │   │       └── HistorialVacaciones.jsx
+│   │   ├── employees/
+│   │   │   └── GestionEmpleados.jsx
+│   │   └── portal/
+│   │       ├── Portal.jsx
+│   │       └── NewBulletinForm.jsx
+│   ├── services/              # API clients
+│   │   ├── api.js             # Axios instance
+│   │   ├── auth.service.js
+│   │   ├── empleados.service.js
+│   │   ├── publicaciones.service.js
+│   │   └── notificaciones.service.js
+│   ├── utils/                 # Utilidades
+│   ├── App.jsx                # Component principal
+│   ├── main.jsx               # Entry point
+│   └── index.css              # Estilos globales
+├── .env                       # Variables de entorno
+├── vite.config.js             # Configuración Vite
+└── package.json               # Dependencies
+</pre>
+                    </div>
+
+                    <h3>Backend Structure</h3>
+                    <div class="code-box">
+<pre>
+backend/
+├── database/
+│   └── migrations/            # Scripts SQL
+│       ├── 01_initial_schema.sql
+│       ├── 02_usuarios.sql
+│       ├── 03_empleados.sql
+│       ├── 04_publicaciones.sql
+│       ├── 05_sistema_vacaciones.sql
+│       ├── 06_fix_vacaciones.sql
+│       └── 07_tablas_adicionales.sql
+├── src/
+│   ├── controllers/           # Lógica de negocio
+│   │   ├── auth.controller.js
+│   │   ├── empleados.controller.js
+│   │   ├── publicaciones.controller.js
+│   │   ├── notificaciones.controller.js
+│   │   └── vacaciones.controller.js
+│   ├── routes/                # Definición de endpoints
+│   │   ├── auth.routes.js
+│   │   ├── empleados.routes.js
+│   │   ├── publicaciones.routes.js
+│   │   ├── notificaciones.routes.js
+│   │   └── vacaciones.routes.js
+│   ├── middleware/            # Middleware personalizado
+│   │   └── auth.js            # Verificación JWT
+│   ├── services/              # Servicios de negocio
+│   │   └── vacaciones.service.js
+│   ├── db.js                  # Pool PostgreSQL
+│   └── server.js              # Entry point
+├── .env                       # Variables de entorno
+└── package.json               # Dependencies
+</pre>
+                    </div>
+
+                    <h3>Convenciones de Código</h3>
+                    <div class="feature-box">
+                        <h4>Naming Conventions</h4>
+                        <ul>
+                            <li><strong>Components:</strong> PascalCase (ej. <code class="code-inline">DashboardRRHH.jsx</code>)</li>
+                            <li><strong>Services:</strong> camelCase + .service.js (ej. <code class="code-inline">empleados.service.js</code>)</li>
+                            <li><strong>Controllers:</strong> camelCase + .controller.js</li>
+                            <li><strong>Variables:</strong> camelCase</li>
+                            <li><strong>Constants:</strong> UPPER_SNAKE_CASE</li>
+                            <li><strong>Database tables:</strong> snake_case plural</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="content" id="backend">
+                    <h2>⚙️ Backend - API REST</h2>
+
+                    <h3>Configuración del Servidor</h3>
+                    <div class="code-box">
+<pre>
+// backend/src/server.js
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+// Middleware
+app.use(cors({ origin: process.env.CORS_ORIGIN }));
+app.use(express.json());
+
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/empleados', empleadosRoutes);
+app.use('/api/publicaciones', publicacionesRoutes);
+app.use('/api/notificaciones', notificacionesRoutes);
+app.use('/api/vacaciones', vacacionesRoutes);
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', database: 'PostgreSQL' });
+});
+
+app.listen(PORT, () => {
+  console.log(`✅ Servidor corriendo en puerto ${PORT}`);
+});
+</pre>
+                    </div>
+
+                    <h3>Middleware de Autenticación</h3>
+                    <div class="code-box">
+<pre>
+// backend/src/middleware/auth.js
+import jwt from 'jsonwebtoken';
+
+export const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Token no proporcionado' });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: 'Token inválido' });
+    }
+    req.user = user;
+    next();
+  });
+};
+</pre>
+                    </div>
+
+                    <h3>Ejemplo de Controller</h3>
+                    <div class="code-box">
+<pre>
+// backend/src/controllers/empleados.controller.js
+import { query } from '../db.js';
+
+export const getEmpleados = async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT 
+        e.id, e.dni, e.nombres, e.apellidos,
+        e.email, e.telefono, e.puesto, e.area,
+        e.dias_vacaciones, e.estado
+      FROM empleados e
+      WHERE e.estado != 'Cesado'
+      ORDER BY e.nombres
+    `);
+    
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Error al obtener empleados' });
+  }
+};
+</pre>
+                    </div>
+                </div>
+
+                <div class="content" id="frontend">
+                    <h2>⚛️ Frontend - React Application</h2>
+
+                    <h3>Configuración Principal</h3>
+                    <div class="code-box">
+<pre>
+// src/App.jsx
+import { useState } from 'react';
+import { ThemeProvider, createTheme } from '@mui/material';
+import Sidebar from './components/Sidebar';
+import TopBar from './components/TopBar';
+import Portal from './features/portal/Portal';
+
+const theme = createTheme({
+  palette: {
+    primary: { main: '#1976d2' },
+    secondary: { main: '#dc004e' },
+  },
+});
+
+function App() {
+  const [currentView, setCurrentView] = useState('portal');
+  const [user, setUser] = useState(null);
+
+  return (
+    &lt;ThemeProvider theme={theme}&gt;
+      &lt;Box sx={{ display: 'flex' }}&gt;
+        &lt;Sidebar onMenuClick={setCurrentView} /&gt;
+        &lt;Box sx={{ flexGrow: 1 }}&gt;
+          &lt;TopBar user={user} /&gt;
+          {/* Render current view */}
+        &lt;/Box&gt;
+      &lt;/Box&gt;
+    &lt;/ThemeProvider&gt;
+  );
+}
+</pre>
+                    </div>
+
+                    <h3>Service Pattern</h3>
+                    <div class="code-box">
+<pre>
+// src/services/empleados.service.js
+import api from './api';
+
+export const empleadosService = {
+  getAll: async () => {
+    const response = await api.get('/empleados');
+    return response.data;
+  },
+
+  getById: async (id) => {
+    const response = await api.get(`/empleados/${id}`);
+    return response.data;
+  },
+
+  create: async (empleadoData) => {
+    const response = await api.post('/empleados', empleadoData);
+    return response.data;
+  },
+
+  update: async (id, empleadoData) => {
+    const response = await api.put(`/empleados/${id}`, empleadoData);
+    return response.data;
+  },
+
+  delete: async (id) => {
+    const response = await api.delete(`/empleados/${id}`);
+    return response.data;
+  },
+};
+</pre>
+                    </div>
+
+                    <h3>Component Pattern</h3>
+                    <div class="code-box">
+<pre>
+// src/features/employees/GestionEmpleados.jsx
+import { useState, useEffect } from 'react';
+import { empleadosService } from '../../services/empleados.service';
+import { DataGrid } from '@mui/x-data-grid';
+
+export default function GestionEmpleados() {
+  const [empleados, setEmpleados] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchEmpleados();
+  }, []);
+
+  const fetchEmpleados = async () => {
+    try {
+      const data = await empleadosService.getAll();
+      setEmpleados(data);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    &lt;Box sx={{ p: 3 }}&gt;
+      &lt;Typography variant="h4"&gt;Gestión de Empleados&lt;/Typography&gt;
+      &lt;DataGrid rows={empleados} columns={columns} loading={loading} /&gt;
+    &lt;/Box&gt;
+  );
+}
+</pre>
+                    </div>
+                </div>
+
+                <div class="content" id="database">
+                    <h2>💾 Base de Datos PostgreSQL</h2>
+
+                    <h3>Esquema Principal</h3>
+                    <table>
+                        <tr>
+                            <th>Tabla</th>
+                            <th>Descripción</th>
+                            <th>Registros</th>
+                        </tr>
+                        <tr>
+                            <td><code class="code-inline">usuarios</code></td>
+                            <td>Credenciales de acceso</td>
+                            <td>8</td>
+                        </tr>
+                        <tr>
+                            <td><code class="code-inline">empleados</code></td>
+                            <td>Información de empleados</td>
+                            <td>8</td>
+                        </tr>
+                        <tr>
+                            <td><code class="code-inline">puestos</code></td>
+                            <td>Cargos y salarios</td>
+                            <td>15</td>
+                        </tr>
+                        <tr>
+                            <td><code class="code-inline">areas</code></td>
+                            <td>Departamentos</td>
+                            <td>8</td>
+                        </tr>
+                        <tr>
+                            <td><code class="code-inline">divisiones</code></td>
+                            <td>Divisiones organizacionales</td>
+                            <td>3</td>
+                        </tr>
+                        <tr>
+                            <td><code class="code-inline">publicaciones</code></td>
+                            <td>Boletines y anuncios</td>
+                            <td>3</td>
+                        </tr>
+                        <tr>
+                            <td><code class="code-inline">notificaciones</code></td>
+                            <td>Sistema de alertas</td>
+                            <td>3</td>
+                        </tr>
+                        <tr>
+                            <td><code class="code-inline">solicitudes_vacaciones</code></td>
+                            <td>Solicitudes de vacaciones</td>
+                            <td>Variable</td>
+                        </tr>
+                        <tr>
+                            <td><code class="code-inline">periodos_vacacionales</code></td>
+                            <td>Períodos de vacaciones</td>
+                            <td>Variable</td>
+                        </tr>
+                        <tr>
+                            <td><code class="code-inline">tipos_trabajador</code></td>
+                            <td>Tipos de contrato</td>
+                            <td>3</td>
+                        </tr>
+                        <tr>
+                            <td><code class="code-inline">feriados</code></td>
+                            <td>Feriados nacionales 2025</td>
+                            <td>13</td>
+                        </tr>
+                    </table>
+
+                    <h3>Diagrama de Relaciones</h3>
+                    <div class="code-box">
+<pre>
+usuarios (1) ←→ (1) empleados
+    ↓
+empleados (N) → (1) puestos
+empleados (N) → (1) areas
+empleados (N) → (1) divisiones
+empleados (N) → (1) empleados (supervisor)
+    ↓
+empleados (1) ←→ (N) solicitudes_vacaciones
+empleados (1) ←→ (N) periodos_vacacionales
+empleados (1) ←→ (N) notificaciones
+    ↓
+tipos_trabajador (1) ←→ (N) empleados
+feriados (N) ←→ validaciones en solicitudes_vacaciones
+</pre>
+                    </div>
+
+                    <h3>Pool de Conexiones</h3>
+                    <div class="code-box">
+<pre>
+// backend/src/db.js
+import pg from 'pg';
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+  max: 20,                    // Máximo de conexiones
+  idleTimeoutMillis: 30000,   // Timeout idle
+  connectionTimeoutMillis: 2000, // Timeout conexión
+});
+
+export const query = (text, params) => pool.query(text, params);
+export default pool;
+</pre>
+                    </div>
+                </div>
+
+                <div class="content" id="apis">
+                    <h2>🔌 APIs y Endpoints</h2>
+
+                    <h3>Autenticación</h3>
+                    <div class="endpoint-card">
+                        <span class="method post">POST</span>
+                        <code class="code-inline">/api/auth/login</code>
+                        <p>Iniciar sesión y obtener JWT</p>
+                        <div class="code-box">
+<pre>
+Body: { email, password }
+Response: { token, user: { id, nombre, rol, empleadoId } }
+</pre>
+                        </div>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <span class="method post">POST</span>
+                        <code class="code-inline">/api/auth/register</code>
+                        <p>Registrar nuevo usuario</p>
+                    </div>
+
+                    <h3>Empleados</h3>
+                    <div class="endpoint-card">
+                        <span class="method get">GET</span>
+                        <code class="code-inline">/api/empleados</code>
+                        <p>Obtener todos los empleados</p>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <span class="method get">GET</span>
+                        <code class="code-inline">/api/empleados/:id</code>
+                        <p>Obtener empleado por ID</p>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <span class="method post">POST</span>
+                        <code class="code-inline">/api/empleados</code>
+                        <p>Crear nuevo empleado</p>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <span class="method put">PUT</span>
+                        <code class="code-inline">/api/empleados/:id</code>
+                        <p>Actualizar empleado</p>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <span class="method delete">DELETE</span>
+                        <code class="code-inline">/api/empleados/:id</code>
+                        <p>Eliminar empleado (soft delete)</p>
+                    </div>
+
+                    <h3>Vacaciones</h3>
+                    <div class="endpoint-card">
+                        <span class="method get">GET</span>
+                        <code class="code-inline">/api/vacaciones/historial</code>
+                        <p>Historial de solicitudes (con paginación y filtros)</p>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <span class="method get">GET</span>
+                        <code class="code-inline">/api/vacaciones/control-rrhh</code>
+                        <p>Dashboard de control para RRHH</p>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <span class="method post">POST</span>
+                        <code class="code-inline">/api/vacaciones/solicitar</code>
+                        <p>Crear solicitud de vacaciones</p>
+                    </div>
+
+                    <h3>Publicaciones</h3>
+                    <div class="endpoint-card">
+                        <span class="method get">GET</span>
+                        <code class="code-inline">/api/publicaciones</code>
+                        <p>Obtener todas las publicaciones</p>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <span class="method post">POST</span>
+                        <code class="code-inline">/api/publicaciones</code>
+                        <p>Crear nueva publicación</p>
+                    </div>
+
+                    <h3>Notificaciones</h3>
+                    <div class="endpoint-card">
+                        <span class="method get">GET</span>
+                        <code class="code-inline">/api/notificaciones/:userId</code>
+                        <p>Obtener notificaciones de usuario</p>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <span class="method post">POST</span>
+                        <code class="code-inline">/api/notificaciones</code>
+                        <p>Crear notificación</p>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <span class="method put">PUT</span>
+                        <code class="code-inline">/api/notificaciones/:id/marcar-leida</code>
+                        <p>Marcar como leída</p>
+                    </div>
+                </div>
+
+                <div class="content" id="autenticacion">
+                    <h2>🔐 Sistema de Autenticación</h2>
+
+                    <h3>Flujo de Autenticación</h3>
+                    <div class="code-box">
+<pre>
+1. Usuario envía credenciales (email + password)
+2. Backend verifica en tabla usuarios
+3. Compara password con bcrypt.compare()
+4. Si es correcto, genera JWT token
+5. Token incluye: { userId, empleadoId, rol }
+6. Frontend guarda token en localStorage
+7. Todas las requests incluyen: Authorization: Bearer {token}
+8. Middleware verifica token en cada request
+9. Si token es válido, permite acceso
+10. Si token expira, redirige a login
+</pre>
+                    </div>
+
+                    <h3>Generación de Token JWT</h3>
+                    <div class="code-box">
+<pre>
+// backend/src/controllers/auth.controller.js
+const token = jwt.sign(
+  {
+    userId: user.id,
+    empleadoId: user.empleado_id,
+    email: user.email,
+    rol: user.rol
+  },
+  process.env.JWT_SECRET,
+  { expiresIn: '24h' }
+);
+</pre>
+                    </div>
+
+                    <h3>Hash de Contraseñas</h3>
+                    <div class="code-box">
+<pre>
+// Al crear usuario
+const hashedPassword = await bcrypt.hash(password, 10);
+
+// Al verificar login
+const isValid = await bcrypt.compare(password, user.password_hash);
+</pre>
+                    </div>
+
+                    <h3>Interceptor de Axios (Frontend)</h3>
+                    <div class="code-box">
+<pre>
+// src/services/api.js
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api',
+});
+
+// Agregar token en cada request
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Manejar errores 401 (no autorizado)
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default api;
+</pre>
+                    </div>
+                </div>
+
+                <div class="content" id="deployment">
+                    <h2>🚀 Deployment</h2>
+
+                    <h3>Variables de Entorno</h3>
+                    
+                    <h4>Backend (.env)</h4>
+                    <div class="code-box">
+<pre>
+NODE_ENV=production
+PORT=3001
+DATABASE_URL=postgresql://user:password@host:5432/database
+JWT_SECRET=your_super_secret_key_change_in_production
+JWT_EXPIRES_IN=24h
+CORS_ORIGIN=https://yourdomain.com
+</pre>
+                    </div>
+
+                    <h4>Frontend (.env)</h4>
+                    <div class="code-box">
+<pre>
+VITE_API_URL=http://localhost:3001/api
+</pre>
+                    </div>
+
+                    <h3>Build para Producción</h3>
+                    <div class="code-box">
+<pre>
+# Frontend
+npm run build
+# Genera carpeta dist/ optimizada
+
+# Backend
+npm start
+# Ejecuta node src/server.js
+</pre>
+                    </div>
+
+                    <h3>Render.com Deployment</h3>
+                    
+                    <div class="feature-box">
+                        <h4>PostgreSQL Database</h4>
+                        <ul>
+                            <li><strong>Region:</strong> Oregon (US West)</li>
+                            <li><strong>Plan:</strong> Free Tier</li>
+                            <li><strong>SSL:</strong> Habilitado</li>
+                            <li><strong>Backups:</strong> Automáticos diarios</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-box">
+                        <h4>Backend (Web Service)</h4>
+                        <ul>
+                            <li><strong>Build Command:</strong> <code class="code-inline">npm install</code></li>
+                            <li><strong>Start Command:</strong> <code class="code-inline">npm start</code></li>
+                            <li><strong>Environment:</strong> Node.js</li>
+                            <li><strong>Auto-deploy:</strong> main branch</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-box">
+                        <h4>Frontend (Static Site)</h4>
+                        <ul>
+                            <li><strong>Build Command:</strong> <code class="code-inline">npm run build</code></li>
+                            <li><strong>Publish Directory:</strong> <code class="code-inline">dist</code></li>
+                            <li><strong>Framework:</strong> Vite</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="content" id="desarrollo">
+                    <h2>💻 Guía de Desarrollo</h2>
+
+                    <h3>Setup Inicial</h3>
+                    <div class="code-box">
+<pre>
+# 1. Clonar repositorio
+git clone https://github.com/jonathancerda-hub/AgrovetConectAH.git
+cd AgrovetConectAH
+
+# 2. Instalar dependencias Frontend
+npm install
+
+# 3. Instalar dependencias Backend
+cd backend
+npm install
+
+# 4. Configurar variables de entorno
+# Crear .env en raíz y en backend/
+
+# 5. Iniciar desarrollo
+# Terminal 1 - Backend
+cd backend
+npm run dev
+
+# Terminal 2 - Frontend
+npm run dev
+</pre>
+                    </div>
+
+                    <h3>Agregar Nueva Funcionalidad</h3>
+                    
+                    <div class="success-box">
+                        <h4>📌 Checklist de Desarrollo</h4>
+                        <ol>
+                            <li>✅ Crear migración SQL si es necesario</li>
+                            <li>✅ Crear controller en backend/src/controllers/</li>
+                            <li>✅ Agregar ruta en backend/src/routes/</li>
+                            <li>✅ Crear service en src/services/</li>
+                            <li>✅ Crear component en src/features/</li>
+                            <li>✅ Agregar al menú en App.jsx</li>
+                            <li>✅ Probar en desarrollo</li>
+                            <li>✅ Documentar en manual de usuario</li>
+                        </ol>
+                    </div>
+
+                    <h3>Ejemplo: Agregar Módulo de Nómina</h3>
+                    
+                    <h4>1. Migración SQL</h4>
+                    <div class="code-box">
+<pre>
+-- database/migrations/08_nomina.sql
+CREATE TABLE nominas (
+  id SERIAL PRIMARY KEY,
+  empleado_id INT REFERENCES empleados(id),
+  periodo VARCHAR(20) NOT NULL,
+  salario_base DECIMAL(10,2),
+  bonos DECIMAL(10,2),
+  descuentos DECIMAL(10,2),
+  total DECIMAL(10,2),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+</pre>
+                    </div>
+
+                    <h4>2. Backend Controller</h4>
+                    <div class="code-box">
+<pre>
+// backend/src/controllers/nomina.controller.js
+export const getNominas = async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT n.*, e.nombres, e.apellidos
+      FROM nominas n
+      JOIN empleados e ON n.empleado_id = e.id
+      ORDER BY n.created_at DESC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+</pre>
+                    </div>
+
+                    <h4>3. Backend Route</h4>
+                    <div class="code-box">
+<pre>
+// backend/src/routes/nomina.routes.js
+import { Router } from 'express';
+import { getNominas } from '../controllers/nomina.controller.js';
+import { authenticateToken } from '../middleware/auth.js';
+
+const router = Router();
+router.get('/', authenticateToken, getNominas);
+
+export default router;
+</pre>
+                    </div>
+
+                    <h4>4. Frontend Service</h4>
+                    <div class="code-box">
+<pre>
+// src/services/nomina.service.js
+import api from './api';
+
+export const nominaService = {
+  getAll: async () => {
+    const response = await api.get('/nomina');
+    return response.data;
+  },
+};
+</pre>
+                    </div>
+
+                    <h4>5. Frontend Component</h4>
+                    <div class="code-box">
+<pre>
+// src/features/nomina/GestionNomina.jsx
+import { useState, useEffect } from 'react';
+import { nominaService } from '../../services/nomina.service';
+
+export default function GestionNomina() {
+  const [nominas, setNominas] = useState([]);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    const data = await nominaService.getAll();
+    setNominas(data);
+  };
+
+  return (
+    &lt;Box sx={{ p: 3 }}&gt;
+      &lt;Typography variant="h4"&gt;Gestión de Nómina&lt;/Typography&gt;
+      {/* Tabla aquí */}
+    &lt;/Box&gt;
+  );
+}
+</pre>
+                    </div>
+
+                    <h3>Debugging Tips</h3>
+                    <div class="warning-box">
+                        <h4>🐛 Problemas Comunes</h4>
+                        <ul>
+                            <li><strong>CORS Error:</strong> Verificar CORS_ORIGIN en .env del backend</li>
+                            <li><strong>401 Unauthorized:</strong> Token expirado o inválido, hacer login nuevamente</li>
+                            <li><strong>500 Server Error:</strong> Ver logs del backend, probablemente query SQL</li>
+                            <li><strong>Port in use:</strong> Matar proceso con <code class="code-inline">Stop-Process</code></li>
+                            <li><strong>Cannot find module:</strong> Ejecutar <code class="code-inline">npm install</code></li>
+                        </ul>
+                    </div>
+
+                    <h3>Testing</h3>
+                    <div class="info-box">
+                        <h4>🧪 Estrategia de Testing</h4>
+                        <ul>
+                            <li><strong>Manual Testing:</strong> Probar cada endpoint con Postman/Thunder Client</li>
+                            <li><strong>Frontend:</strong> React Developer Tools para inspeccionar estado</li>
+                            <li><strong>Database:</strong> Verificar datos con DBeaver o pgAdmin</li>
+                            <li><strong>Logs:</strong> console.log en desarrollo, Winston en producción</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="content">
+                    <h2>📚 Recursos Adicionales</h2>
+                    
+                    <div class="grid-2">
+                        <div class="tech-card">
+                            <h4>📖 Documentación Oficial</h4>
+                            <ul>
+                                <li><a href="https://react.dev" style="color: #00d9ff;">React Documentation</a></li>
+                                <li><a href="https://mui.com" style="color: #00d9ff;">Material-UI</a></li>
+                                <li><a href="https://expressjs.com" style="color: #00d9ff;">Express.js</a></li>
+                                <li><a href="https://www.postgresql.org/docs/" style="color: #00d9ff;">PostgreSQL</a></li>
+                            </ul>
+                        </div>
+
+                        <div class="tech-card">
+                            <h4>🛠️ Herramientas</h4>
+                            <ul>
+                                <li>VS Code Extensions: ES7 React snippets, ESLint</li>
+                                <li>Postman para testing de APIs</li>
+                                <li>DBeaver para gestión de BD</li>
+                                <li>Git Extensions para control de versiones</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <h3>📞 Contacto del Equipo de Desarrollo</h3>
+                    <div class="info-box">
+                        <p><strong>Email:</strong> desarrollo.ti@agrovetmarket.pe</p>
+                        <p><strong>GitHub:</strong> https://github.com/jonathancerda-hub/AgrovetConectAH</p>
+                        <p><strong>Documentación:</strong> /docs en el repositorio</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <footer>
+            <p><strong>AgrovetConectAH</strong> | Technical Documentation</p>
+            <p>Desarrollado por el Equipo de TI | Stack: React + Node.js + PostgreSQL</p>
+            <p style="margin-top: 15px; font-size: 0.9em;">
+                Build: 2025.11.17 | v1.0.0 | Environment: Development
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

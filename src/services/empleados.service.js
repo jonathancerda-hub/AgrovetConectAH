@@ -71,7 +71,17 @@ export const empleadosService = {
   getAreas: async () => {
     const response = await api.get('/empleados/areas');
     return response.data;
+  },
+
+  /**
+   * Obtener cumpleañeros del día
+   * @returns {Promise<Array>}
+   */
+  getCumpleaneros: async () => {
+    const response = await api.get('/empleados/cumpleaneros');
+    return response.data;
   }
 };
 
 export default empleadosService;
+

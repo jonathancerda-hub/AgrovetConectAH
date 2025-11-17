@@ -6,7 +6,8 @@ import {
   updateEmpleado,
   desactivarEmpleado,
   getPuestos,
-  getAreas
+  getAreas,
+  getCumpleaneros
 } from '../controllers/empleados.controller.js';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
 
@@ -19,6 +20,7 @@ router.use(authMiddleware);
 router.get('/', getEmpleados);
 router.get('/puestos', getPuestos);
 router.get('/areas', getAreas);
+router.get('/cumpleaneros', getCumpleaneros);
 router.get('/:id', getEmpleadoById);
 
 // Rutas que requieren rol de RRHH o admin

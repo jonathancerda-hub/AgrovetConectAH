@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - AgrovetConectAH</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header .subtitle {
+            color: #666;
+            font-size: 1.2em;
+        }
+
+        .content {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        nav {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            position: sticky;
+            top: 20px;
+        }
+
+        nav h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        nav ul {
+            list-style: none;
+        }
+
+        nav ul li {
+            margin: 10px 0;
+        }
+
+        nav ul li a {
+            color: #555;
+            text-decoration: none;
+            padding: 8px 12px;
+            display: block;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+
+        nav ul li a:hover {
+            background: #667eea;
+            color: white;
+            transform: translateX(5px);
+        }
+
+        h2 {
+            color: #667eea;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        h3 {
+            color: #764ba2;
+            margin-top: 25px;
+            margin-bottom: 12px;
+        }
+
+        h4 {
+            color: #555;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .feature-box {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+        }
+
+        .info-box {
+            background: #d1ecf1;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #17a2b8;
+            margin: 20px 0;
+        }
+
+        .success-box {
+            background: #d4edda;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+            margin: 20px 0;
+        }
+
+        .rule-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .rule-item h4 {
+            color: #28a745;
+            margin-bottom: 8px;
+        }
+
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 15px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #e83e8c;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .icon {
+            font-size: 1.3em;
+            margin-right: 8px;
+        }
+
+        footer {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            color: #666;
+        }
+
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .module-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .module-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0,0,0,0.15);
+        }
+
+        .module-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .container {
+                max-width: 100%;
+            }
+            nav {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📘 Manual de Usuario</h1>
+            <p class="subtitle">AgrovetConectAH - Sistema de Gestión de Recursos Humanos</p>
+            <p style="margin-top: 10px; color: #999;">Versión 1.0 | Noviembre 2025</p>
+        </header>
+
+        <div style="display: grid; grid-template-columns: 250px 1fr; gap: 30px;">
+            <nav>
+                <h3>📑 Contenido</h3>
+                <ul>
+                    <li><a href="#introduccion">Introducción</a></li>
+                    <li><a href="#modulos">Módulos del Sistema</a></li>
+                    <li><a href="#vacaciones">Sistema de Vacaciones</a></li>
+                    <li><a href="#reglas">Reglas de Vacaciones</a></li>
+                    <li><a href="#dashboard">Dashboard RRHH</a></li>
+                    <li><a href="#gestion">Gestión de Empleados</a></li>
+                    <li><a href="#proximos">Próximos Pasos</a></li>
+                    <li><a href="#soporte">Soporte</a></li>
+                </ul>
+            </nav>
+
+            <main>
+                <div class="content" id="introduccion">
+                    <h2>🎯 Introducción</h2>
+                    <p>AgrovetConectAH es una plataforma integral de gestión de recursos humanos diseñada específicamente para Agrovet Market S.A. El sistema permite gestionar empleados, solicitudes de vacaciones, nóminas, y mucho más de manera eficiente y centralizada.</p>
+                    
+                    <div class="feature-box">
+                        <h3>✨ Características Principales</h3>
+                        <ul>
+                            <li><strong>Gestión de Empleados:</strong> CRUD completo con información detallada</li>
+                            <li><strong>Sistema de Vacaciones:</strong> Solicitudes, aprobaciones y control inteligente</li>
+                            <li><strong>Dashboard RRHH:</strong> Visualización de métricas y estadísticas en tiempo real</li>
+                            <li><strong>Portal de Empleados:</strong> Acceso personalizado a información y servicios</li>
+                            <li><strong>Notificaciones:</strong> Sistema de alertas y recordatorios automáticos</li>
+                            <li><strong>Historial:</strong> Seguimiento completo de todas las operaciones</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-box">
+                        <strong>ℹ️ Nota:</strong> Este manual está diseñado para usuarios finales. Si necesitas información técnica sobre el desarrollo del sistema, consulta el Manual de Desarrollador.
+                    </div>
+                </div>
+
+                <div class="content" id="modulos">
+                    <h2>📦 Módulos del Sistema</h2>
+                    
+                    <div class="module-grid">
+                        <div class="module-card">
+                            <h3>🏠 Portal</h3>
+                            <p>Página de inicio personalizada que muestra:</p>
+                            <ul>
+                                <li>Boletines y anuncios importantes</li>
+                                <li>Accesos rápidos a módulos</li>
+                                <li>Información del empleado</li>
+                            </ul>
+                        </div>
+
+                        <div class="module-card">
+                            <h3>👥 Gestión de Empleados</h3>
+                            <p>Administración completa de personal:</p>
+                            <ul>
+                                <li>Alta, baja y modificación</li>
+                                <li>Datos personales y laborales</li>
+                                <li>Historial de cambios</li>
+                            </ul>
+                        </div>
+
+                        <div class="module-card">
+                            <h3>🏖️ Vacaciones</h3>
+                            <p>Gestión integral de vacaciones:</p>
+                            <ul>
+                                <li>Solicitudes de vacaciones</li>
+                                <li>Calendario visual</li>
+                                <li>Días disponibles y tomados</li>
+                            </ul>
+                        </div>
+
+                        <div class="module-card">
+                            <h3>📊 Dashboard RRHH</h3>
+                            <p>Panel de control avanzado:</p>
+                            <ul>
+                                <li>Estadísticas de empleados</li>
+                                <li>Control de vacaciones</li>
+                                <li>Alertas y notificaciones</li>
+                            </ul>
+                        </div>
+
+                        <div class="module-card">
+                            <h3>👔 Mi Equipo</h3>
+                            <p>Gestión de supervisión:</p>
+                            <ul>
+                                <li>Empleados bajo supervisión</li>
+                                <li>Aprobación de solicitudes</li>
+                                <li>Evaluación de desempeño</li>
+                            </ul>
+                        </div>
+
+                        <div class="module-card">
+                            <h3>📜 Historial</h3>
+                            <p>Registro de actividades:</p>
+                            <ul>
+                                <li>Historial de solicitudes</li>
+                                <li>Filtros avanzados</li>
+                                <li>Exportación de reportes</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content" id="vacaciones">
+                    <h2>🏖️ Sistema de Vacaciones</h2>
+                    
+                    <h3>📝 Cómo Solicitar Vacaciones</h3>
+                    
+                    <div class="feature-box">
+                        <h4><span class="step-number">1</span> Acceder al Formulario</h4>
+                        <p>Desde el menú principal, selecciona <code>Vacaciones</code> → <code>Solicitar Vacaciones</code></p>
+                    </div>
+
+                    <div class="feature-box">
+                        <h4><span class="step-number">2</span> Completar el Formulario</h4>
+                        <p>Ingresa la siguiente información:</p>
+                        <ul>
+                            <li><strong>Fecha de Inicio:</strong> Primer día de vacaciones</li>
+                            <li><strong>Fecha de Fin:</strong> Último día de vacaciones</li>
+                            <li><strong>Motivo (opcional):</strong> Razón de la solicitud</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-box">
+                        <h4><span class="step-number">3</span> Validación Automática</h4>
+                        <p>El sistema valida automáticamente:</p>
+                        <ul>
+                            <li>✅ Días disponibles suficientes</li>
+                            <li>✅ Cumplimiento de reglas laborales</li>
+                            <li>✅ No sobrepasar límite de viernes</li>
+                            <li>✅ Compatibilidad con feriados</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-box">
+                        <h4><span class="step-number">4</span> Envío y Seguimiento</h4>
+                        <p>Una vez enviada:</p>
+                        <ul>
+                            <li>📧 Se notifica al supervisor</li>
+                            <li>📊 Puedes ver el estado en <code>Historial</code></li>
+                            <li>🔔 Recibirás notificación cuando sea aprobada/rechazada</li>
+                        </ul>
+                    </div>
+
+                    <h3>📊 Consultar Días Disponibles</h3>
+                    <p>Puedes ver tus días disponibles en:</p>
+                    <ul>
+                        <li><strong>Portal:</strong> Card "Días Disponibles" en la página principal</li>
+                        <li><strong>Formulario de Solicitud:</strong> Se muestra automáticamente</li>
+                        <li><strong>Calendario:</strong> Vista mensual con días marcados</li>
+                    </ul>
+
+                    <h3>📅 Calendario de Vacaciones</h3>
+                    <p>El calendario muestra:</p>
+                    <ul>
+                        <li><strong>Verde:</strong> Vacaciones aprobadas</li>
+                        <li><strong>Amarillo:</strong> Solicitudes pendientes</li>
+                        <li><strong>Rojo:</strong> Solicitudes rechazadas</li>
+                        <li><strong>Azul:</strong> Feriados nacionales</li>
+                    </ul>
+                </div>
+
+                <div class="content" id="reglas">
+                    <h2>📋 Reglas del Sistema de Vacaciones</h2>
+                    
+                    <div class="warning-box">
+                        <strong>⚠️ Importante:</strong> Todas estas reglas se validan automáticamente al enviar una solicitud. Si alguna regla no se cumple, el sistema mostrará un mensaje de error explicativo.
+                    </div>
+
+                    <div class="rule-item">
+                        <h4>1️⃣ Días por Año Según Tipo de Trabajador</h4>
+                        <table>
+                            <tr>
+                                <th>Tipo de Trabajador</th>
+                                <th>Días por Año</th>
+                            </tr>
+                            <tr>
+                                <td>Tiempo Completo</td>
+                                <td>30 días</td>
+                            </tr>
+                            <tr>
+                                <td>Part Time</td>
+                                <td>7 días</td>
+                            </tr>
+                            <tr>
+                                <td>Practicante</td>
+                                <td>15 días</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="rule-item">
+                        <h4>2️⃣ Bloque Continuo Mínimo</h4>
+                        <p>Al menos una vez al año, debes tomar un mínimo de <strong>7 días continuos</strong> de vacaciones.</p>
+                    </div>
+
+                    <div class="rule-item">
+                        <h4>3️⃣ Días Mínimos por Solicitud</h4>
+                        <p>Cada solicitud debe ser de al menos <strong>7 días calendario</strong> (salvo casos excepcionales aprobados por RRHH).</p>
+                    </div>
+
+                    <div class="rule-item">
+                        <h4>4️⃣ Cómputo de Días</h4>
+                        <p>Los días de vacaciones se cuentan en <strong>días calendario</strong> (no laborables), incluyendo sábados y domingos.</p>
+                    </div>
+
+                    <div class="rule-item">
+                        <h4>5️⃣ Acumulación de Días</h4>
+                        <p>Los días no utilizados <strong>NO</strong> se acumulan para el siguiente período. Deben ser tomados dentro del año correspondiente.</p>
+                    </div>
+
+                    <div class="rule-item">
+                        <h4>6️⃣ Solicitud con Anticipación</h4>
+                        <p>Las vacaciones deben solicitarse con al menos <strong>15 días de anticipación</strong>.</p>
+                    </div>
+
+                    <div class="rule-item">
+                        <h4>7️⃣ Derecho a Vacaciones</h4>
+                        <p>Los trabajadores tienen derecho a 30 días de vacaciones al cumplir <strong>1 año de servicio</strong>.</p>
+                    </div>
+
+                    <div class="rule-item">
+                        <h4>8️⃣ Preaviso al Empleador</h4>
+                        <p>El empleador debe otorgar las vacaciones en el período solicitado, siempre que se cumpla con el preaviso de <strong>15 días</strong>.</p>
+                    </div>
+
+                    <div class="rule-item">
+                        <h4>9️⃣ Fraccionamiento</h4>
+                        <p>Las vacaciones pueden fraccionarse en hasta <strong>3 períodos</strong> durante el año, siempre que uno sea de al menos 7 días continuos.</p>
+                    </div>
+
+                    <div class="rule-item">
+                        <h4>🔟 Reducción de Días</h4>
+                        <p>Solo se permite reducir el período vacacional mediante acuerdo escrito y con <strong>aprobación expresa de RRHH</strong>.</p>
+                    </div>
+
+                    <div class="rule-item">
+                        <h4>1️⃣1️⃣ Inicio en Cualquier Día</h4>
+                        <p>Las vacaciones pueden iniciar cualquier día de la semana, no necesariamente un lunes.</p>
+                    </div>
+
+                    <div class="rule-item">
+                        <h4>1️⃣2️⃣ Feriados No Suman a Vacaciones</h4>
+                        <p>Si un feriado cae dentro del período de vacaciones, <strong>NO se descuenta</strong> de los días de vacaciones (día extra gratis).</p>
+                    </div>
+
+                    <div class="rule-item">
+                        <h4>1️⃣3️⃣ Límite de Viernes</h4>
+                        <p>Máximo <strong>3 viernes</strong> pueden incluirse en el período de vacaciones.</p>
+                    </div>
+
+                    <div class="rule-item">
+                        <h4>1️⃣4️⃣ Validación de Saldo</h4>
+                        <p>El sistema valida automáticamente que tengas suficientes días disponibles antes de aprobar la solicitud.</p>
+                    </div>
+
+                    <div class="info-box">
+                        <strong>📘 Ejemplo Práctico:</strong><br>
+                        Si solicitas del <strong>Lunes 15 al Domingo 21 de Enero</strong> (7 días):<br>
+                        ✅ Cumple el mínimo de 7 días<br>
+                        ✅ Incluye solo 2 viernes (dentro del límite)<br>
+                        ✅ Si hay un feriado el 18, no se descuenta (día gratis)<br>
+                        ✅ Se descuentan 7 días de tu saldo
+                    </div>
+                </div>
+
+                <div class="content" id="dashboard">
+                    <h2>📊 Dashboard RRHH (Supervisores y Administradores)</h2>
+                    
+                    <h3>🎯 Funcionalidades del Dashboard</h3>
+                    
+                    <div class="feature-box">
+                        <h4>📈 Tarjetas de Estadísticas</h4>
+                        <ul>
+                            <li><strong>Total Empleados:</strong> Cantidad de empleados activos</li>
+                            <li><strong>Sin Vacaciones:</strong> Empleados que no han tomado vacaciones</li>
+                            <li><strong>En Vacaciones:</strong> Empleados actualmente de vacaciones</li>
+                            <li><strong>Días Promedio:</strong> Promedio de días disponibles</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-box">
+                        <h4>🔍 Buscador de Empleados</h4>
+                        <p>Filtra empleados por:</p>
+                        <ul>
+                            <li>Nombre completo</li>
+                            <li>DNI</li>
+                            <li>Email</li>
+                            <li>Puesto</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-box">
+                        <h4>📋 Tabla de Control</h4>
+                        <p>Información detallada por empleado:</p>
+                        <table>
+                            <tr>
+                                <th>Columna</th>
+                                <th>Descripción</th>
+                            </tr>
+                            <tr>
+                                <td>Empleado</td>
+                                <td>Avatar, nombre y DNI</td>
+                            </tr>
+                            <tr>
+                                <td>Puesto</td>
+                                <td>Cargo actual</td>
+                            </tr>
+                            <tr>
+                                <td>Estado</td>
+                                <td>Activo / Vacaciones / Cesado</td>
+                            </tr>
+                            <tr>
+                                <td>Días por Año</td>
+                                <td>Días asignados según tipo</td>
+                            </tr>
+                            <tr>
+                                <td>Días Tomados</td>
+                                <td>Días ya utilizados</td>
+                            </tr>
+                            <tr>
+                                <td>Días Restantes</td>
+                                <td>Saldo disponible (con color)</td>
+                            </tr>
+                            <tr>
+                                <td>Uso de Vacaciones</td>
+                                <td>Barra de progreso visual</td>
+                            </tr>
+                            <tr>
+                                <td>Alerta</td>
+                                <td>Estado: OK / Pocos días / Agotados</td>
+                            </tr>
+                            <tr>
+                                <td>Acciones</td>
+                                <td>Enviar recordatorio</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="feature-box">
+                        <h4>🔔 Sistema de Recordatorios</h4>
+                        <p>Los supervisores pueden enviar recordatorios personalizados a empleados para que tomen sus vacaciones pendientes.</p>
+                    </div>
+
+                    <h3>🎨 Código de Colores</h3>
+                    <table>
+                        <tr>
+                            <th>Color</th>
+                            <th>Significado</th>
+                        </tr>
+                        <tr style="background: #f8d7da;">
+                            <td>🔴 Rojo</td>
+                            <td>0 días disponibles o menos de 5</td>
+                        </tr>
+                        <tr style="background: #fff3cd;">
+                            <td>🟡 Amarillo</td>
+                            <td>Entre 5 y 10 días disponibles</td>
+                        </tr>
+                        <tr style="background: #d4edda;">
+                            <td>🟢 Verde</td>
+                            <td>Más de 10 días disponibles</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="content" id="gestion">
+                    <h2>👥 Gestión de Empleados</h2>
+                    
+                    <h3>➕ Crear Nuevo Empleado</h3>
+                    <ol>
+                        <li>Click en el botón <code>+ Nuevo Empleado</code></li>
+                        <li>Completa todos los campos obligatorios (marcados con *)</li>
+                        <li>Selecciona el tipo de trabajador (determina días de vacaciones)</li>
+                        <li>Asigna puesto, área y supervisor</li>
+                        <li>Click en <code>Guardar</code></li>
+                    </ol>
+
+                    <h3>✏️ Editar Empleado</h3>
+                    <ol>
+                        <li>Busca al empleado en la tabla</li>
+                        <li>Click en el icono de editar (lápiz)</li>
+                        <li>Modifica los campos necesarios</li>
+                        <li>Click en <code>Actualizar</code></li>
+                    </ol>
+
+                    <h3>🗑️ Dar de Baja a Empleado</h3>
+                    <ol>
+                        <li>Busca al empleado en la tabla</li>
+                        <li>Click en el icono de eliminar (papelera)</li>
+                        <li>Confirma la operación</li>
+                        <li>El sistema cambiará el estado a "Cesado"</li>
+                    </ol>
+
+                    <div class="warning-box">
+                        <strong>⚠️ Nota:</strong> Los empleados no se eliminan permanentemente, solo cambian a estado "Cesado" para mantener el historial.
+                    </div>
+
+                    <h3>🔍 Búsqueda y Filtros</h3>
+                    <p>La tabla de empleados permite:</p>
+                    <ul>
+                        <li><strong>Búsqueda en tiempo real</strong> por nombre, DNI, email</li>
+                        <li><strong>Ordenamiento</strong> por cualquier columna (click en encabezado)</li>
+                        <li><strong>Paginación</strong> para grandes volúmenes de datos</li>
+                        <li><strong>Exportación</strong> a Excel o PDF</li>
+                    </ul>
+                </div>
+
+                <div class="content" id="proximos">
+                    <h2>🚀 Próximos Pasos del Sistema</h2>
+                    
+                    <div class="info-box">
+                        <strong>📅 Roadmap 2025-2026</strong><br>
+                        Funcionalidades planificadas para las próximas versiones
+                    </div>
+
+                    <h3>📌 Q1 2025 (Enero - Marzo)</h3>
+                    <div class="feature-box">
+                        <h4>✅ Módulo de Nómina</h4>
+                        <ul>
+                            <li>Cálculo automático de salarios</li>
+                            <li>Generación de boletas de pago</li>
+                            <li>Integración con SUNAT</li>
+                            <li>Descuentos y bonificaciones</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-box">
+                        <h4>✅ Asistencia y Marcaciones</h4>
+                        <ul>
+                            <li>Integración con reloj biométrico</li>
+                            <li>Control de tardanzas</li>
+                            <li>Reportes de asistencia</li>
+                            <li>Justificaciones online</li>
+                        </ul>
+                    </div>
+
+                    <h3>📌 Q2 2025 (Abril - Junio)</h3>
+                    <div class="feature-box">
+                        <h4>✅ Evaluación de Desempeño</h4>
+                        <ul>
+                            <li>Evaluaciones 360°</li>
+                            <li>Objetivos y KPIs</li>
+                            <li>Planes de mejora</li>
+                            <li>Historial de evaluaciones</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-box">
+                        <h4>✅ Capacitaciones</h4>
+                        <ul>
+                            <li>Catálogo de cursos</li>
+                            <li>Inscripciones online</li>
+                            <li>Certificados digitales</li>
+                            <li>Seguimiento de progreso</li>
+                        </ul>
+                    </div>
+
+                    <h3>📌 Q3 2025 (Julio - Septiembre)</h3>
+                    <div class="feature-box">
+                        <h4>✅ Reclutamiento y Selección</h4>
+                        <ul>
+                            <li>Portal de empleos</li>
+                            <li>Gestión de postulantes</li>
+                            <li>Entrevistas programadas</li>
+                            <li>Evaluaciones técnicas</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-box">
+                        <h4>✅ App Móvil</h4>
+                        <ul>
+                            <li>Versión iOS y Android</li>
+                            <li>Solicitudes desde el celular</li>
+                            <li>Notificaciones push</li>
+                            <li>Marcación por GPS</li>
+                        </ul>
+                    </div>
+
+                    <h3>📌 Q4 2025 (Octubre - Diciembre)</h3>
+                    <div class="feature-box">
+                        <h4>✅ Inteligencia Artificial</h4>
+                        <ul>
+                            <li>Predicción de rotación</li>
+                            <li>Recomendaciones de capacitación</li>
+                            <li>Chatbot de RRHH</li>
+                            <li>Análisis de clima laboral</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-box">
+                        <h4>✅ Integración con ERP</h4>
+                        <ul>
+                            <li>Sincronización con SAP/Oracle</li>
+                            <li>Intercambio de datos automático</li>
+                            <li>APIs RESTful</li>
+                            <li>Webhooks</li>
+                        </ul>
+                    </div>
+
+                    <h3>🎯 Mejoras Continuas</h3>
+                    <ul>
+                        <li>🔒 <strong>Seguridad:</strong> Autenticación de dos factores, auditoría completa</li>
+                        <li>📊 <strong>Reportes:</strong> Dashboards personalizables, exportación avanzada</li>
+                        <li>🌐 <strong>Multiidioma:</strong> Soporte para inglés y otros idiomas</li>
+                        <li>♿ <strong>Accesibilidad:</strong> Cumplimiento WCAG 2.1</li>
+                        <li>⚡ <strong>Rendimiento:</strong> Optimizaciones de velocidad y caché</li>
+                    </ul>
+                </div>
+
+                <div class="content" id="soporte">
+                    <h2>🆘 Soporte y Ayuda</h2>
+                    
+                    <h3>📞 Canales de Contacto</h3>
+                    <div class="module-grid">
+                        <div class="module-card">
+                            <h3>📧 Email</h3>
+                            <p><strong>soporte.ti@agrovetmarket.pe</strong></p>
+                            <p>Tiempo de respuesta: 24 horas hábiles</p>
+                        </div>
+
+                        <div class="module-card">
+                            <h3>📱 Teléfono</h3>
+                            <p><strong>(01) 123-4567</strong></p>
+                            <p>Lun-Vie: 8:00 AM - 6:00 PM</p>
+                        </div>
+
+                        <div class="module-card">
+                            <h3>💬 Chat Interno</h3>
+                            <p><strong>Disponible en la app</strong></p>
+                            <p>Respuesta en tiempo real</p>
+                        </div>
+
+                        <div class="module-card">
+                            <h3>📍 Oficina TI</h3>
+                            <p><strong>Piso 3, Área TI</strong></p>
+                            <p>Atención presencial con cita</p>
+                        </div>
+                    </div>
+
+                    <h3>❓ Preguntas Frecuentes</h3>
+                    
+                    <div class="feature-box">
+                        <h4>¿Olvidé mi contraseña?</h4>
+                        <p>Click en "¿Olvidaste tu contraseña?" en la pantalla de login y sigue las instrucciones enviadas a tu correo corporativo.</p>
+                    </div>
+
+                    <div class="feature-box">
+                        <h4>¿Cómo cambio mis datos personales?</h4>
+                        <p>Ve a <code>Portal</code> → <code>Mi Perfil</code> → <code>Editar Datos</code>. Algunos campos requieren aprobación de RRHH.</p>
+                    </div>
+
+                    <div class="feature-box">
+                        <h4>¿Puedo cancelar una solicitud de vacaciones?</h4>
+                        <p>Sí, mientras esté en estado "Pendiente". Ve a <code>Historial</code>, busca tu solicitud y click en <code>Cancelar</code>.</p>
+                    </div>
+
+                    <div class="feature-box">
+                        <h4>¿Qué hago si el sistema no me deja solicitar vacaciones?</h4>
+                        <p>Verifica que cumples todas las reglas. El sistema mostrará un mensaje específico indicando qué regla no se cumple.</p>
+                    </div>
+
+                    <div class="success-box">
+                        <strong>✅ Tip:</strong> Mantén tu navegador actualizado (Chrome, Edge, Firefox) para una mejor experiencia.
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <footer>
+            <p><strong>AgrovetConectAH</strong> | Agrovet Market S.A. © 2025</p>
+            <p>Desarrollado por el Equipo de TI | Versión 1.0</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">
+                Última actualización: 17 de Noviembre de 2025
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

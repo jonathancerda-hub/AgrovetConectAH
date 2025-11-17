@@ -29,4 +29,9 @@ router.put('/notificaciones/:id/leer', vacacionesController.marcarNotificacionLe
 router.get('/tipos-trabajador', vacacionesController.obtenerTiposTrabajador);
 router.get('/feriados', vacacionesController.obtenerFeriados);
 
+// Rutas para RRHH
+router.get('/control-rrhh', vacacionesController.obtenerControlRRHH);
+router.get('/dashboard-rrhh', vacacionesController.obtenerDashboardRRHH);
+router.get('/historial', vacacionesController.obtenerHistorialVacaciones);
+
 export default router;

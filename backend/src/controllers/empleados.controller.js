@@ -282,3 +282,35 @@ export const getAreas = async (req, res) => {
     res.status(500).json({ error: 'Error en el servidor' });
   }
 };
+
+/**
+ * Obtener cumpleañeros del día
+ */
+export const getCumpleaneros = async (req, res) => {
+  try {
+    const result = await query(
+      `SELECT 
+        e.id,
+        e.nombres,
+        e.apellidos,
+        e.nombres || ' ' || e.apellidos as nombre_completo,
+        e.fecha_nacimiento,
+        e.foto_perfil,
+        p.nombre as puesto,
+        a.nombre as area,
+        EXTRACT(YEAR FROM AGE(CURRENT_DATE, e.fecha_nacimiento)) as edad
+       FROM empleados e
+       LEFT JOIN puestos p ON e.puesto_id = p.id
+       LEFT JOIN areas a ON e.area_id = a.id
+       WHERE e.estado = 'Activo'
+         AND EXTRACT(MONTH FROM e.fecha_nacimiento) = EXTRACT(MONTH FROM CURRENT_DATE)
+         AND EXTRACT(DAY FROM e.fecha_nacimiento) = EXTRACT(DAY FROM CURRENT_DATE)
+       ORDER BY e.nombres, e.apellidos`
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error al obtener cumpleañeros:', error);
+    res.status(500).json({ error: 'Error en el servidor' });
+  }
+};
+

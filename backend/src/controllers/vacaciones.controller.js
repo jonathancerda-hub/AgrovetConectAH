@@ -98,9 +98,9 @@ export const obtenerPeriodos = async (req, res) => {
 // Obtener solicitudes del empleado
 export const obtenerSolicitudes = async (req, res) => {
   try {
-    const empleadoId = req.params.empleadoId || req.user?.id;
+    const empleadoId = req.params.empleadoId || req.user?.empleado_id;
     if (!empleadoId) {
-      return res.status(401).json({ error: 'No autenticado' });
+      return res.status(401).json({ error: 'No autenticado o empleado no encontrado' });
     }
     const { estado } = req.query;
     
@@ -123,7 +123,9 @@ export const obtenerSolicitudes = async (req, res) => {
     query += ` ORDER BY sv.created_at DESC`;
     
     const result = await pool.query(query, params);
-    res.json(result.rows);
+    
+    // Devolver array vacío si no hay resultados (no es error)
+    res.json(result.rows || []);
   } catch (error) {
     console.error('Error al obtener solicitudes:', error);
     res.status(500).json({ 
@@ -453,6 +455,225 @@ export const obtenerFeriados = async (req, res) => {
     console.error('Error al obtener feriados:', error);
     res.status(500).json({ 
       error: 'Error al obtener los feriados',
+      detalles: error.message 
+    });
+  }
+};
+
+// Control de vacaciones RRHH - Vista completa de todos los empleados
+export const obtenerControlRRHH = async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        e.id as empleado_id,
+        e.nombres || ' ' || e.apellidos as nombre_completo,
+        a.nombre as area,
+        p.nombre as puesto,
+        COALESCE(SUM(pv.dias_totales), 0) as dias_totales,
+        COALESCE(SUM(pv.dias_disponibles), 0) as dias_disponibles,
+        COALESCE(SUM(pv.dias_totales - pv.dias_disponibles), 0) as dias_usados,
+        COALESCE(
+          (SELECT COUNT(*) 
+           FROM solicitudes_vacaciones sv 
+           WHERE sv.empleado_id = e.id AND sv.estado = 'Pendiente'
+          ), 0
+        ) as solicitudes_pendientes,
+        COALESCE(
+          (SELECT SUM(dias_solicitados) 
+           FROM solicitudes_vacaciones sv 
+           WHERE sv.empleado_id = e.id AND sv.estado = 'Pendiente'
+          ), 0
+        ) as dias_pendientes
+      FROM empleados e
+      LEFT JOIN areas a ON e.area_id = a.id
+      LEFT JOIN puestos p ON e.puesto_id = p.id
+      LEFT JOIN periodos_vacacionales pv ON e.id = pv.empleado_id 
+        AND pv.estado = 'activo'
+        AND pv.anio_generacion = EXTRACT(YEAR FROM CURRENT_DATE)
+      WHERE e.estado = 'Activo'
+      GROUP BY e.id, e.nombres, e.apellidos, a.nombre, p.nombre
+      ORDER BY e.apellidos, e.nombres
+    `;
+    
+    const result = await pool.query(query);
+    
+    // Devolver array vacío si no hay resultados (no es error)
+    res.json(result.rows || []);
+  } catch (error) {
+    console.error('Error al obtener control RRHH:', error);
+    res.status(500).json({ 
+      error: 'Error al obtener el control de vacaciones',
+      detalles: error.message 
+    });
+  }
+};
+
+// Dashboard RRHH - Métricas y estadísticas
+export const obtenerDashboardRRHH = async (req, res) => {
+  try {
+    // Total empleados activos
+    const totalEmpleados = await pool.query(`
+      SELECT COUNT(*) as total FROM empleados WHERE estado = 'Activo'
+    `);
+
+    // Empleados que necesitan tomar vacaciones (más del 70% disponible)
+    const necesitanVacaciones = await pool.query(`
+      SELECT COUNT(DISTINCT e.id) as total
+      FROM empleados e
+      JOIN periodos_vacacionales pv ON e.id = pv.empleado_id
+      WHERE e.estado = 'Activo'
+        AND pv.estado = 'activo'
+        AND pv.anio_generacion = EXTRACT(YEAR FROM CURRENT_DATE)
+        AND (pv.dias_disponibles::float / NULLIF(pv.dias_totales, 0)) > 0.7
+    `);
+
+    // Solicitudes pendientes de aprobación
+    const solicitudesPendientes = await pool.query(`
+      SELECT COUNT(*) as total 
+      FROM solicitudes_vacaciones 
+      WHERE estado = 'Pendiente'
+    `);
+
+    // Días totales de vacaciones en el sistema
+    const diasTotales = await pool.query(`
+      SELECT 
+        COALESCE(SUM(dias_totales), 0) as total,
+        COALESCE(SUM(dias_disponibles), 0) as disponibles,
+        COALESCE(SUM(dias_totales - dias_disponibles), 0) as usados
+      FROM periodos_vacacionales
+      WHERE estado = 'activo'
+        AND anio_generacion = EXTRACT(YEAR FROM CURRENT_DATE)
+    `);
+
+    // Empleados en riesgo (más del 90% de días disponibles)
+    const enRiesgo = await pool.query(`
+      SELECT COUNT(DISTINCT e.id) as total
+      FROM empleados e
+      JOIN periodos_vacacionales pv ON e.id = pv.empleado_id
+      WHERE e.estado = 'Activo'
+        AND pv.estado = 'activo'
+        AND pv.anio_generacion = EXTRACT(YEAR FROM CURRENT_DATE)
+        AND (pv.dias_disponibles::float / NULLIF(pv.dias_totales, 0)) > 0.9
+    `);
+
+    // Solicitudes por mes (últimos 6 meses)
+    const solicitudesPorMes = await pool.query(`
+      SELECT 
+        TO_CHAR(created_at, 'YYYY-MM') as mes,
+        COUNT(*) as total,
+        SUM(CASE WHEN estado = 'Aprobado' THEN 1 ELSE 0 END) as aprobadas,
+        SUM(CASE WHEN estado = 'Rechazado' THEN 1 ELSE 0 END) as rechazadas,
+        SUM(CASE WHEN estado = 'Pendiente' THEN 1 ELSE 0 END) as pendientes
+      FROM solicitudes_vacaciones
+      WHERE created_at >= CURRENT_DATE - INTERVAL '6 months'
+      GROUP BY TO_CHAR(created_at, 'YYYY-MM')
+      ORDER BY mes DESC
+    `);
+
+    res.json({
+      totalEmpleados: parseInt(totalEmpleados.rows[0].total),
+      necesitanVacaciones: parseInt(necesitanVacaciones.rows[0].total),
+      solicitudesPendientes: parseInt(solicitudesPendientes.rows[0].total),
+      enRiesgo: parseInt(enRiesgo.rows[0].total),
+      diasTotales: parseInt(diasTotales.rows[0].total),
+      diasDisponibles: parseInt(diasTotales.rows[0].disponibles),
+      diasUsados: parseInt(diasTotales.rows[0].usados),
+      solicitudesPorMes: solicitudesPorMes.rows
+    });
+  } catch (error) {
+    console.error('Error al obtener dashboard RRHH:', error);
+    res.status(500).json({ 
+      error: 'Error al obtener el dashboard',
+      detalles: error.message 
+    });
+  }
+};
+
+// Historial completo de vacaciones
+export const obtenerHistorialVacaciones = async (req, res) => {
+  try {
+    const { empleadoId, estado, fechaInicio, fechaFin, page = 1, limit = 50 } = req.query;
+    
+    let query = `
+      SELECT 
+        sv.id as solicitud_id,
+        sv.empleado_id,
+        sv.fecha_inicio,
+        sv.fecha_fin,
+        sv.dias_solicitados,
+        sv.estado,
+        sv.motivo,
+        sv.created_at,
+        sv.aprobador_id,
+        sv.fecha_aprobacion,
+        sv.comentarios_aprobador,
+        e.nombres || ' ' || e.apellidos as nombre_completo,
+        a.nombre as area,
+        p.nombre as puesto,
+        aprobador.nombres || ' ' || aprobador.apellidos as nombre_aprobador
+      FROM solicitudes_vacaciones sv
+      JOIN empleados e ON sv.empleado_id = e.id
+      LEFT JOIN areas a ON e.area_id = a.id
+      LEFT JOIN puestos p ON e.puesto_id = p.id
+      LEFT JOIN empleados aprobador ON sv.aprobador_id = aprobador.id
+      WHERE 1=1
+    `;
+    
+    const params = [];
+    let paramCounter = 1;
+    
+    if (empleadoId) {
+      query += ` AND sv.empleado_id = $${paramCounter}`;
+      params.push(empleadoId);
+      paramCounter++;
+    }
+    
+    if (estado) {
+      query += ` AND sv.estado = $${paramCounter}`;
+      params.push(estado);
+      paramCounter++;
+    }
+    
+    if (fechaInicio) {
+      query += ` AND sv.fecha_inicio >= $${paramCounter}`;
+      params.push(fechaInicio);
+      paramCounter++;
+    }
+    
+    if (fechaFin) {
+      query += ` AND sv.fecha_fin <= $${paramCounter}`;
+      params.push(fechaFin);
+      paramCounter++;
+    }
+    
+    query += ` ORDER BY sv.created_at DESC`;
+    query += ` LIMIT $${paramCounter} OFFSET $${paramCounter + 1}`;
+    params.push(parseInt(limit));
+    params.push((parseInt(page) - 1) * parseInt(limit));
+    
+    const result = await pool.query(query, params);
+    
+    // Contar total de registros
+    let countQuery = `
+      SELECT COUNT(*) as total
+      FROM solicitudes_vacaciones sv
+      WHERE 1=1
+    `;
+    const countParams = params.slice(0, -2); // Remover limit y offset
+    
+    const countResult = await pool.query(countQuery, countParams);
+    
+    res.json({
+      data: result.rows,
+      total: parseInt(countResult.rows[0].total),
+      page: parseInt(page),
+      limit: parseInt(limit),
+      totalPages: Math.ceil(parseInt(countResult.rows[0].total) / parseInt(limit))
+    });
+  } catch (error) {
+    console.error('Error al obtener historial:', error);
+    res.status(500).json({ 
+      error: 'Error al obtener el historial de vacaciones',
       detalles: error.message 
     });
   }
