@@ -15,9 +15,9 @@ export const authMiddleware = async (req, res, next) => {
     
     // Obtener usuario de la base de datos
     const result = await query(
-      `SELECT u.*, e.id as empleado_id, e.nombres, e.apellidos 
+      `SELECT u.*, e.id as empleado_id, e.nombres, e.apellidos, e.es_rrhh 
        FROM usuarios u 
-       LEFT JOIN empleados e ON u.id = e.usuario_id 
+       LEFT JOIN empleados e ON u.empleado_id = e.id 
        WHERE u.id = $1 AND u.activo = true`,
       [decoded.id]
     );
@@ -26,8 +26,11 @@ export const authMiddleware = async (req, res, next) => {
       return res.status(401).json({ error: 'Usuario inválido' });
     }
 
-    // Agregar usuario al request
-    req.user = result.rows[0];
+    // Agregar usuario al request (incluye es_rrhh)
+    req.user = {
+      ...result.rows[0],
+      esRRHH: result.rows[0].es_rrhh || false
+    };
     next();
   } catch (error) {
     console.error('Error en autenticación:', error);

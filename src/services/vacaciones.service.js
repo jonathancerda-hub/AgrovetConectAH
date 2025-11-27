@@ -83,6 +83,7 @@ const vacacionesService = {
   validarSolicitud,
   crearSolicitud,
   obtenerResumen,
+  getResumenVacaciones: obtenerResumen, // Alias para compatibilidad
   obtenerPeriodos,
   obtenerSolicitudes,
   obtenerMisSolicitudes: () => obtenerSolicitudes(), // Sin empleadoId obtiene las del usuario actual

@@ -23,7 +23,8 @@ import {
   CircularProgress,
   Alert,
   Avatar,
-  Tooltip
+  Tooltip,
+  Switch
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
@@ -69,7 +70,7 @@ export default function GestionEmpleados() {
     const filtered = empleados.filter(emp =>
       emp.nombres?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       emp.apellidos?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.dni?.includes(searchTerm) ||
+      emp.codigo_empleado?.includes(searchTerm) ||
       emp.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       emp.puesto?.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -138,6 +139,27 @@ export default function GestionEmpleados() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleToggleRRHH = async (empleadoId, currentValue) => {
+    try {
+      await empleadosService.setRolRRHH(empleadoId, !currentValue);
+      // Actualizar la lista
+      setEmpleados(prevEmpleados =>
+        prevEmpleados.map(emp =>
+          emp.id === empleadoId ? { ...emp, es_rrhh: !currentValue } : emp
+        )
+      );
+      setFilteredEmpleados(prevFiltered =>
+        prevFiltered.map(emp =>
+          emp.id === empleadoId ? { ...emp, es_rrhh: !currentValue } : emp
+        )
+      );
+      setError(''); // Limpiar error si había
+    } catch (err) {
+      console.error('Error al cambiar rol RRHH:', err);
+      setError('No se pudo actualizar el rol de RRHH');
+    }
   };
 
   const handleSubmit = async () => {
@@ -236,19 +258,20 @@ export default function GestionEmpleados() {
           <TableHead>
             <TableRow sx={{ bgcolor: 'grey.100' }}>
               <TableCell>Empleado</TableCell>
-              <TableCell>DNI</TableCell>
+              <TableCell>Código</TableCell>
               <TableCell>Puesto</TableCell>
               <TableCell>Área</TableCell>
               <TableCell>Tipo Contrato</TableCell>
               <TableCell>Días Vac.</TableCell>
               <TableCell>Estado</TableCell>
+              <TableCell align="center">RRHH</TableCell>
               <TableCell align="center">Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {filteredEmpleados.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} align="center">
+                <TableCell colSpan={9} align="center">
                   <Typography color="text.secondary">
                     {searchTerm ? 'No se encontraron resultados' : 'No hay empleados registrados'}
                   </Typography>
@@ -272,17 +295,27 @@ export default function GestionEmpleados() {
                       </Box>
                     </Box>
                   </TableCell>
-                  <TableCell>{empleado.dni}</TableCell>
-                  <TableCell>{empleado.puesto}</TableCell>
-                  <TableCell>{empleado.area}</TableCell>
-                  <TableCell>{empleado.tipo_contrato}</TableCell>
-                  <TableCell align="center">{empleado.dias_vacaciones}</TableCell>
+                  <TableCell>{empleado.codigo_empleado || '-'}</TableCell>
+                  <TableCell>{empleado.puesto || '-'}</TableCell>
+                  <TableCell>{empleado.area || '-'}</TableCell>
+                  <TableCell>{empleado.tipo_contrato || '-'}</TableCell>
+                  <TableCell align="center">{empleado.dias_vacaciones || 0}</TableCell>
                   <TableCell>
                     <Chip
-                      label={empleado.estado}
-                      color={getEstadoColor(empleado.estado)}
+                      label={empleado.activo ? 'Activo' : 'Inactivo'}
+                      color={empleado.activo ? 'success' : 'default'}
                       size="small"
                     />
+                  </TableCell>
+                  <TableCell align="center">
+                    <Tooltip title={empleado.es_rrhh ? 'Usuario de RRHH' : 'Empleado normal'}>
+                      <Switch
+                        checked={empleado.es_rrhh || false}
+                        onChange={() => handleToggleRRHH(empleado.id, empleado.es_rrhh)}
+                        color="primary"
+                        size="small"
+                      />
+                    </Tooltip>
                   </TableCell>
                   <TableCell align="center">
                     <Tooltip title="Editar">

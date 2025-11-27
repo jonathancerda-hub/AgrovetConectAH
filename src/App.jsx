@@ -14,6 +14,7 @@ import Portal from './features/vacations/components/Portal';
 import Login from './features/vacations/components/Login';
 import NewCollaboratorForm from './features/vacations/components/NewCollaboratorForm';
 import GestionEmpleados from './features/vacations/components/GestionEmpleados';
+import AprobacionSolicitudes from './features/vacations/components/AprobacionSolicitudes';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -74,9 +75,6 @@ const initialVacationRequests = [
 
 // Datos de ejemplo para mostrar los componentes
 const availableDaysData = { available: 10, taken: 5 };
-const calendarEvents = [
-  { id: 1, title: 'Vacaciones Juan', start: new Date(), end: new Date() },
-];
 const requestsData = [
   { id: 1, requester: 'Juan', startDate: '2025-10-10', endDate: '2025-10-15', status: 'Aprobada' },
   { id: 2, requester: 'Ana', startDate: '2025-11-01', endDate: '2025-11-05', status: 'Pendiente' },
@@ -99,15 +97,7 @@ const initialPublicaciones = [
 
 
 const portalComponent = <Portal />;
-const fichaComponent = <MiFicha />;
-
-const vacacionesItems = [
-  { text: 'Dashboard', icon: <EventAvailableIcon />, component: <AvailableDays available={availableDaysData.available} taken={availableDaysData.taken} /> },
-  { text: 'Formulario de Solicitud', icon: <AssignmentIcon />, component: null }, // Se manejará dinámicamente
-  { text: 'Calendario', icon: <CalendarMonthIcon />, component: <VacationCalendar events={calendarEvents} /> },
-  { text: 'Lista de Solicitudes', icon: <ListAltIcon />, component: <RequestsList /> },
-  { text: 'Panel de Aprobación', icon: <SupervisorAccountIcon />, component: null }, // Se manejará dinámicamente
-];
+// fichaComponent se renderiza dinámicamente con currentUser
 
 // Placeholder components para el nuevo menú de RRHH
 const ControlVacacionesComponent = () => (
@@ -151,6 +141,7 @@ function App() {
   const [vacationRequests, setVacationRequests] = useState(initialVacationRequests); // Estado para las solicitudes de vacaciones
   const [publishedBulletins, setPublishedBulletins] = useState(initialPublicaciones); // Lista de todos los boletines publicados
   const [openSubMenu, setOpenSubMenu] = useState(null); // Controla qué submenú está abierto
+  const [calendarEvents, setCalendarEvents] = useState([]); // Eventos del calendario
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -162,6 +153,52 @@ function App() {
       setIsAuthenticated(true);
     }
   }, []);
+
+  // Cargar eventos del calendario cuando se accede a vacaciones
+  useEffect(() => {
+    if (selectedMenu.main === 'vacaciones' && currentUser) {
+      fetchCalendarEvents();
+    }
+  }, [selectedMenu.main, currentUser]);
+
+  const fetchCalendarEvents = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3001/api/aprobacion/solicitudes', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        // Convertir solicitudes a eventos del calendario
+        const events = data.solicitudes
+          .filter(s => s.estado === 'aprobada')
+          .map(solicitud => ({
+            id: solicitud.id,
+            title: `${solicitud.nombre_empleado} - Vacaciones`,
+            start: new Date(solicitud.fecha_inicio),
+            end: new Date(solicitud.fecha_fin),
+            empleado: solicitud.nombre_empleado,
+            dias: solicitud.dias_solicitados
+          }));
+        setCalendarEvents(events);
+      }
+    } catch (error) {
+      console.error('Error al cargar eventos del calendario:', error);
+    }
+  };
+
+  // Definir items de vacaciones dentro del componente para usar el estado
+  const vacacionesItems = [
+    { text: 'Dashboard', icon: <EventAvailableIcon />, component: <AvailableDays available={availableDaysData.available} taken={availableDaysData.taken} /> },
+    { text: 'Formulario de Solicitud', icon: <AssignmentIcon />, component: null },
+    { text: 'Calendario', icon: <CalendarMonthIcon />, component: <VacationCalendar events={calendarEvents} /> },
+    { text: 'Lista de Solicitudes', icon: <ListAltIcon />, component: <RequestsList /> },
+    { text: 'Aprobar Solicitudes', icon: <FactCheckIcon />, component: <AprobacionSolicitudes /> },
+  ];
 
   const handleDrawerToggle = () => {
     setDrawerOpen((prev) => !prev);
@@ -225,7 +262,23 @@ function App() {
         handleMenuClick('portal'); // Navega al portal para ver el resultado
       } catch (error) {
         console.error('Error al publicar boletín:', error);
-        alert('Error al publicar el boletín. Por favor, intenta de nuevo.');
+        
+        // Si la tabla de publicaciones no existe, mover el boletín localmente
+        if (error.response?.status === 404 || error.message?.includes('404')) {
+          alert('El módulo de publicaciones está en desarrollo. El boletín se guardó localmente.');
+          
+          // Mover el boletín de staged a published localmente
+          setPublishedBulletins(prev => [{
+            ...bulletinToPublish,
+            id: Date.now(), // Generar nuevo ID
+            fecha_publicacion: new Date().toISOString()
+          }, ...prev]);
+          setStagedBulletins(prev => prev.filter(b => b.id !== bulletinId));
+          
+          handleMenuClick('portal');
+        } else {
+          alert('Error al publicar el boletín. Por favor, intenta de nuevo.');
+        }
       }
     }
   };
@@ -270,7 +323,7 @@ function App() {
     pageTitle = `Procesando Solicitud #${requestToProcess.id}`;
     breadcrumbs = [
       { text: 'Vacaciones', action: 'vacaciones' },
-      { text: 'Panel de Aprobación', action: 'vacaciones' },
+      { text: 'Aprobar Solicitudes', action: 'vacaciones' },
       { text: `Solicitud #${requestToProcess.id}` }
     ];
   } else if (selectedMenu.main === 'portal') {
@@ -278,7 +331,7 @@ function App() {
     pageTitle = 'Portal';
     breadcrumbs = [{ text: 'Portal' }];
   } else if (selectedMenu.main === 'ficha') {
-    mainContent = <MiFicha />;
+    mainContent = <MiFicha currentUser={currentUser} />;
     breadcrumbs = [{ text: 'Mi Ficha' }];
   } else if (selectedMenu.main === 'vacaciones') {
     const selectedItem = vacacionesItems[selectedMenu.sub];
@@ -286,8 +339,6 @@ function App() {
     breadcrumbs = [{ text: 'Vacaciones' }];
     if (selectedItem.text === 'Formulario de Solicitud') {
       mainContent = <RequestForm onNewRequest={handleNewRequest} />;
-    } else if (selectedItem.text === 'Panel de Aprobación') {
-      mainContent = <ApprovalDashboard currentUser={currentUser} vacationRequests={vacationRequests} users={users} onSelectRequest={setRequestToProcess} />;
     } else {
       mainContent = selectedItem.component;
     }

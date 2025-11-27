@@ -1,14 +1,15 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import pool from './db.js';
+import { query as dbQuery } from './db.js';
 
 // Rutas
 import authRoutes from './routes/auth.routes.js';
-import publicacionesRoutes from './routes/publicaciones.routes.js';
-import notificacionesRoutes from './routes/notificaciones.routes.js';
+// import publicacionesRoutes from './routes/publicaciones.routes.js'; // Tabla no existe en Supabase
+// import notificacionesRoutes from './routes/notificaciones.routes.js'; // Tabla no existe en Supabase
 import empleadosRoutes from './routes/empleados.routes.js';
 import vacacionesRoutes from './routes/vacaciones.routes.js';
+import aprobacionRoutes from './routes/aprobacion.routes.js';
 
 // Configuración
 dotenv.config();
@@ -36,7 +37,7 @@ if (process.env.NODE_ENV === 'development') {
 // Health check
 app.get('/health', async (req, res) => {
   try {
-    await pool.query('SELECT 1');
+    await dbQuery('SELECT 1');
     res.json({ 
       status: 'ok', 
       database: 'connected',
@@ -53,10 +54,11 @@ app.get('/health', async (req, res) => {
 
 // Rutas API
 app.use('/api/auth', authRoutes);
-app.use('/api/publicaciones', publicacionesRoutes);
-app.use('/api/notificaciones', notificacionesRoutes);
+// app.use('/api/publicaciones', publicacionesRoutes); // Tabla no existe en Supabase
+// app.use('/api/notificaciones', notificacionesRoutes); // Tabla no existe en Supabase
 app.use('/api/empleados', empleadosRoutes);
 app.use('/api/vacaciones', vacacionesRoutes);
+app.use('/api/aprobacion', aprobacionRoutes);
 
 // Ruta 404
 app.use((req, res) => {

@@ -80,6 +80,17 @@ export const empleadosService = {
   getCumpleaneros: async () => {
     const response = await api.get('/empleados/cumpleaneros');
     return response.data;
+  },
+
+  /**
+   * Asignar o remover rol RRHH a un empleado
+   * @param {number} id - ID del empleado
+   * @param {boolean} esRRHH - true para asignar, false para remover
+   * @returns {Promise<object>}
+   */
+  setRolRRHH: async (id, esRRHH) => {
+    const response = await api.put(`/empleados/${id}/rrhh`, { es_rrhh: esRRHH });
+    return response.data;
   }
 };
 

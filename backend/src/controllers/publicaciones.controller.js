@@ -5,12 +5,12 @@ export const getPublicaciones = async (req, res) => {
   try {
     const result = await query(
       `SELECT p.*, u.email as autor_email, e.nombres as autor_nombres, 
-              e.apellidos as autor_apellidos, e.foto_perfil as autor_foto,
+              e.apellidos as autor_apellidos,
               (SELECT COUNT(*) FROM reacciones_publicaciones WHERE publicacion_id = p.id) as total_reacciones,
               (SELECT COUNT(*) FROM comentarios_publicaciones WHERE publicacion_id = p.id) as total_comentarios
        FROM publicaciones p
        JOIN usuarios u ON p.autor_id = u.id
-       LEFT JOIN empleados e ON u.id = e.usuario_id
+       LEFT JOIN empleados e ON u.empleado_id = e.id
        WHERE p.visible = true
        ORDER BY p.fecha_publicacion DESC
        LIMIT 50`,
@@ -91,10 +91,10 @@ export const getComments = async (req, res) => {
     const { id } = req.params;
 
     const result = await query(
-      `SELECT c.*, u.email, e.nombres, e.apellidos, e.foto_perfil
+      `SELECT c.*, u.email, e.nombres, e.apellidos
        FROM comentarios_publicaciones c
        JOIN usuarios u ON c.usuario_id = u.id
-       LEFT JOIN empleados e ON u.id = e.usuario_id
+       LEFT JOIN empleados e ON u.empleado_id = e.id
        WHERE c.publicacion_id = $1
        ORDER BY c.created_at ASC`,
       [id]

@@ -126,10 +126,28 @@ ON CONFLICT DO NOTHING;
 -- SOLICITUDES DE VACACIONES DE EJEMPLO
 -- ============================================
 
-INSERT INTO solicitudes_vacaciones (empleado_id, aprobador_id, fecha_inicio, fecha_fin, dias_solicitados, estado, comentarios) VALUES
-(5, 4, '2025-12-22', '2025-12-26', 5, 'Pendiente', 'Vacaciones de fin de año'),
-(6, 4, '2025-11-15', '2025-11-20', 5, 'Aprobado', 'Viaje familiar'),
-(7, 2, '2025-10-10', '2025-10-15', 5, 'Aprobado', 'Descanso programado')
+-- Nota: dias_calendario debe incluir todos los días del periodo (incluidos fines de semana)
+-- empleado_id 5 = Ana García (supervisor_id = 4, Jonathan Cerda)
+-- empleado_id 6 = Carlos Martínez (supervisor_id = 4, Jonathan Cerda)
+-- empleado_id 7 = Laura Rodríguez (supervisor_id = 2, Ursula Huamancaja)
+
+INSERT INTO solicitudes_vacaciones (
+  empleado_id, 
+  fecha_inicio, 
+  fecha_fin, 
+  dias_solicitados, 
+  dias_calendario,
+  mes_solicitud,
+  anio_solicitud,
+  estado, 
+  comentarios
+) VALUES
+-- Solicitud pendiente de Ana García (Jonathan debe verla)
+(5, '2025-12-22', '2025-12-26', 5, 5, 12, 2025, 'pendiente', 'Vacaciones de fin de año'),
+-- Solicitud pendiente de Carlos Martínez (Jonathan debe verla)
+(6, '2025-12-15', '2025-12-20', 5, 6, 12, 2025, 'pendiente', 'Viaje familiar'),
+-- Solicitud aprobada de Laura Rodríguez (Ursula ya la aprobó)
+(7, '2025-10-10', '2025-10-15', 5, 6, 10, 2025, 'aprobada', 'Descanso programado')
 ON CONFLICT DO NOTHING;
 
 -- ============================================

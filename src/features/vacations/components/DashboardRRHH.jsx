@@ -67,7 +67,7 @@ export default function DashboardRRHH() {
     const filtered = empleados.filter(emp =>
       emp.nombres?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       emp.apellidos?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.dni?.includes(searchTerm) ||
+      emp.codigo_empleado?.includes(searchTerm) ||
       emp.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       emp.puesto?.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -77,16 +77,21 @@ export default function DashboardRRHH() {
   const fetchData = async () => {
     try {
       setLoading(true);
+      console.log('📊 Cargando empleados para Dashboard RRHH...');
       const data = await empleadosService.getAll();
+      console.log('📊 Datos recibidos:', data);
+      console.log('📊 Total empleados:', data?.length);
+      console.log('📊 Primer empleado (muestra):', data[0]);
       
-      // Filtrar solo empleados activos
-      const activos = data.filter(emp => emp.estado === 'Activo' || emp.estado === 'Vacaciones');
+      // Mostrar TODOS los empleados sin filtrar por ahora
+      const activos = data.filter(emp => emp.activo !== false); // Filtrar solo por activo true
+      console.log('📊 Empleados activos:', activos.length);
       setEmpleados(activos);
       setFilteredEmpleados(activos);
 
       // Calcular estadísticas
       const sinVacaciones = activos.filter(emp => !emp.dias_vacaciones || emp.dias_vacaciones === 0).length;
-      const enVacaciones = activos.filter(emp => emp.estado === 'Vacaciones').length;
+      const enVacaciones = 0; // Por ahora no tenemos forma de saber quién está de vacaciones
       const totalDias = activos.reduce((sum, emp) => sum + (emp.dias_vacaciones || 0), 0);
       const promedio = activos.length > 0 ? Math.round(totalDias / activos.length) : 0;
 
@@ -123,14 +128,16 @@ export default function DashboardRRHH() {
         return;
       }
 
-      await notificacionesService.create({
+      // TODO: Implementar endpoint de notificaciones para tabla notificaciones_vacaciones
+      console.log('📧 Notificación a enviar:', {
+        destinatario_id: selectedEmpleado.id,
         usuario_id: selectedEmpleado.usuario_id,
         titulo: 'Recordatorio de Vacaciones',
         mensaje: mensaje,
-        tipo: 'recordatorio'
+        tipo_notificacion: 'recordatorio'
       });
 
-      setSuccess(`Notificación enviada exitosamente a ${selectedEmpleado.nombres} ${selectedEmpleado.apellidos}`);
+      setSuccess(`Vista previa del mensaje guardada en consola. (Funcionalidad de envío en desarrollo)`);
       handleCloseDialog();
       
     } catch (err) {
@@ -139,13 +146,12 @@ export default function DashboardRRHH() {
     }
   };
 
-  const getEstadoColor = (estado) => {
-    switch (estado) {
-      case 'Activo': return 'success';
-      case 'Vacaciones': return 'warning';
-      case 'Cesado': return 'error';
-      default: return 'default';
-    }
+  const getEstadoColor = (activo) => {
+    return activo ? 'success' : 'error';
+  };
+
+  const getEstadoLabel = (activo) => {
+    return activo ? 'Activo' : 'Inactivo';
   };
 
   const getDiasColor = (dias) => {
@@ -273,7 +279,7 @@ export default function DashboardRRHH() {
       <Box sx={{ mb: 3 }}>
         <TextField
           fullWidth
-          placeholder="Buscar por nombre, DNI, email o puesto..."
+          placeholder="Buscar por nombre, código, email o puesto..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           InputProps={{
@@ -317,7 +323,7 @@ export default function DashboardRRHH() {
                 filteredEmpleados.map((empleado) => {
                   const diasPorAno = empleado.dias_por_ano || 30;
                   const diasTomados = empleado.dias_tomados || 0;
-                  const diasRestantes = (empleado.dias_vacaciones || 0);
+                  const diasRestantes = empleado.dias_vacaciones || 0;
                   const porcentajeUso = diasPorAno > 0 ? ((diasTomados / diasPorAno) * 100) : 0;
 
                   return (
@@ -336,7 +342,7 @@ export default function DashboardRRHH() {
                               {empleado.nombres} {empleado.apellidos}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
-                              DNI: {empleado.dni}
+                              Código: {empleado.codigo_empleado}
                             </Typography>
                           </Box>
                         </Box>
@@ -346,8 +352,8 @@ export default function DashboardRRHH() {
                       </TableCell>
                       <TableCell>
                         <Chip 
-                          label={empleado.estado} 
-                          color={getEstadoColor(empleado.estado)} 
+                          label={getEstadoLabel(empleado.activo)} 
+                          color={getEstadoColor(empleado.activo)} 
                           size="small" 
                         />
                       </TableCell>

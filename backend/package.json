@@ -7,7 +7,9 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "migrate": "node ../database/migrate.js"
+    "migrate": "node migrate.js",
+    "seed": "node seed.js",
+    "reset": "node migrate.js && node seed.js"
   },
   "keywords": [
     "api",
@@ -18,6 +20,7 @@
   "author": "Agrovet Market",
   "license": "MIT",
   "dependencies": {
+    "@supabase/supabase-js": "^2.85.0",
     "axios": "^1.13.2",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",

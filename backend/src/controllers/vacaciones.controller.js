@@ -1,5 +1,5 @@
 import vacacionesService from '../services/vacaciones.service.js';
-import pool from '../db.js';
+import { query as dbQuery } from '../db.js';
 
 /**
  * Controlador de Vacaciones
@@ -120,9 +120,9 @@ export const obtenerSolicitudes = async (req, res) => {
       params.push(estado);
     }
     
-    query += ` ORDER BY sv.created_at DESC`;
+    query += ` ORDER BY sv.fecha_creacion DESC`;
     
-    const result = await pool.query(query, params);
+    const result = await dbQuery(query, params);
     
     // Devolver array vacío si no hay resultados (no es error)
     res.json(result.rows || []);
@@ -163,7 +163,7 @@ export const obtenerSolicitudesPendientes = async (req, res) => {
       ORDER BY sv.fecha_creacion DESC
     `;
     
-    const result = await pool.query(query, [aprobadorId, aprobadorId]);
+    const result = await dbQuery(query, [aprobadorId, aprobadorId]);
     res.json(result.rows);
   } catch (error) {
     console.error('Error al obtener solicitudes pendientes:', error);
@@ -175,7 +175,7 @@ export const obtenerSolicitudesPendientes = async (req, res) => {
 };
 
 // Aprobar solicitud
-export const aprobarSolicitud = async (req, res) => {
+export const aprobarSolicitud = async (req, res) => {  
   try {
     const { id } = req.params;
     const aprobadorId = req.user?.id;
@@ -184,89 +184,51 @@ export const aprobarSolicitud = async (req, res) => {
     }
     const { comentarios } = req.body;
     
-    const client = await pool.connect();
+    // Obtener datos de la solicitud
+    const solicitudResult = await dbQuery(
+      'SELECT * FROM solicitudes_vacaciones WHERE id = $1',
+      [id]
+    );
     
-    try {
-      await client.query('BEGIN');
-      
-      // Obtener datos de la solicitud
-      const solicitudQuery = await client.query(
-        'SELECT * FROM solicitudes_vacaciones WHERE id = $1',
-        [id]
-      );
-      const solicitud = solicitudQuery.rows[0];
-      
-      if (!solicitud) {
-        throw new Error('Solicitud no encontrada');
-      }
-      
-      if (solicitud.estado !== 'pendiente') {
-        throw new Error('La solicitud ya fue procesada');
-      }
-      
-      // Actualizar solicitud
-      await client.query(`
-        UPDATE solicitudes_vacaciones
-        SET estado = 'aprobada',
-            aprobador_id = $1,
-            fecha_aprobacion = CURRENT_TIMESTAMP,
-            observaciones_aprobador = $2
-        WHERE id = $3
-      `, [aprobadorId, comentarios, id]);
-      
-      // Aplicar descuento al período
-      const detallesQuery = await client.query(`
-        SELECT dias_solicitados, viernes_incluidos, periodo_id
-        FROM solicitudes_vacaciones
-        WHERE id = $1
-      `, [id]);
-      
-      const { dias_solicitados, viernes_incluidos, periodo_id } = detallesQuery.rows[0];
-      
-      await client.query(`
+    if (!solicitudResult.data || solicitudResult.data.length === 0) {
+      return res.status(404).json({ error: 'Solicitud no encontrada' });
+    }
+    
+    const solicitud = solicitudResult.data[0];
+    
+    if (solicitud.estado !== 'pendiente') {
+      return res.status(400).json({ error: 'La solicitud ya fue procesada' });
+    }
+    
+    // Actualizar solicitud
+    await dbQuery(`
+      UPDATE solicitudes_vacaciones
+      SET estado = 'aprobada',
+          aprobador_id = $1,
+          fecha_aprobacion = CURRENT_TIMESTAMP,
+          observaciones_aprobador = $2,
+          fecha_actualizacion = CURRENT_TIMESTAMP
+      WHERE id = $3
+    `, [aprobadorId, comentarios || '', id]);
+    
+    // Aplicar descuento al período si existe periodo_id
+    if (solicitud.periodo_id) {
+      await dbQuery(`
         UPDATE periodos_vacacionales
         SET dias_disponibles = dias_disponibles - $1,
-            dias_usados = dias_usados + $1,
-            viernes_usados = viernes_usados + $2,
             estado = CASE 
               WHEN dias_disponibles - $1 <= 0 THEN 'consumido'
               ELSE estado
             END
-        WHERE id = $3
-      `, [dias_solicitados, viernes_incluidos, periodo_id]);
-      
-      // Registrar en historial
-      await client.query(`
-        INSERT INTO historial_aprobaciones (
-          solicitud_id, aprobador_id, accion, comentarios
-        ) VALUES ($1, $2, 'aprobado', $3)
-      `, [id, aprobadorId, comentarios]);
-      
-      // Crear notificación para el solicitante
-      await client.query(`
-        INSERT INTO notificaciones_vacaciones (
-          solicitud_id, destinatario_id, tipo_notificacion, titulo, mensaje
-        ) VALUES ($1, $2, 'solicitud_aprobada', $3, $4)
-      `, [
-        id,
-        solicitud.empleado_id,
-        'Solicitud de vacaciones aprobada',
-        `Su solicitud de vacaciones del ${solicitud.fecha_inicio} al ${solicitud.fecha_fin} ha sido aprobada.`
-      ]);
-      
-      await client.query('COMMIT');
-      
-      res.json({ 
-        success: true, 
-        mensaje: 'Solicitud aprobada exitosamente' 
-      });
-      
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
+        WHERE id = $2
+      `, [solicitud.dias_solicitados, solicitud.periodo_id]);
     }
+    
+    res.json({ 
+      success: true, 
+      mensaje: 'Solicitud aprobada exitosamente' 
+    });
+    
   } catch (error) {
     console.error('Error al aprobar solicitud:', error);
     res.status(400).json({ 
@@ -274,9 +236,7 @@ export const aprobarSolicitud = async (req, res) => {
       detalles: error.message 
     });
   }
-};
-
-// Rechazar solicitud
+};// Rechazar solicitud
 export const rechazarSolicitud = async (req, res) => {
   try {
     const { id } = req.params;
@@ -286,70 +246,44 @@ export const rechazarSolicitud = async (req, res) => {
     }
     const { motivo } = req.body;
     
-    if (!motivo) {
+    if (!motivo || motivo.trim() === '') {
       return res.status(400).json({ 
         error: 'Debe proporcionar un motivo de rechazo' 
       });
     }
     
-    const client = await pool.connect();
+    // Obtener datos de la solicitud
+    const solicitudResult = await dbQuery(
+      'SELECT * FROM solicitudes_vacaciones WHERE id = $1',
+      [id]
+    );
     
-    try {
-      await client.query('BEGIN');
-      
-      // Obtener datos de la solicitud
-      const solicitudQuery = await client.query(
-        'SELECT * FROM solicitudes_vacaciones WHERE id = $1',
-        [id]
-      );
-      const solicitud = solicitudQuery.rows[0];
-      
-      if (!solicitud) {
-        throw new Error('Solicitud no encontrada');
-      }
-      
-      // Actualizar solicitud
-      await client.query(`
-        UPDATE solicitudes_vacaciones
-        SET estado = 'rechazada',
-            aprobador_id = $1,
-            fecha_aprobacion = CURRENT_TIMESTAMP,
-            observaciones_aprobador = $2
-        WHERE id = $3
-      `, [aprobadorId, motivo, id]);
-      
-      // Registrar en historial
-      await client.query(`
-        INSERT INTO historial_aprobaciones (
-          solicitud_id, aprobador_id, accion, comentarios
-        ) VALUES ($1, $2, 'rechazado', $3)
-      `, [id, aprobadorId, motivo]);
-      
-      // Crear notificación
-      await client.query(`
-        INSERT INTO notificaciones_vacaciones (
-          solicitud_id, destinatario_id, tipo_notificacion, titulo, mensaje
-        ) VALUES ($1, $2, 'solicitud_rechazada', $3, $4)
-      `, [
-        id,
-        solicitud.empleado_id,
-        'Solicitud de vacaciones rechazada',
-        `Su solicitud de vacaciones ha sido rechazada. Motivo: ${motivo}`
-      ]);
-      
-      await client.query('COMMIT');
-      
-      res.json({ 
-        success: true, 
-        mensaje: 'Solicitud rechazada' 
-      });
-      
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
+    if (!solicitudResult.data || solicitudResult.data.length === 0) {
+      return res.status(404).json({ error: 'Solicitud no encontrada' });
     }
+    
+    const solicitud = solicitudResult.data[0];
+    
+    if (solicitud.estado !== 'pendiente') {
+      return res.status(400).json({ error: 'La solicitud ya fue procesada' });
+    }
+    
+    // Actualizar solicitud
+    await dbQuery(`
+      UPDATE solicitudes_vacaciones
+      SET estado = 'rechazada',
+          aprobador_id = $1,
+          fecha_aprobacion = CURRENT_TIMESTAMP,
+          observaciones_aprobador = $2,
+          fecha_actualizacion = CURRENT_TIMESTAMP
+      WHERE id = $3
+    `, [aprobadorId, motivo, id]);
+    
+    res.json({ 
+      success: true, 
+      mensaje: 'Solicitud rechazada' 
+    });
+    
   } catch (error) {
     console.error('Error al rechazar solicitud:', error);
     res.status(400).json({ 
@@ -384,7 +318,7 @@ export const obtenerNotificaciones = async (req, res) => {
     
     query += ` ORDER BY nv.fecha_creacion DESC LIMIT 50`;
     
-    const result = await pool.query(query, params);
+    const result = await dbQuery(query, params);
     res.json(result.rows);
   } catch (error) {
     console.error('Error al obtener notificaciones:', error);
@@ -404,7 +338,7 @@ export const marcarNotificacionLeida = async (req, res) => {
       return res.status(401).json({ error: 'No autenticado' });
     }
     
-    await pool.query(`
+    await dbQuery(`
       UPDATE notificaciones_vacaciones
       SET leida = true, fecha_lectura = CURRENT_TIMESTAMP
       WHERE id = $1 AND destinatario_id = $2
@@ -423,7 +357,7 @@ export const marcarNotificacionLeida = async (req, res) => {
 // Obtener tipos de trabajador
 export const obtenerTiposTrabajador = async (req, res) => {
   try {
-    const result = await pool.query(`
+    const result = await dbQuery(`
       SELECT * FROM tipos_trabajador
       WHERE activo = true
       ORDER BY dias_vacaciones_anuales DESC
@@ -444,7 +378,7 @@ export const obtenerFeriados = async (req, res) => {
     const { anio } = req.query;
     const anioActual = anio || new Date().getFullYear();
     
-    const result = await pool.query(`
+    const result = await dbQuery(`
       SELECT * FROM feriados
       WHERE anio = $1
       ORDER BY fecha
@@ -475,13 +409,13 @@ export const obtenerControlRRHH = async (req, res) => {
         COALESCE(
           (SELECT COUNT(*) 
            FROM solicitudes_vacaciones sv 
-           WHERE sv.empleado_id = e.id AND sv.estado = 'Pendiente'
+           WHERE sv.empleado_id = e.id AND sv.estado = 'pendiente'
           ), 0
         ) as solicitudes_pendientes,
         COALESCE(
           (SELECT SUM(dias_solicitados) 
            FROM solicitudes_vacaciones sv 
-           WHERE sv.empleado_id = e.id AND sv.estado = 'Pendiente'
+           WHERE sv.empleado_id = e.id AND sv.estado = 'pendiente'
           ), 0
         ) as dias_pendientes
       FROM empleados e
@@ -490,12 +424,12 @@ export const obtenerControlRRHH = async (req, res) => {
       LEFT JOIN periodos_vacacionales pv ON e.id = pv.empleado_id 
         AND pv.estado = 'activo'
         AND pv.anio_generacion = EXTRACT(YEAR FROM CURRENT_DATE)
-      WHERE e.estado = 'Activo'
+      WHERE e.activo = true
       GROUP BY e.id, e.nombres, e.apellidos, a.nombre, p.nombre
       ORDER BY e.apellidos, e.nombres
     `;
     
-    const result = await pool.query(query);
+    const result = await dbQuery(query);
     
     // Devolver array vacío si no hay resultados (no es error)
     res.json(result.rows || []);
@@ -512,30 +446,30 @@ export const obtenerControlRRHH = async (req, res) => {
 export const obtenerDashboardRRHH = async (req, res) => {
   try {
     // Total empleados activos
-    const totalEmpleados = await pool.query(`
-      SELECT COUNT(*) as total FROM empleados WHERE estado = 'Activo'
+    const totalEmpleados = await dbQuery(`
+      SELECT COUNT(*) as total FROM empleados WHERE activo = true
     `);
 
     // Empleados que necesitan tomar vacaciones (más del 70% disponible)
-    const necesitanVacaciones = await pool.query(`
+    const necesitanVacaciones = await dbQuery(`
       SELECT COUNT(DISTINCT e.id) as total
       FROM empleados e
       JOIN periodos_vacacionales pv ON e.id = pv.empleado_id
-      WHERE e.estado = 'Activo'
+      WHERE e.activo = true
         AND pv.estado = 'activo'
         AND pv.anio_generacion = EXTRACT(YEAR FROM CURRENT_DATE)
         AND (pv.dias_disponibles::float / NULLIF(pv.dias_totales, 0)) > 0.7
     `);
 
     // Solicitudes pendientes de aprobación
-    const solicitudesPendientes = await pool.query(`
+    const solicitudesPendientes = await dbQuery(`
       SELECT COUNT(*) as total 
       FROM solicitudes_vacaciones 
-      WHERE estado = 'Pendiente'
+      WHERE estado = 'pendiente'
     `);
 
     // Días totales de vacaciones en el sistema
-    const diasTotales = await pool.query(`
+    const diasTotales = await dbQuery(`
       SELECT 
         COALESCE(SUM(dias_totales), 0) as total,
         COALESCE(SUM(dias_disponibles), 0) as disponibles,
@@ -546,27 +480,27 @@ export const obtenerDashboardRRHH = async (req, res) => {
     `);
 
     // Empleados en riesgo (más del 90% de días disponibles)
-    const enRiesgo = await pool.query(`
+    const enRiesgo = await dbQuery(`
       SELECT COUNT(DISTINCT e.id) as total
       FROM empleados e
       JOIN periodos_vacacionales pv ON e.id = pv.empleado_id
-      WHERE e.estado = 'Activo'
+      WHERE e.activo = true
         AND pv.estado = 'activo'
         AND pv.anio_generacion = EXTRACT(YEAR FROM CURRENT_DATE)
         AND (pv.dias_disponibles::float / NULLIF(pv.dias_totales, 0)) > 0.9
     `);
 
     // Solicitudes por mes (últimos 6 meses)
-    const solicitudesPorMes = await pool.query(`
+    const solicitudesPorMes = await dbQuery(`
       SELECT 
-        TO_CHAR(created_at, 'YYYY-MM') as mes,
+        TO_CHAR(fecha_creacion, 'YYYY-MM') as mes,
         COUNT(*) as total,
-        SUM(CASE WHEN estado = 'Aprobado' THEN 1 ELSE 0 END) as aprobadas,
-        SUM(CASE WHEN estado = 'Rechazado' THEN 1 ELSE 0 END) as rechazadas,
-        SUM(CASE WHEN estado = 'Pendiente' THEN 1 ELSE 0 END) as pendientes
+        SUM(CASE WHEN estado = 'aprobada' THEN 1 ELSE 0 END) as aprobadas,
+        SUM(CASE WHEN estado = 'rechazada' THEN 1 ELSE 0 END) as rechazadas,
+        SUM(CASE WHEN estado = 'pendiente' THEN 1 ELSE 0 END) as pendientes
       FROM solicitudes_vacaciones
-      WHERE created_at >= CURRENT_DATE - INTERVAL '6 months'
-      GROUP BY TO_CHAR(created_at, 'YYYY-MM')
+      WHERE fecha_creacion >= CURRENT_DATE - INTERVAL '6 months'
+      GROUP BY TO_CHAR(fecha_creacion, 'YYYY-MM')
       ORDER BY mes DESC
     `);
 
@@ -603,10 +537,10 @@ export const obtenerHistorialVacaciones = async (req, res) => {
         sv.dias_solicitados,
         sv.estado,
         sv.motivo,
-        sv.created_at,
+        sv.fecha_creacion,
         sv.aprobador_id,
         sv.fecha_aprobacion,
-        sv.comentarios_aprobador,
+        sv.observaciones_aprobador,
         e.nombres || ' ' || e.apellidos as nombre_completo,
         a.nombre as area,
         p.nombre as puesto,
@@ -646,12 +580,12 @@ export const obtenerHistorialVacaciones = async (req, res) => {
       paramCounter++;
     }
     
-    query += ` ORDER BY sv.created_at DESC`;
+    query += ` ORDER BY sv.fecha_creacion DESC`;
     query += ` LIMIT $${paramCounter} OFFSET $${paramCounter + 1}`;
     params.push(parseInt(limit));
     params.push((parseInt(page) - 1) * parseInt(limit));
     
-    const result = await pool.query(query, params);
+    const result = await dbQuery(query, params);
     
     // Contar total de registros
     let countQuery = `
@@ -661,7 +595,7 @@ export const obtenerHistorialVacaciones = async (req, res) => {
     `;
     const countParams = params.slice(0, -2); // Remover limit y offset
     
-    const countResult = await pool.query(countQuery, countParams);
+    const countResult = await dbQuery(countQuery, countParams);
     
     res.json({
       data: result.rows,

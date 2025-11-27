@@ -7,7 +7,8 @@ import {
   desactivarEmpleado,
   getPuestos,
   getAreas,
-  getCumpleaneros
+  getCumpleaneros,
+  setRolRRHH
 } from '../controllers/empleados.controller.js';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
 
@@ -27,5 +28,6 @@ router.get('/:id', getEmpleadoById);
 router.post('/', requireRole(['admin', 'rrhh']), createEmpleado);
 router.put('/:id', requireRole(['admin', 'rrhh']), updateEmpleado);
 router.patch('/:id/desactivar', requireRole(['admin', 'rrhh']), desactivarEmpleado);
+router.put('/:id/rrhh', requireRole(['admin', 'rrhh']), setRolRRHH);
 
 export default router;

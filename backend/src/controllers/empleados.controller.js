@@ -8,32 +8,36 @@ export const getEmpleados = async (req, res) => {
     const result = await query(
       `SELECT 
         e.id,
-        e.dni,
+        e.codigo_empleado,
         e.nombres,
         e.apellidos,
+        e.email,
         e.telefono,
+        e.fecha_nacimiento,
         e.fecha_ingreso,
-        e.fecha_cese,
-        e.dias_vacaciones,
-        e.tipo_contrato,
-        e.estado,
-        e.foto_perfil,
         e.puesto_id,
         e.area_id,
+        e.es_rrhh,
+        e.supervisor_id,
+        e.tipo_trabajador_id,
+        e.activo,
         p.nombre as puesto,
-        p.salario_base,
         a.nombre as area,
-        a.centro_costos,
-        d.nombre as division,
-        u.email,
+        tt.nombre as tipo_contrato,
+        u.id as usuario_id,
+        u.email as email_usuario,
         u.rol,
-        supervisor.nombres || ' ' || supervisor.apellidos as supervisor_nombre
+        supervisor.nombres || ' ' || supervisor.apellidos as supervisor_nombre,
+        COALESCE(pv.dias_disponibles, 0) as dias_vacaciones,
+        COALESCE(pv.dias_totales, 30) as dias_por_ano,
+        COALESCE(pv.dias_usados, 0) as dias_tomados
        FROM empleados e
        LEFT JOIN puestos p ON e.puesto_id = p.id
        LEFT JOIN areas a ON e.area_id = a.id
-       LEFT JOIN divisiones d ON a.division_id = d.id
-       LEFT JOIN usuarios u ON e.usuario_id = u.id
+       LEFT JOIN tipos_trabajador tt ON e.tipo_trabajador_id = tt.id
+       LEFT JOIN usuarios u ON u.empleado_id = e.id
        LEFT JOIN empleados supervisor ON e.supervisor_id = supervisor.id
+       LEFT JOIN periodos_vacacionales pv ON pv.empleado_id = e.id AND pv.estado = 'activo' AND pv.anio_generacion = EXTRACT(YEAR FROM CURRENT_DATE)
        ORDER BY e.fecha_ingreso DESC`
     );
 
@@ -55,20 +59,20 @@ export const getEmpleadoById = async (req, res) => {
       `SELECT 
         e.*,
         p.nombre as puesto,
-        p.salario_base,
         a.nombre as area,
-        a.centro_costos,
-        d.nombre as division,
+        tt.nombre as tipo_contrato,
         u.email,
         u.rol,
         u.activo as usuario_activo,
-        supervisor.nombres || ' ' || supervisor.apellidos as supervisor_nombre
+        supervisor.nombres || ' ' || supervisor.apellidos as supervisor_nombre,
+        COALESCE(pv.dias_disponibles, 0) as dias_vacaciones
        FROM empleados e
        LEFT JOIN puestos p ON e.puesto_id = p.id
        LEFT JOIN areas a ON e.area_id = a.id
-       LEFT JOIN divisiones d ON a.division_id = d.id
-       LEFT JOIN usuarios u ON e.usuario_id = u.id
+       LEFT JOIN tipos_trabajador tt ON e.tipo_trabajador_id = tt.id
+       LEFT JOIN usuarios u ON u.empleado_id = e.id
        LEFT JOIN empleados supervisor ON e.supervisor_id = supervisor.id
+       LEFT JOIN periodos_vacacionales pv ON pv.empleado_id = e.id AND pv.estado = 'activo' AND pv.anio_generacion = EXTRACT(YEAR FROM CURRENT_DATE)
        WHERE e.id = $1`,
       [id]
     );
@@ -122,26 +126,14 @@ export const createEmpleado = async (req, res) => {
       return res.status(400).json({ error: 'El email ya está registrado' });
     }
 
-    // Crear usuario primero
-    const bcrypt = await import('bcrypt');
-    const password_hash = await bcrypt.hash(password || 'temp123', 10);
-
-    const userResult = await query(
-      'INSERT INTO usuarios (email, password_hash, rol) VALUES ($1, $2, $3) RETURNING id',
-      [email, password_hash, rol || 'empleado']
-    );
-
-    const usuario_id = userResult.rows[0].id;
-
-    // Crear empleado
-    const result = await query(
+    // Crear empleado primero
+    const empleadoResult = await query(
       `INSERT INTO empleados 
-       (usuario_id, puesto_id, area_id, supervisor_id, dni, nombres, apellidos, 
+       (puesto_id, area_id, supervisor_id, dni, nombres, apellidos, 
         telefono, tipo_contrato, fecha_ingreso, dias_vacaciones, estado)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'Activo')
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'Activo')
        RETURNING *`,
       [
-        usuario_id,
         puesto_id,
         area_id,
         supervisor_id || null,
@@ -155,8 +147,19 @@ export const createEmpleado = async (req, res) => {
       ]
     );
 
-    console.log('✅ Empleado creado:', result.rows[0].id);
-    res.status(201).json(result.rows[0]);
+    const empleado_id = empleadoResult.rows[0].id;
+
+    // Crear usuario vinculado al empleado
+    const bcrypt = await import('bcrypt');
+    const hashedPassword = await bcrypt.hash(password || 'temp123', 10);
+
+    await query(
+      'INSERT INTO usuarios (empleado_id, email, password, rol) VALUES ($1, $2, $3, $4)',
+      [empleado_id, email, hashedPassword, rol || 'empleado']
+    );
+
+    console.log('✅ Empleado creado:', empleadoResult.rows[0].id);
+    res.status(201).json(empleadoResult.rows[0]);
   } catch (error) {
     console.error('Error al crear empleado:', error);
     res.status(500).json({ error: 'Error en el servidor' });
@@ -235,7 +238,7 @@ export const desactivarEmpleado = async (req, res) => {
 
     // Desactivar usuario también
     await query(
-      'UPDATE usuarios SET activo = false WHERE id = (SELECT usuario_id FROM empleados WHERE id = $1)',
+      'UPDATE usuarios SET activo = false WHERE empleado_id = $1',
       [id]
     );
 
@@ -253,9 +256,9 @@ export const desactivarEmpleado = async (req, res) => {
 export const getPuestos = async (req, res) => {
   try {
     const result = await query(
-      `SELECT p.*, a.nombre as area_nombre
+      `SELECT p.*
        FROM puestos p
-       LEFT JOIN areas a ON p.area_id = a.id
+       WHERE p.activo = true
        ORDER BY p.nombre`
     );
     res.json(result.rows);
@@ -271,9 +274,9 @@ export const getPuestos = async (req, res) => {
 export const getAreas = async (req, res) => {
   try {
     const result = await query(
-      `SELECT a.*, d.nombre as division_nombre
+      `SELECT a.*
        FROM areas a
-       LEFT JOIN divisiones d ON a.division_id = d.id
+       WHERE a.activo = true
        ORDER BY a.nombre`
     );
     res.json(result.rows);
@@ -295,14 +298,13 @@ export const getCumpleaneros = async (req, res) => {
         e.apellidos,
         e.nombres || ' ' || e.apellidos as nombre_completo,
         e.fecha_nacimiento,
-        e.foto_perfil,
         p.nombre as puesto,
         a.nombre as area,
         EXTRACT(YEAR FROM AGE(CURRENT_DATE, e.fecha_nacimiento)) as edad
        FROM empleados e
        LEFT JOIN puestos p ON e.puesto_id = p.id
        LEFT JOIN areas a ON e.area_id = a.id
-       WHERE e.estado = 'Activo'
+       WHERE e.activo = true
          AND EXTRACT(MONTH FROM e.fecha_nacimiento) = EXTRACT(MONTH FROM CURRENT_DATE)
          AND EXTRACT(DAY FROM e.fecha_nacimiento) = EXTRACT(DAY FROM CURRENT_DATE)
        ORDER BY e.nombres, e.apellidos`
@@ -310,6 +312,41 @@ export const getCumpleaneros = async (req, res) => {
     res.json(result.rows);
   } catch (error) {
     console.error('Error al obtener cumpleañeros:', error);
+    res.status(500).json({ error: 'Error en el servidor' });
+  }
+};
+
+/**
+ * Asignar o remover rol de RRHH a un empleado
+ */
+export const setRolRRHH = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { es_rrhh } = req.body;
+
+    // Validar que es_rrhh sea booleano
+    if (typeof es_rrhh !== 'boolean') {
+      return res.status(400).json({ error: 'El campo es_rrhh debe ser booleano' });
+    }
+
+    // Verificar que el empleado existe
+    const empleadoCheck = await query('SELECT id FROM empleados WHERE id = $1', [id]);
+    if (empleadoCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Empleado no encontrado' });
+    }
+
+    // Actualizar el rol RRHH
+    const result = await query(
+      'UPDATE empleados SET es_rrhh = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+      [es_rrhh, id]
+    );
+
+    res.json({
+      mensaje: `Rol RRHH ${es_rrhh ? 'asignado' : 'removido'} exitosamente`,
+      empleado: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error al asignar rol RRHH:', error);
     res.status(500).json({ error: 'Error en el servidor' });
   }
 };

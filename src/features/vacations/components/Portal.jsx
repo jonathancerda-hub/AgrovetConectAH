@@ -14,6 +14,7 @@ import CakeIcon from '@mui/icons-material/Cake';
 import { publicacionesService } from '../../../services/publicaciones.service';
 import { authService } from '../../../services/auth.service';
 import { empleadosService } from '../../../services/empleados.service';
+import { vacacionesService } from '../../../services/vacaciones.service';
 
 const boletas = [
   { mes: 'Septiembre 2025', url: '#' },
@@ -23,6 +24,7 @@ const boletas = [
 
 export default function Portal() {
   const [publicaciones, setPublicaciones] = useState([]);
+  const [diasVacaciones, setDiasVacaciones] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [empleadoInfo, setEmpleadoInfo] = useState(null);
@@ -42,6 +44,15 @@ export default function Portal() {
           try {
             const empleadoData = await empleadosService.getById(currentUser.empleadoId);
             setEmpleadoInfo(empleadoData);
+            
+            // Obtener días de vacaciones disponibles
+            try {
+              const vacacionesData = await vacacionesService.getResumenVacaciones(currentUser.empleadoId);
+              setDiasVacaciones(vacacionesData.dias_disponibles || 0);
+            } catch (vacError) {
+              console.warn('No se pudieron cargar días de vacaciones:', vacError);
+              setDiasVacaciones(0);
+            }
           } catch (empError) {
             console.warn('No se pudo cargar información del empleado:', empError);
             // No mostramos error, simplemente no cargamos la info del empleado
@@ -49,25 +60,30 @@ export default function Portal() {
         }
         
         // Obtener publicaciones
-        const data = await publicacionesService.getAll();
-        
-        // Formatear las publicaciones
-        const formattedData = data.map(pub => ({
-          id: pub.id,
-          autor: `${pub.autor_nombres} ${pub.autor_apellidos}`,
-          fecha: new Date(pub.fecha_publicacion).toLocaleDateString('es-PE', {
-            day: 'numeric',
-            month: 'long',
-            hour: '2-digit',
-            minute: '2-digit'
-          }),
-          titulo: pub.titulo,
-          contenido: pub.contenido,
-          imageUrl: pub.imagen_url,
-          reacciones: pub.total_reacciones || 0,
-        }));
-        
-        setPublicaciones(formattedData);
+        try {
+          const data = await publicacionesService.getAll();
+          
+          // Formatear las publicaciones
+          const formattedData = data.map(pub => ({
+            id: pub.id,
+            autor: `${pub.autor_nombres} ${pub.autor_apellidos}`,
+            fecha: new Date(pub.fecha_publicacion).toLocaleDateString('es-PE', {
+              day: 'numeric',
+              month: 'long',
+              hour: '2-digit',
+              minute: '2-digit'
+            }),
+            titulo: pub.titulo,
+            contenido: pub.contenido,
+            imageUrl: pub.imagen_url,
+            reacciones: pub.total_reacciones || 0,
+          }));
+          
+          setPublicaciones(formattedData);
+        } catch (pubError) {
+          console.warn('No se pudieron cargar publicaciones:', pubError);
+          setPublicaciones([]);
+        }
         
         // Obtener cumpleañeros del día
         try {
@@ -80,7 +96,7 @@ export default function Portal() {
         
       } catch (err) {
         console.error('Error al cargar datos:', err);
-        setError('No se pudieron cargar los datos. Por favor, intenta de nuevo.');
+        // No mostramos error general si las llamadas individuales ya manejaron sus errores
       } finally {
         setLoading(false);
       }
@@ -271,7 +287,7 @@ export default function Portal() {
                     Vacaciones disponibles
                   </Typography>
                   <Typography variant="h5" fontWeight={700} color="primary">
-                    {empleadoInfo?.dias_vacaciones || 0} días
+                    {diasVacaciones} días
                   </Typography>
                 </Box>
               </Box>
