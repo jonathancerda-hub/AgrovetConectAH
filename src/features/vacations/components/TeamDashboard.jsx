@@ -30,7 +30,8 @@ export default function TeamDashboard() {
       
       // Obtener subordinados directos del usuario actual
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3001/api/aprobacion/subordinados', {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const response = await fetch(`${API_URL}/aprobacion/subordinados`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
