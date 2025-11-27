@@ -328,7 +328,7 @@ function App() {
       { text: `Solicitud #${requestToProcess.id}` }
     ];
   } else if (selectedMenu.main === 'portal') {
-    mainContent = <Portal publicaciones={publishedBulletins} />; // Pasamos toda la lista de publicaciones
+    mainContent = <Portal publicaciones={publishedBulletins} onNavigate={handleMenuClick} />; // Pasamos toda la lista de publicaciones
     pageTitle = 'Portal';
     breadcrumbs = [{ text: 'Portal' }];
   } else if (selectedMenu.main === 'ficha') {

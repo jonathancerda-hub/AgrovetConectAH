@@ -22,7 +22,7 @@ const boletas = [
   { mes: 'Julio 2025', url: '#' },
 ];
 
-export default function Portal() {
+export default function Portal({ onNavigate }) {
   const [publicaciones, setPublicaciones] = useState([]);
   const [diasVacaciones, setDiasVacaciones] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -291,7 +291,12 @@ export default function Portal() {
                   </Typography>
                 </Box>
               </Box>
-              <Button size="small" variant="text" color="primary">
+              <Button 
+                size="small" 
+                variant="text" 
+                color="primary"
+                onClick={() => onNavigate && onNavigate('vacaciones', 0)}
+              >
                 Solicitar
               </Button>
             </Box>

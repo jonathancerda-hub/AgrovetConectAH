@@ -151,35 +151,36 @@ export default function TeamDashboard() {
             elevation={2} 
             sx={{ 
               height: '100%',
-              borderTop: 3, 
+              borderLeft: 4, 
               borderColor: 'primary.main',
               transition: 'transform 0.2s, box-shadow 0.2s',
               '&:hover': {
-                transform: 'translateY(-4px)',
+                transform: 'translateY(-2px)',
                 boxShadow: 4
               }
             }}
           >
-            <CardContent sx={{ textAlign: 'center', py: 3 }}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 2 }}>
               <GroupsIcon 
                 sx={{ 
-                  fontSize: 48, 
-                  color: 'primary.main',
-                  mb: 1
+                  fontSize: 56, 
+                  color: 'primary.main'
                 }} 
               />
-              <Typography variant="h3" fontWeight={700} sx={{ my: 1.5 }}>
-                {stats.totalMiembros}
-              </Typography>
-              <Typography 
-                variant="body2" 
-                color="text.secondary" 
-                textTransform="uppercase"
-                fontWeight={600}
-                letterSpacing={0.5}
-              >
-                Miembros del Equipo
-              </Typography>
+              <Box>
+                <Typography variant="h3" fontWeight={700} color="primary.main">
+                  {stats.totalMiembros}
+                </Typography>
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary" 
+                  textTransform="uppercase"
+                  fontWeight={600}
+                  letterSpacing={0.5}
+                >
+                  Miembros del Equipo
+                </Typography>
+              </Box>
             </CardContent>
           </Card>
         </Grid>
@@ -189,35 +190,36 @@ export default function TeamDashboard() {
             elevation={2} 
             sx={{ 
               height: '100%',
-              borderTop: 3, 
+              borderLeft: 4, 
               borderColor: 'success.main',
               transition: 'transform 0.2s, box-shadow 0.2s',
               '&:hover': {
-                transform: 'translateY(-4px)',
+                transform: 'translateY(-2px)',
                 boxShadow: 4
               }
             }}
           >
-            <CardContent sx={{ textAlign: 'center', py: 3 }}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 2 }}>
               <CalendarMonthIcon 
                 sx={{ 
-                  fontSize: 48, 
-                  color: 'success.main',
-                  mb: 1
+                  fontSize: 56, 
+                  color: 'success.main'
                 }} 
               />
-              <Typography variant="h3" fontWeight={700} sx={{ my: 1.5 }}>
-                {stats.activos}
-              </Typography>
-              <Typography 
-                variant="body2" 
-                color="text.secondary" 
-                textTransform="uppercase"
-                fontWeight={600}
-                letterSpacing={0.5}
-              >
-                Empleados Activos
-              </Typography>
+              <Box>
+                <Typography variant="h3" fontWeight={700} color="success.main">
+                  {stats.activos}
+                </Typography>
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary" 
+                  textTransform="uppercase"
+                  fontWeight={600}
+                  letterSpacing={0.5}
+                >
+                  Empleados Activos
+                </Typography>
+              </Box>
             </CardContent>
           </Card>
         </Grid>
@@ -227,35 +229,36 @@ export default function TeamDashboard() {
             elevation={2} 
             sx={{ 
               height: '100%',
-              borderTop: 3, 
+              borderLeft: 4, 
               borderColor: 'warning.main',
               transition: 'transform 0.2s, box-shadow 0.2s',
               '&:hover': {
-                transform: 'translateY(-4px)',
+                transform: 'translateY(-2px)',
                 boxShadow: 4
               }
             }}
           >
-            <CardContent sx={{ textAlign: 'center', py: 3 }}>
+            <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 2 }}>
               <AccessTimeIcon 
                 sx={{ 
-                  fontSize: 48, 
-                  color: 'warning.main',
-                  mb: 1
+                  fontSize: 56, 
+                  color: 'warning.main'
                 }} 
               />
-              <Typography variant="h3" fontWeight={700} sx={{ my: 1.5 }}>
-                {stats.deVacaciones}
-              </Typography>
-              <Typography 
-                variant="body2" 
-                color="text.secondary" 
-                textTransform="uppercase"
-                fontWeight={600}
-                letterSpacing={0.5}
-              >
-                De Vacaciones
-              </Typography>
+              <Box>
+                <Typography variant="h3" fontWeight={700} color="warning.main">
+                  {stats.deVacaciones}
+                </Typography>
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary" 
+                  textTransform="uppercase"
+                  fontWeight={600}
+                  letterSpacing={0.5}
+                >
+                  De Vacaciones
+                </Typography>
+              </Box>
             </CardContent>
           </Card>
         </Grid>
