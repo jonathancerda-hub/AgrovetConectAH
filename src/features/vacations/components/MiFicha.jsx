@@ -6,8 +6,10 @@ import {
   Avatar,
   Grid,
   Divider,
-  Tabs,
-  Tab,
+  List,
+  ListItemButton,
+  ListItemText,
+  ListItemIcon,
   CircularProgress,
   Alert
 } from '@mui/material';
@@ -15,6 +17,15 @@ import PersonIcon from '@mui/icons-material/Person';
 import WorkIcon from '@mui/icons-material/Work';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import BadgeIcon from '@mui/icons-material/Badge';
+import ReceiptIcon from '@mui/icons-material/Receipt';
+import DescriptionIcon from '@mui/icons-material/Description';
+import HistoryIcon from '@mui/icons-material/History';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import ContactEmergencyIcon from '@mui/icons-material/ContactEmergency';
+import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
+import FlightIcon from '@mui/icons-material/Flight';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
 import { empleadosService } from '../../../services/empleados.service';
 
 const MiFicha = ({ currentUser }) => {
@@ -104,238 +115,735 @@ const MiFicha = ({ currentUser }) => {
   }
 
   return (
-    <Box>
-      {/* Header con información básica */}
-      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-        <Grid container spacing={3} alignItems="center">
-          <Grid item>
-            <Avatar
-              sx={{
-                width: 120,
-                height: 120,
-                bgcolor: 'primary.main',
-                fontSize: '3rem'
-              }}
-            >
-              <PersonIcon sx={{ fontSize: '4rem' }} />
-            </Avatar>
-          </Grid>
-          <Grid item xs>
-            <Typography variant="h4" gutterBottom>
-              {empleado.nombres} {empleado.apellidos}
-            </Typography>
-            <Box display="flex" alignItems="center" gap={1} mb={1}>
-              <WorkIcon color="primary" />
-              <Typography variant="h6" color="text.secondary">
-                {empleado.puesto || 'Sin puesto asignado'}
-              </Typography>
-            </Box>
-            <Box display="flex" alignItems="center" gap={1}>
-              <BadgeIcon color="primary" />
-              <Typography variant="body1" color="text.secondary">
-                {empleado.area || 'Sin área asignada'}
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item>
-            <Paper elevation={2} sx={{ p: 2, bgcolor: 'primary.light', color: 'white' }}>
-              <Typography variant="body2" align="center">
-                Código de Empleado
-              </Typography>
-              <Typography variant="h5" align="center" fontWeight="bold">
-                {empleado.codigo_empleado || 'N/A'}
-              </Typography>
-            </Paper>
-          </Grid>
-        </Grid>
-      </Paper>
-
-      {/* Tabs de información */}
-      <Paper elevation={3}>
-        <Tabs
-          value={tabValue}
-          onChange={handleTabChange}
-          indicatorColor="primary"
-          textColor="primary"
-          variant="fullWidth"
+    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+      {/* COLUMNA IZQUIERDA - Foto y Menú de Navegación */}
+      <Box sx={{ width: 280, flexShrink: 0 }}>
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            p: 3,
+            bgcolor: '#f5f5f5',
+            minHeight: '100vh',
+            borderRadius: 0,
+            width: 280
+          }}
         >
-          <Tab label="Resumen" />
-          <Tab label="Boletas de Pago" />
-          <Tab label="Documentos" />
-          <Tab label="Bitácora" />
-          <Tab label="Talento" />
-        </Tabs>
-
-        <Box sx={{ p: 3 }}>
-          {tabValue === 0 && (
-            <Grid container spacing={3}>
-              {/* Información Personal */}
-              <Grid item xs={12} md={6}>
-                <Typography variant="h6" gutterBottom color="primary">
-                  Información Personal
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
+            {/* Foto de perfil */}
+            <Box sx={{ textAlign: 'center', mb: 3 }}>
+              <Box sx={{ position: 'relative', display: 'inline-block', mb: 2 }}>
+                <Avatar
+                  sx={{
+                    width: 140,
+                    height: 140,
+                    bgcolor: 'primary.main',
+                    fontSize: '3rem',
+                    border: '4px solid white',
+                    boxShadow: 2
+                  }}
+                >
+                  <PersonIcon sx={{ fontSize: '4rem' }} />
+                </Avatar>
                 
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Nombres Completos
-                  </Typography>
-                  <Typography variant="body1" fontWeight="500">
-                    {empleado.nombres} {empleado.apellidos}
+                {/* Botón para subir foto */}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 0,
+                    bgcolor: 'primary.main',
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    border: '2px solid white',
+                    '&:hover': {
+                      bgcolor: 'primary.dark'
+                    }
+                  }}
+                >
+                  <Typography variant="body2" sx={{ color: 'white', fontSize: '20px' }}>
+                    📷
                   </Typography>
                 </Box>
+              </Box>
+              
+              <Typography variant="h6" fontWeight={600} gutterBottom>
+                {empleado.nombres?.split(' ')[0] || 'Usuario'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {empleado.puesto || 'Sin puesto'}
+              </Typography>
+            </Box>
 
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
+            <Divider sx={{ mb: 2 }} />
+
+            {/* Menú de navegación */}
+            <List sx={{ p: 0 }}>
+              <ListItemButton 
+                selected={tabValue === 0}
+                onClick={() => setTabValue(0)}
+                sx={{ 
+                  borderRadius: 1,
+                  mb: 0.5,
+                  '&.Mui-selected': {
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': {
+                      bgcolor: 'primary.dark',
+                    },
+                    '& .MuiListItemIcon-root': {
+                      color: 'white'
+                    }
+                  }
+                }}
+              >
+                <ListItemIcon>
+                  <PersonIcon />
+                </ListItemIcon>
+                <ListItemText primary="Datos Personales" />
+              </ListItemButton>
+              
+              <ListItemButton 
+                selected={tabValue === 1}
+                onClick={() => setTabValue(1)}
+                sx={{ 
+                  borderRadius: 1,
+                  mb: 0.5,
+                  '&.Mui-selected': {
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': {
+                      bgcolor: 'primary.dark',
+                    },
+                    '& .MuiListItemIcon-root': {
+                      color: 'white'
+                    }
+                  }
+                }}
+              >
+                <ListItemIcon>
+                  <ContactEmergencyIcon />
+                </ListItemIcon>
+                <ListItemText primary="Contacto" />
+              </ListItemButton>
+              
+              <ListItemButton 
+                selected={tabValue === 2}
+                onClick={() => setTabValue(2)}
+                sx={{ 
+                  borderRadius: 1,
+                  mb: 0.5,
+                  '&.Mui-selected': {
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': {
+                      bgcolor: 'primary.dark',
+                    },
+                    '& .MuiListItemIcon-root': {
+                      color: 'white'
+                    }
+                  }
+                }}
+              >
+                <ListItemIcon>
+                  <FamilyRestroomIcon />
+                </ListItemIcon>
+                <ListItemText primary="Dependientes" />
+              </ListItemButton>
+              
+              <ListItemButton 
+                selected={tabValue === 3}
+                onClick={() => setTabValue(3)}
+                sx={{ 
+                  borderRadius: 1,
+                  mb: 0.5,
+                  '&.Mui-selected': {
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': {
+                      bgcolor: 'primary.dark',
+                    },
+                    '& .MuiListItemIcon-root': {
+                      color: 'white'
+                    }
+                  }
+                }}
+              >
+                <ListItemIcon>
+                  <FlightIcon />
+                </ListItemIcon>
+                <ListItemText primary="Inmigración" />
+              </ListItemButton>
+              
+              <ListItemButton 
+                selected={tabValue === 4}
+                onClick={() => setTabValue(4)}
+                sx={{ 
+                  borderRadius: 1,
+                  mb: 0.5,
+                  '&.Mui-selected': {
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': {
+                      bgcolor: 'primary.dark',
+                    },
+                    '& .MuiListItemIcon-root': {
+                      color: 'white'
+                    }
+                  }
+                }}
+              >
+                <ListItemIcon>
+                  <WorkIcon />
+                </ListItemIcon>
+                <ListItemText primary="Trabajo" />
+              </ListItemButton>
+              
+              <ListItemButton 
+                selected={tabValue === 5}
+                onClick={() => setTabValue(5)}
+                sx={{ 
+                  borderRadius: 1,
+                  mb: 0.5,
+                  '&.Mui-selected': {
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': {
+                      bgcolor: 'primary.dark',
+                    },
+                    '& .MuiListItemIcon-root': {
+                      color: 'white'
+                    }
+                  }
+                }}
+              >
+                <ListItemIcon>
+                  <AttachMoneyIcon />
+                </ListItemIcon>
+                <ListItemText primary="Salario" />
+              </ListItemButton>
+              
+              <ListItemButton 
+                selected={tabValue === 6}
+                onClick={() => setTabValue(6)}
+                sx={{ 
+                  borderRadius: 1,
+                  mb: 0.5,
+                  '&.Mui-selected': {
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': {
+                      bgcolor: 'primary.dark',
+                    },
+                    '& .MuiListItemIcon-root': {
+                      color: 'white'
+                    }
+                  }
+                }}
+              >
+                <ListItemIcon>
+                  <SupervisorAccountIcon />
+                </ListItemIcon>
+                <ListItemText primary="Reporta a" />
+              </ListItemButton>
+
+              <Divider sx={{ my: 2 }} />
+              
+              <ListItemButton 
+                selected={tabValue === 7}
+                onClick={() => setTabValue(7)}
+                sx={{ 
+                  borderRadius: 1,
+                  mb: 0.5,
+                  '&.Mui-selected': {
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': {
+                      bgcolor: 'primary.dark',
+                    },
+                    '& .MuiListItemIcon-root': {
+                      color: 'white'
+                    }
+                  }
+                }}
+              >
+                <ListItemIcon>
+                  <ReceiptIcon />
+                </ListItemIcon>
+                <ListItemText primary="Boletas de Pago" />
+              </ListItemButton>
+              
+              <ListItemButton 
+                selected={tabValue === 8}
+                onClick={() => setTabValue(8)}
+                sx={{ 
+                  borderRadius: 1,
+                  mb: 0.5,
+                  '&.Mui-selected': {
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': {
+                      bgcolor: 'primary.dark',
+                    },
+                    '& .MuiListItemIcon-root': {
+                      color: 'white'
+                    }
+                  }
+                }}
+              >
+                <ListItemIcon>
+                  <DescriptionIcon />
+                </ListItemIcon>
+                <ListItemText primary="Documentos" />
+              </ListItemButton>
+              
+              <ListItemButton 
+                selected={tabValue === 9}
+                onClick={() => setTabValue(9)}
+                sx={{ 
+                  borderRadius: 1,
+                  mb: 0.5,
+                  '&.Mui-selected': {
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': {
+                      bgcolor: 'primary.dark',
+                    },
+                    '& .MuiListItemIcon-root': {
+                      color: 'white'
+                    }
+                  }
+                }}
+              >
+                <ListItemIcon>
+                  <HistoryIcon />
+                </ListItemIcon>
+                <ListItemText primary="Bitácora" />
+              </ListItemButton>
+              
+              <ListItemButton 
+                selected={tabValue === 10}
+                onClick={() => setTabValue(10)}
+                sx={{ 
+                  borderRadius: 1,
+                  '&.Mui-selected': {
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': {
+                      bgcolor: 'primary.dark',
+                    },
+                    '& .MuiListItemIcon-root': {
+                      color: 'white'
+                    }
+                  }
+                }}
+              >
+                <ListItemIcon>
+                  <EmojiEventsIcon />
+                </ListItemIcon>
+                <ListItemText primary="Talento" />
+              </ListItemButton>
+            </List>
+          </Paper>
+        </Box>
+
+        {/* COLUMNA DERECHA - Contenido */}
+        <Box sx={{ flex: 1 }}>
+          <Paper elevation={0} sx={{ minHeight: '100vh', borderRadius: 0, p: 5, bgcolor: '#fafafa' }}>
+            
+            {/* Tab 0 - Datos Personales */}
+            
+            {/* Tab 0 - Datos Personales */}
+            {tabValue === 0 && (
+              <Box>
+                <Typography variant="h5" fontWeight={600} gutterBottom color="primary.main" sx={{ mb: 4 }}>
+                  Datos Personales
+                </Typography>
+                  
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                    Nombre Completo del Empleado*
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                    <Box 
+                      sx={{ 
+                        flex: 1,
+                        bgcolor: 'white',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: 1,
+                        p: 1.5
+                      }}
+                    >
+                      <Typography variant="body2" fontWeight={500}>
+                        {empleado.nombres?.split(' ')[0] || 'N/A'}
+                      </Typography>
+                    </Box>
+                    <Box 
+                      sx={{ 
+                        flex: 1,
+                        bgcolor: 'white',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: 1,
+                        p: 1.5
+                      }}
+                    >
+                      <Typography variant="body2" fontWeight={500}>
+                        {empleado.nombres?.split(' ')[1] || ''}
+                      </Typography>
+                    </Box>
+                    <Box 
+                      sx={{ 
+                        flex: 1,
+                        bgcolor: 'white',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: 1,
+                        p: 1.5
+                      }}
+                    >
+                      <Typography variant="body2" fontWeight={500}>
+                        {empleado.apellidos || 'N/A'}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+
+                <Grid container spacing={2} sx={{ mb: 3 }}>
+                  <Grid item xs={6}>
+                    <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                      Código de Empleado
+                    </Typography>
+                    <Box 
+                      sx={{ 
+                        bgcolor: 'white',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: 1,
+                        p: 1.5,
+                        mt: 1
+                      }}
+                    >
+                      <Typography variant="body2" fontWeight={500}>
+                        {empleado.codigo_empleado || 'N/A'}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                      DNI
+                    </Typography>
+                    <Box 
+                      sx={{ 
+                        bgcolor: 'white',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: 1,
+                        p: 1.5,
+                        mt: 1
+                      }}
+                    >
+                      <Typography variant="body2" fontWeight={500}>
+                        {empleado.dni || 'N/A'}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={500}>
                     Correo Electrónico
                   </Typography>
-                  <Typography variant="body1" fontWeight="500">
-                    {empleado.email || 'N/A'}
-                  </Typography>
-                </Box>
-
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Código de Empleado
-                  </Typography>
-                  <Typography variant="body1" fontWeight="500">
-                    {empleado.codigo_empleado || 'N/A'}
-                  </Typography>
-                </Box>
-              </Grid>
-
-              {/* Información Laboral */}
-              <Grid item xs={12} md={6}>
-                <Typography variant="h6" gutterBottom color="primary">
-                  Información Laboral
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Cargo
-                  </Typography>
-                  <Typography variant="body1" fontWeight="500">
-                    {empleado.puesto || 'N/A'}
-                  </Typography>
-                </Box>
-
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Área
-                  </Typography>
-                  <Typography variant="body1" fontWeight="500">
-                    {empleado.area || 'N/A'}
-                  </Typography>
-                </Box>
-
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Tipo de Contrato
-                  </Typography>
-                  <Typography variant="body1" fontWeight="500">
-                    {empleado.tipo_contrato || 'N/A'}
-                  </Typography>
-                </Box>
-
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Supervisor
-                  </Typography>
-                  <Typography variant="body1" fontWeight="500">
-                    {empleado.supervisor_nombre || 'N/A'}
-                  </Typography>
-                </Box>
-
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Fecha de Ingreso
-                  </Typography>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <CalendarTodayIcon color="primary" fontSize="small" />
-                    <Typography variant="body1" fontWeight="500">
-                      {formatearFecha(empleado.fecha_ingreso)}
+                  <Box 
+                    sx={{ 
+                      bgcolor: 'white',
+                      border: '1px solid #e0e0e0',
+                      borderRadius: 1,
+                      p: 1.5,
+                      mt: 1
+                    }}
+                  >
+                    <Typography variant="body2" fontWeight={500}>
+                      {empleado.email || 'N/A'}
                     </Typography>
                   </Box>
                 </Box>
 
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Antigüedad
-                  </Typography>
-                  <Typography variant="body1" fontWeight="500">
-                    {calcularAntiguedad(empleado.fecha_ingreso)}
-                  </Typography>
-                </Box>
-              </Grid>
-
-              {/* Información de Vacaciones */}
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom color="primary">
-                  Información de Vacaciones
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-                
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={4}>
-                    <Paper elevation={2} sx={{ p: 2, bgcolor: 'success.light', color: 'white' }}>
-                      <Typography variant="body2" align="center">
-                        Días Disponibles
+                <Grid container spacing={2} sx={{ mb: 3 }}>
+                  <Grid item xs={6}>
+                    <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                      Fecha de Nacimiento
+                    </Typography>
+                    <Box 
+                      sx={{ 
+                        bgcolor: 'white',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: 1,
+                        p: 1.5,
+                        mt: 1
+                      }}
+                    >
+                      <Typography variant="body2" fontWeight={500}>
+                        {empleado.fecha_nacimiento ? formatearFecha(empleado.fecha_nacimiento) : 'N/A'}
                       </Typography>
-                      <Typography variant="h4" align="center" fontWeight="bold">
-                        {empleado.dias_vacaciones || 0}
-                      </Typography>
-                    </Paper>
+                    </Box>
                   </Grid>
-                  <Grid item xs={12} sm={4}>
-                    <Paper elevation={2} sx={{ p: 2, bgcolor: 'info.light', color: 'white' }}>
-                      <Typography variant="body2" align="center">
-                        Estado
+                  <Grid item xs={6}>
+                    <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                      Género
+                    </Typography>
+                    <Box 
+                      sx={{ 
+                        bgcolor: 'white',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: 1,
+                        p: 1.5,
+                        mt: 1
+                      }}
+                    >
+                      <Typography variant="body2" fontWeight={500}>
+                        {empleado.genero || 'N/A'}
                       </Typography>
-                      <Typography variant="h6" align="center" fontWeight="bold">
-                        {empleado.activo ? 'Activo' : 'Inactivo'}
-                      </Typography>
-                    </Paper>
+                    </Box>
                   </Grid>
                 </Grid>
-              </Grid>
-            </Grid>
-          )}
+              </Box>
+            )}
 
-          {tabValue === 1 && (
-            <Box textAlign="center" py={5}>
-              <Typography variant="h6" color="text.secondary">
-                Módulo de Boletas de Pago en desarrollo
-              </Typography>
-            </Box>
-          )}
+            {/* Tab 1 - Contacto */}
+            {tabValue === 1 && (
+              <Box textAlign="center" py={5}>
+                <ContactEmergencyIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+                <Typography variant="h6" color="text.secondary">
+                  Módulo de Contacto en desarrollo
+                </Typography>
+              </Box>
+            )}
 
-          {tabValue === 2 && (
-            <Box textAlign="center" py={5}>
-              <Typography variant="h6" color="text.secondary">
-                Módulo de Documentos en desarrollo
-              </Typography>
-            </Box>
-          )}
+            {/* Tab 2 - Dependientes */}
+            {tabValue === 2 && (
+              <Box textAlign="center" py={5}>
+                <FamilyRestroomIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+                <Typography variant="h6" color="text.secondary">
+                  Módulo de Dependientes en desarrollo
+                </Typography>
+              </Box>
+            )}
 
-          {tabValue === 3 && (
-            <Box textAlign="center" py={5}>
-              <Typography variant="h6" color="text.secondary">
-                Módulo de Bitácora en desarrollo
-              </Typography>
-            </Box>
-          )}
+            {/* Tab 3 - Inmigración */}
+            {tabValue === 3 && (
+              <Box textAlign="center" py={5}>
+                <FlightIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+                <Typography variant="h6" color="text.secondary">
+                  Módulo de Inmigración en desarrollo
+                </Typography>
+              </Box>
+            )}
 
-          {tabValue === 4 && (
-            <Box textAlign="center" py={5}>
-              <Typography variant="h6" color="text.secondary">
-                Módulo de Talento en desarrollo
-              </Typography>
-            </Box>
-          )}
+            {/* Tab 4 - Trabajo */}
+            {tabValue === 4 && (
+              <Box>
+                <Typography variant="h5" fontWeight={600} gutterBottom color="primary.main" sx={{ mb: 4 }}>
+                  Información de Trabajo
+                </Typography>
+
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                    Puesto
+                  </Typography>
+                  <Box 
+                    sx={{ 
+                      bgcolor: 'white',
+                      border: '1px solid #e0e0e0',
+                      borderRadius: 1,
+                      p: 1.5,
+                      mt: 1
+                    }}
+                  >
+                    <Typography variant="body2" fontWeight={500}>
+                      {empleado.puesto || 'N/A'}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                    Área / Departamento
+                  </Typography>
+                  <Box 
+                    sx={{ 
+                      bgcolor: 'white',
+                      border: '1px solid #e0e0e0',
+                      borderRadius: 1,
+                      p: 1.5,
+                      mt: 1
+                    }}
+                  >
+                    <Typography variant="body2" fontWeight={500}>
+                      {empleado.area || 'N/A'}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Grid container spacing={2} sx={{ mb: 3 }}>
+                  <Grid item xs={6}>
+                    <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                      Fecha de Ingreso
+                    </Typography>
+                    <Box 
+                      sx={{ 
+                        bgcolor: 'white',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: 1,
+                        p: 1.5,
+                        mt: 1
+                      }}
+                    >
+                      <Typography variant="body2" fontWeight={500}>
+                        {formatearFecha(empleado.fecha_ingreso)}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                      Tipo de Contrato
+                    </Typography>
+                    <Box 
+                      sx={{ 
+                        bgcolor: 'white',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: 1,
+                        p: 1.5,
+                        mt: 1
+                      }}
+                    >
+                      <Typography variant="body2" fontWeight={500}>
+                        {empleado.tipo_contrato || 'N/A'}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                    Antigüedad
+                  </Typography>
+                  <Box 
+                    sx={{ 
+                      bgcolor: 'white',
+                      border: '1px solid #e0e0e0',
+                      borderRadius: 1,
+                      p: 1.5,
+                      mt: 1
+                    }}
+                  >
+                    <Typography variant="body2" fontWeight={500}>
+                      {calcularAntiguedad(empleado.fecha_ingreso)}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                    Días de Vacaciones Disponibles
+                  </Typography>
+                  <Box 
+                    sx={{ 
+                      bgcolor: '#e8f5e9',
+                      border: '1px solid #4caf50',
+                      borderRadius: 1,
+                      p: 1.5,
+                      mt: 1
+                    }}
+                  >
+                    <Typography variant="h6" fontWeight={600} color="success.main">
+                      {empleado.dias_vacaciones || 0} días
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+            )}
+
+            {/* Tab 5 - Salario */}
+            {tabValue === 5 && (
+              <Box textAlign="center" py={5}>
+                <AttachMoneyIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+                <Typography variant="h6" color="text.secondary">
+                  Módulo de Salario en desarrollo
+                </Typography>
+              </Box>
+            )}
+
+            {/* Tab 6 - Reporta a */}
+            {tabValue === 6 && (
+              <Box>
+                <Typography variant="h5" fontWeight={600} gutterBottom color="primary.main" sx={{ mb: 4 }}>
+                  Reporta a
+                </Typography>
+
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                    Supervisor Directo
+                  </Typography>
+                  <Box 
+                    sx={{ 
+                      bgcolor: 'white',
+                      border: '1px solid #e0e0e0',
+                      borderRadius: 1,
+                      p: 1.5,
+                      mt: 1
+                    }}
+                  >
+                    <Typography variant="body2" fontWeight={500}>
+                      {empleado.supervisor_nombre || 'N/A'}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+            )}
+
+            {/* Tab 7 - Boletas de Pago */}
+            {tabValue === 7 && (
+              <Box textAlign="center" py={5}>
+                <ReceiptIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+                <Typography variant="h6" color="text.secondary">
+                  Módulo de Boletas de Pago en desarrollo
+                </Typography>
+              </Box>
+            )}
+
+            {/* Tab 8 - Documentos */}
+            {tabValue === 8 && (
+              <Box textAlign="center" py={5}>
+                <DescriptionIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+                <Typography variant="h6" color="text.secondary">
+                  Módulo de Documentos en desarrollo
+                </Typography>
+              </Box>
+            )}
+
+            {/* Tab 9 - Bitácora */}
+            {tabValue === 9 && (
+              <Box textAlign="center" py={5}>
+                <HistoryIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+                <Typography variant="h6" color="text.secondary">
+                  Módulo de Bitácora en desarrollo
+                </Typography>
+              </Box>
+            )}
+
+            {/* Tab 10 - Talento */}
+            {tabValue === 10 && (
+              <Box textAlign="center" py={5}>
+                <EmojiEventsIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+                <Typography variant="h6" color="text.secondary">
+                  Módulo de Talento en desarrollo
+                </Typography>
+              </Box>
+            )}
+
+          </Paper>
         </Box>
-      </Paper>
-    </Box>
+      </Box>
   );
 };
 
