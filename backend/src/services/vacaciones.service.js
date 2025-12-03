@@ -286,6 +286,9 @@ class VacacionesService {
 
   /**
    * Regla: Prohibición de puenteo de feriados
+   * Si hay un feriado entre dos solicitudes separadas por POCOS días, debe incluirse
+   * Ejemplo: No puedes tener solicitud 29-30 dic y 2-8 ene si hay feriado el 1 ene
+   * Pero SÍ puedes tener solicitud en diciembre y otra en enero (mucha distancia)
    */
   async validarPuenteoFeriados(solicitudData) {
     const { empleado_id, fecha_inicio, fecha_fin } = solicitudData;
@@ -302,41 +305,57 @@ class VacacionesService {
     const result = await dbQuery(solicitudesQuery, [empleado_id, solicitudData.id || 0]);
     const solicitudesExistentes = result.rows;
 
-    // Obtener feriados entre las fechas relevantes
-    const feriadosQuery = `
-      SELECT fecha
-      FROM feriados
-      WHERE fecha BETWEEN $1 AND $2
-      ORDER BY fecha
-    `;
-    
+    // Si no hay solicitudes existentes, no hay riesgo de puenteo
+    if (solicitudesExistentes.length === 0) {
+      return { valida: true };
+    }
+
     const fechaInicio = new Date(fecha_inicio);
     const fechaFin = new Date(fecha_fin);
-    
-    // Buscar en un rango amplio para detectar puenteos
-    const rangoInicio = new Date(fechaInicio);
-    rangoInicio.setDate(rangoInicio.getDate() - 30);
-    const rangoFin = new Date(fechaFin);
-    rangoFin.setDate(rangoFin.getDate() + 30);
-    
-    const feriadosResult = await dbQuery(feriadosQuery, [rangoInicio, rangoFin]);
-    const feriados = feriadosResult.rows.map(f => new Date(f.fecha).getTime());
 
     // Verificar si hay puenteo con solicitudes existentes
     for (const solicitud of solicitudesExistentes) {
-      const existenteInicio = new Date(solicitud.fecha_inicio).getTime();
-      const existenteFin = new Date(solicitud.fecha_fin).getTime();
-      const nuevaInicio = fechaInicio.getTime();
-      const nuevaFin = fechaFin.getTime();
+      const existenteInicio = new Date(solicitud.fecha_inicio);
+      const existenteFin = new Date(solicitud.fecha_fin);
 
-      // Buscar feriados entre las dos solicitudes
-      for (const feriado of feriados) {
-        // Si hay un feriado entre el fin de una solicitud y el inicio de otra
-        if ((feriado > existenteFin && feriado < nuevaInicio) ||
-            (feriado > nuevaFin && feriado < existenteInicio)) {
+      // Determinar el rango entre las dos solicitudes
+      let rangoInicio, rangoFin;
+      
+      // Si la nueva solicitud es después de la existente
+      if (fechaInicio > existenteFin) {
+        rangoInicio = existenteFin;
+        rangoFin = fechaInicio;
+      }
+      // Si la nueva solicitud es antes de la existente
+      else if (fechaFin < existenteInicio) {
+        rangoInicio = fechaFin;
+        rangoFin = existenteInicio;
+      }
+      // Si se solapan o son continuas, no hay problema
+      else {
+        continue;
+      }
+
+      // Calcular días entre solicitudes
+      const diasEntre = Math.floor((rangoFin - rangoInicio) / (1000 * 60 * 60 * 24));
+      
+      // Solo validar puenteo si hay 7 días o menos de separación
+      // Más de 7 días = son períodos completamente separados, no hay "puenteo"
+      if (diasEntre > 1 && diasEntre <= 7) {
+        const feriadosQuery = `
+          SELECT fecha, nombre
+          FROM feriados
+          WHERE fecha > $1 AND fecha < $2
+          ORDER BY fecha
+        `;
+        
+        const feriadosResult = await dbQuery(feriadosQuery, [rangoInicio, rangoFin]);
+        
+        if (feriadosResult.rows.length > 0) {
+          const nombresFeriados = feriadosResult.rows.map(f => f.nombre).join(', ');
           return {
             valida: false,
-            mensaje: 'No se permite "puentear" feriados. Existe un feriado entre esta solicitud y otra solicitud de vacaciones ya registrada. Debe incluir el feriado en una sola solicitud continua.'
+            mensaje: `No se permite "puentear" feriados. Existe un feriado (${nombresFeriados}) entre esta solicitud y otra solicitud de vacaciones ya registrada. Debe incluir el feriado en una sola solicitud continua.`
           };
         }
       }
@@ -368,6 +387,33 @@ class VacacionesService {
    */
   async crearSolicitud(solicitudData, usuarioId) {
     try {
+      console.log('🔵 CREAR SOLICITUD INICIADA:', {
+        empleado_id: solicitudData.empleado_id,
+        fecha_inicio: solicitudData.fecha_inicio,
+        fecha_fin: solicitudData.fecha_fin,
+        timestamp: new Date().toISOString()
+      });
+      
+      // 0. Verificar si ya existe una solicitud idéntica reciente (últimas 24 horas)
+      const verificarDuplicadoQuery = `
+        SELECT id FROM solicitudes_vacaciones
+        WHERE empleado_id = $1 
+          AND fecha_inicio = $2 
+          AND fecha_fin = $3
+          AND created_at > NOW() - INTERVAL '24 hours'
+        LIMIT 1
+      `;
+      const duplicadoResult = await dbQuery(verificarDuplicadoQuery, [
+        solicitudData.empleado_id,
+        solicitudData.fecha_inicio,
+        solicitudData.fecha_fin
+      ]);
+      
+      if (duplicadoResult.rows && duplicadoResult.rows.length > 0) {
+        console.log('⚠️ SOLICITUD DUPLICADA DETECTADA - BLOQUEANDO');
+        throw new Error('Ya existe una solicitud idéntica creada recientemente. Por favor, revise su historial de solicitudes.');
+      }
+
       // 1. Validar solicitud
       const validacion = await this.validarSolicitud(solicitudData);
       
@@ -406,9 +452,9 @@ class VacacionesService {
       const insertQuery = `
         INSERT INTO solicitudes_vacaciones (
           empleado_id, periodo_id, fecha_inicio, fecha_fin,
-          dias_solicitados, dias_calendario, mes_solicitud, anio_solicitud,
+          dias_solicitados, mes_solicitud, anio_solicitud,
           estado, comentarios, motivo
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING id
       `;
       
@@ -421,7 +467,6 @@ class VacacionesService {
         periodoId,
         solicitudData.fecha_inicio,
         solicitudData.fecha_fin,
-        detalles.diasCalendario,
         detalles.diasCalendario,
         mes,
         anio,

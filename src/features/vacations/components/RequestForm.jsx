@@ -129,6 +129,11 @@ const RequestForm = ({ onSuccess }) => {
       return;
     }
     
+    // Prevenir doble envío
+    if (enviando) {
+      return;
+    }
+    
     setEnviando(true);
     try {
       await vacacionesService.crearSolicitud({

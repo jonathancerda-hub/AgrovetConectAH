@@ -40,6 +40,7 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import PersonIcon from '@mui/icons-material/Person';
 import { empleadosService } from '../../../services/empleados.service';
 import { notificacionesService } from '../../../services/notificaciones.service';
+import api from '../../../services/api';
 
 export default function DashboardRRHH() {
   const [empleados, setEmpleados] = useState([]);
@@ -77,32 +78,34 @@ export default function DashboardRRHH() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      console.log('📊 Cargando empleados para Dashboard RRHH...');
-      const data = await empleadosService.getAll();
+      console.log('📊 Cargando datos de control de vacaciones...');
+      
+      // Usar api de axios que ya tiene la configuración correcta
+      const response = await api.get('/vacaciones/control-rrhh');
+      const data = response.data;
+      
       console.log('📊 Datos recibidos:', data);
       console.log('📊 Total empleados:', data?.length);
       console.log('📊 Primer empleado (muestra):', data[0]);
       
-      // Mostrar TODOS los empleados sin filtrar por ahora
-      const activos = data.filter(emp => emp.activo !== false); // Filtrar solo por activo true
-      console.log('📊 Empleados activos:', activos.length);
-      setEmpleados(activos);
-      setFilteredEmpleados(activos);
+      setEmpleados(data);
+      setFilteredEmpleados(data);
 
       // Calcular estadísticas
-      const sinVacaciones = activos.filter(emp => !emp.dias_vacaciones || emp.dias_vacaciones === 0).length;
-      const enVacaciones = 0; // Por ahora no tenemos forma de saber quién está de vacaciones
-      const totalDias = activos.reduce((sum, emp) => sum + (emp.dias_vacaciones || 0), 0);
-      const promedio = activos.length > 0 ? Math.round(totalDias / activos.length) : 0;
+      const sinVacaciones = data.filter(emp => (emp.dias_disponibles || 0) === 0).length;
+      const enVacaciones = 0; // Por implementar
+      const totalDias = data.reduce((sum, emp) => sum + (emp.dias_totales || 0), 0);
+      const promedio = data.length > 0 ? Math.round(totalDias / data.length) : 0;
 
       setStats({
-        totalEmpleados: activos.length,
+        totalEmpleados: data.length,
         sinVacaciones,
         enVacaciones,
         diasPromedio: promedio
       });
     } catch (err) {
-      console.error('Error al cargar datos:', err);
+      console.error('❌ Error al cargar datos:', err);
+      console.error('❌ Error response:', err.response);
       setError('No se pudo cargar la información de empleados');
     } finally {
       setLoading(false);
@@ -111,7 +114,9 @@ export default function DashboardRRHH() {
 
   const handleOpenDialog = (empleado) => {
     setSelectedEmpleado(empleado);
-    setMensaje(`Estimado/a ${empleado.nombres}, le recordamos que tiene ${empleado.dias_vacaciones || 0} días de vacaciones disponibles. Por favor, coordine con su supervisor para programar su descanso.`);
+    const nombreCompleto = empleado.nombre_completo || `${empleado.nombres || ''} ${empleado.apellidos || ''}`.trim();
+    const diasDisponibles = empleado.dias_disponibles || 0;
+    setMensaje(`Estimado/a ${nombreCompleto}, le recordamos que tiene ${diasDisponibles} días de vacaciones disponibles. Por favor, coordine con su supervisor para programar su descanso.`);
     setOpenDialog(true);
   };
 
@@ -123,26 +128,26 @@ export default function DashboardRRHH() {
 
   const handleSendNotification = async () => {
     try {
-      if (!selectedEmpleado.usuario_id) {
-        setError('El empleado no tiene un usuario asignado');
+      if (!selectedEmpleado) {
+        setError('No hay empleado seleccionado');
         return;
       }
 
-      // TODO: Implementar endpoint de notificaciones para tabla notificaciones_vacaciones
-      console.log('📧 Notificación a enviar:', {
-        destinatario_id: selectedEmpleado.id,
-        usuario_id: selectedEmpleado.usuario_id,
+      // Crear notificación en la base de datos
+      await notificacionesService.create({
+        empleado_id: selectedEmpleado.empleado_id,
         titulo: 'Recordatorio de Vacaciones',
         mensaje: mensaje,
-        tipo_notificacion: 'recordatorio'
+        tipo: 'recordatorio',
+        prioridad: 'normal'
       });
 
-      setSuccess(`Vista previa del mensaje guardada en consola. (Funcionalidad de envío en desarrollo)`);
+      setSuccess(`Notificación enviada exitosamente a ${selectedEmpleado.nombre_completo}`);
       handleCloseDialog();
       
     } catch (err) {
       console.error('Error al enviar notificación:', err);
-      setError('No se pudo enviar la notificación');
+      setError(err.response?.data?.detalles || 'No se pudo enviar la notificación');
     }
   };
 
@@ -321,28 +326,28 @@ export default function DashboardRRHH() {
                 </TableRow>
               ) : (
                 filteredEmpleados.map((empleado) => {
-                  const diasPorAno = empleado.dias_por_ano || 30;
-                  const diasTomados = empleado.dias_tomados || 0;
-                  const diasRestantes = empleado.dias_vacaciones || 0;
+                  const diasPorAno = empleado.dias_totales || 30;
+                  const diasTomados = empleado.dias_tomados || empleado.dias_usados || 0;
+                  const diasRestantes = empleado.dias_disponibles || 0;
                   const porcentajeUso = diasPorAno > 0 ? ((diasTomados / diasPorAno) * 100) : 0;
 
                   return (
                     <TableRow 
-                      key={empleado.id}
+                      key={empleado.empleado_id}
                       hover
                       sx={{ '&:nth-of-type(odd)': { bgcolor: 'action.hover' } }}
                     >
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
-                            {empleado.nombres?.charAt(0) || <PersonIcon />}
+                            {empleado.nombre_completo?.charAt(0) || <PersonIcon />}
                           </Avatar>
                           <Box>
                             <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                              {empleado.nombres} {empleado.apellidos}
+                              {empleado.nombre_completo}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
-                              Código: {empleado.codigo_empleado}
+                              EMP-{String(empleado.empleado_id).padStart(3, '0')}
                             </Typography>
                           </Box>
                         </Box>
@@ -352,8 +357,8 @@ export default function DashboardRRHH() {
                       </TableCell>
                       <TableCell>
                         <Chip 
-                          label={getEstadoLabel(empleado.activo)} 
-                          color={getEstadoColor(empleado.activo)} 
+                          label="Activo" 
+                          color="success" 
                           size="small" 
                         />
                       </TableCell>

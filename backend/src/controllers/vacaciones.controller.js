@@ -296,7 +296,7 @@ export const rechazarSolicitud = async (req, res) => {
 // Obtener notificaciones del usuario
 export const obtenerNotificaciones = async (req, res) => {
   try {
-    const empleadoId = req.user?.id;
+    const empleadoId = req.user?.empleado_id;
     if (!empleadoId) {
       return res.status(401).json({ error: 'No autenticado' });
     }
@@ -333,7 +333,7 @@ export const obtenerNotificaciones = async (req, res) => {
 export const marcarNotificacionLeida = async (req, res) => {
   try {
     const { id } = req.params;
-    const empleadoId = req.user?.id;
+    const empleadoId = req.user?.empleado_id;
     if (!empleadoId) {
       return res.status(401).json({ error: 'No autenticado' });
     }
@@ -349,6 +349,86 @@ export const marcarNotificacionLeida = async (req, res) => {
     console.error('Error al marcar notificación:', error);
     res.status(500).json({ 
       error: 'Error al marcar la notificación',
+      detalles: error.message 
+    });
+  }
+};
+
+// Crear notificación
+export const crearNotificacion = async (req, res) => {
+  try {
+    const { empleado_id, titulo, mensaje, tipo, solicitud_id } = req.body;
+    
+    if (!empleado_id || !titulo || !mensaje) {
+      return res.status(400).json({ error: 'Faltan campos requeridos' });
+    }
+    
+    const result = await dbQuery(`
+      INSERT INTO notificaciones_vacaciones (
+        destinatario_id, 
+        tipo_notificacion, 
+        titulo, 
+        mensaje,
+        solicitud_id,
+        fecha_creacion
+      )
+      VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+      RETURNING *
+    `, [empleado_id, tipo || 'info', titulo, mensaje, solicitud_id || null]);
+    
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Error al crear notificación:', error);
+    res.status(500).json({ 
+      error: 'Error al crear la notificación',
+      detalles: error.message 
+    });
+  }
+};
+
+// Marcar todas las notificaciones como leídas
+export const marcarTodasLeidas = async (req, res) => {
+  try {
+    const empleadoId = req.user?.empleado_id;
+    if (!empleadoId) {
+      return res.status(401).json({ error: 'No autenticado' });
+    }
+    
+    await dbQuery(`
+      UPDATE notificaciones_vacaciones
+      SET leida = true, fecha_lectura = CURRENT_TIMESTAMP
+      WHERE destinatario_id = $1 AND leida = false
+    `, [empleadoId]);
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error al marcar todas como leídas:', error);
+    res.status(500).json({ 
+      error: 'Error al marcar las notificaciones',
+      detalles: error.message 
+    });
+  }
+};
+
+// Eliminar notificación
+export const eliminarNotificacion = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const empleadoId = req.user?.empleado_id;
+    if (!empleadoId) {
+      return res.status(401).json({ error: 'No autenticado' });
+    }
+    
+    await dbQuery(`
+      DELETE FROM notificaciones_vacaciones
+      WHERE id = $1 AND destinatario_id = $2
+    `, [id, empleadoId]);
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error al eliminar notificación:', error);
+    res.status(500).json({ 
+      error: 'Error al eliminar la notificación',
       detalles: error.message 
     });
   }
@@ -405,7 +485,8 @@ export const obtenerControlRRHH = async (req, res) => {
         p.nombre as puesto,
         COALESCE(SUM(pv.dias_totales), 0) as dias_totales,
         COALESCE(SUM(pv.dias_disponibles), 0) as dias_disponibles,
-        COALESCE(SUM(pv.dias_totales - pv.dias_disponibles), 0) as dias_usados,
+        COALESCE(SUM(pv.dias_usados), 0) as dias_usados,
+        COALESCE(SUM(pv.dias_usados), 0) as dias_tomados,
         COALESCE(
           (SELECT COUNT(*) 
            FROM solicitudes_vacaciones sv 
@@ -423,7 +504,6 @@ export const obtenerControlRRHH = async (req, res) => {
       LEFT JOIN puestos p ON e.puesto_id = p.id
       LEFT JOIN periodos_vacacionales pv ON e.id = pv.empleado_id 
         AND pv.estado = 'activo'
-        AND pv.anio_generacion = EXTRACT(YEAR FROM CURRENT_DATE)
       WHERE e.activo = true
       GROUP BY e.id, e.nombres, e.apellidos, a.nombre, p.nombre
       ORDER BY e.apellidos, e.nombres

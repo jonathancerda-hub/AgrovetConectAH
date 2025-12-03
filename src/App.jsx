@@ -50,6 +50,10 @@ import NewBulletinForm from './features/vacations/components/NewBulletinForm'; /
 import PortalPage from './features/vacations/components/PortalPage'; // Corregido
 import ProcessRequestPage from './features/vacations/components/ProcessRequestPage';
 
+// Importación para Notificaciones
+import NotificationsPage from './features/vacations/components/NotificationsPage';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+
 const drawerWidth = 240;
 
 import GroupIcon from '@mui/icons-material/Group';
@@ -385,6 +389,10 @@ function App() {
     mainContent = <GestionEmpleados />;
     pageTitle = 'Gestión de Empleados';
     breadcrumbs = [{ text: 'Gestión de Empleados' }];
+  } else if (selectedMenu.main === 'notificaciones') {
+    mainContent = <NotificationsPage />;
+    pageTitle = 'Mis Notificaciones';
+    breadcrumbs = [{ text: 'Notificaciones' }];
   } else if (selectedMenu.main === 'equipo') {
     mainContent = equipoItems[selectedMenu.sub].component;
     pageTitle = equipoItems[selectedMenu.sub].text;
@@ -601,6 +609,47 @@ function App() {
 
             <ListItem disablePadding sx={{ display: 'block' }}>
               <ListItemButton
+                selected={selectedMenu.main === 'notificaciones'}
+                onClick={() => handleMenuClick('notificaciones')}
+                sx={{
+                  minHeight: 48,
+                  mx: 2,
+                  justifyContent: drawerOpen ? 'initial' : 'center',
+                  borderRadius: 1,
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                  },
+                  '&.Mui-selected': {
+                    color: '#fff',
+                    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                    '& .MuiListItemIcon-root': {
+                      color: '#fff',
+                    },
+                  },
+                  '&.Mui-selected:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  },
+                  px: 2.5,
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    mr: drawerOpen ? 3 : 'auto',
+                    justifyContent: 'center',
+                    transition: (theme) => theme.transitions.create('margin', {
+                      easing: theme.transitions.easing.sharp,
+                      duration: theme.transitions.duration.enteringScreen,
+                    }),
+                  }}>
+                  <NotificationsIcon />
+                </ListItemIcon>
+                {drawerOpen && <ListItemText primary="Notificaciones" sx={{ opacity: drawerOpen ? 1 : 0 }} />}
+              </ListItemButton>
+            </ListItem>
+
+            <ListItem disablePadding sx={{ display: 'block' }}>
+              <ListItemButton
                 onClick={() => handleSubMenuToggle('equipo')}
                 sx={{
                   minHeight: 48,
@@ -732,6 +781,9 @@ function App() {
               </Box>
             </Collapse>
 
+            {/* Solo mostrar Dashboard RRHH para usuarios RRHH */}
+            {currentUser?.esRrhh && (
+            <>
             <ListItem disablePadding sx={{ display: 'block' }}>
               <ListItemButton
                 onClick={() => handleSubMenuToggle('rrhh')}
@@ -857,7 +909,11 @@ function App() {
                 </List>
               </Box>
             </Collapse>
+            </>
+            )}
 
+            {/* Solo mostrar Gestión de Empleados para usuarios RRHH */}
+            {currentUser?.esRrhh && (
             <ListItem disablePadding sx={{ display: 'block' }}>
               <ListItemButton
                 selected={selectedMenu.main === 'empleados'}
@@ -898,6 +954,7 @@ function App() {
                 {drawerOpen && <ListItemText primary="Gestión de Empleados" sx={{ opacity: drawerOpen ? 1 : 0 }} />}
               </ListItemButton>
             </ListItem>
+            )}
           </List>
         </Box>
       </Box>

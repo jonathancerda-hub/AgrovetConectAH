@@ -23,7 +23,10 @@ router.put('/solicitudes/:id/rechazar', vacacionesController.rechazarSolicitud);
 
 // Notificaciones
 router.get('/notificaciones', vacacionesController.obtenerNotificaciones);
+router.post('/notificaciones', vacacionesController.crearNotificacion);
 router.put('/notificaciones/:id/leer', vacacionesController.marcarNotificacionLeida);
+router.put('/notificaciones/leer-todas', vacacionesController.marcarTodasLeidas);
+router.delete('/notificaciones/:id', vacacionesController.eliminarNotificacion);
 
 // Catálogos
 router.get('/tipos-trabajador', vacacionesController.obtenerTiposTrabajador);

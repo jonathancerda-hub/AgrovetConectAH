@@ -41,6 +41,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import LogoutIcon from '@mui/icons-material/Logout';
 import NotificationPanel from './NotificationPanel';
 import { authService } from '../../../services/auth.service';
+import { notificacionesService } from '../../../services/notificaciones.service';
 
 const settings = [
   { text: 'Mi Perfil', icon: <PersonIcon fontSize="small" />, action: 'profile' },
@@ -56,6 +57,7 @@ export default function TopBar({ onMenuClick, title, breadcrumbs = [], onNavigat
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState('');
   const [logoutDialogOpen, setLogoutDialogOpen] = React.useState(false);
+  const [unreadCount, setUnreadCount] = React.useState(0);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
   const isNotificationOpen = Boolean(notificationAnchor);
 
@@ -63,6 +65,23 @@ export default function TopBar({ onMenuClick, title, breadcrumbs = [], onNavigat
   const currentUser = authService.getCurrentUser();
   const userName = currentUser?.nombre || currentUser?.email || 'Usuario';
   const userRole = currentUser?.rol || 'Colaborador';
+
+  // Cargar contador de notificaciones no leídas
+  React.useEffect(() => {
+    fetchUnreadCount();
+    // Recargar cada 30 segundos
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const notifications = await notificacionesService.getUnread();
+      setUnreadCount(notifications.length);
+    } catch (error) {
+      console.error('Error al cargar contador de notificaciones:', error);
+    }
+  };
 
   const handleMobileMenuClose = () => {
     setMobileMoreAnchorEl(null);
@@ -115,6 +134,8 @@ export default function TopBar({ onMenuClick, title, breadcrumbs = [], onNavigat
 
   const handleNotificationClose = () => {
     setNotificationAnchor(null);
+    // Recargar el contador al cerrar el panel
+    fetchUnreadCount();
   };
 
   const handleHelpClick = () => {
@@ -313,7 +334,7 @@ export default function TopBar({ onMenuClick, title, breadcrumbs = [], onNavigat
                 }}
                 onClick={handleNotificationClick}
               >
-                <Badge badgeContent={2} color="error">
+                <Badge badgeContent={unreadCount} color="error">
                   <NotificationsIcon />
                 </Badge>
               </IconButton>
@@ -440,7 +461,10 @@ export default function TopBar({ onMenuClick, title, breadcrumbs = [], onNavigat
         TransitionComponent={Fade}
         sx={{ mt: 1 }}
       >
-        <NotificationPanel onClose={handleNotificationClose} />
+        <NotificationPanel 
+          onClose={handleNotificationClose} 
+          onNavigate={onNavigate}
+        />
       </Popover>
 
       {/* Menu móvil */}
@@ -467,7 +491,7 @@ export default function TopBar({ onMenuClick, title, breadcrumbs = [], onNavigat
         </MenuItem>
         <MenuItem>
           <IconButton color="inherit">
-            <Badge badgeContent={2} color="error">
+            <Badge badgeContent={unreadCount} color="error">
               <NotificationsIcon />
             </Badge>
           </IconButton>

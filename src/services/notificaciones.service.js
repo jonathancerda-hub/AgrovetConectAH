@@ -9,7 +9,7 @@ export const notificacionesService = {
    * @returns {Promise<Array>}
    */
   getAll: async () => {
-    const response = await api.get('/notificaciones');
+    const response = await api.get('/vacaciones/notificaciones');
     return response.data;
   },
 
@@ -18,7 +18,7 @@ export const notificacionesService = {
    * @returns {Promise<Array>}
    */
   getUnread: async () => {
-    const response = await api.get('/notificaciones/no-leidas');
+    const response = await api.get('/vacaciones/notificaciones?leida=false');
     return response.data;
   },
 
@@ -28,7 +28,7 @@ export const notificacionesService = {
    * @returns {Promise<object>}
    */
   markAsRead: async (id) => {
-    const response = await api.put(`/notificaciones/${id}/leer`);
+    const response = await api.put(`/vacaciones/notificaciones/${id}/leer`);
     return response.data;
   },
 
@@ -37,7 +37,7 @@ export const notificacionesService = {
    * @returns {Promise<object>}
    */
   markAllAsRead: async () => {
-    const response = await api.put('/notificaciones/leer-todas');
+    const response = await api.put('/vacaciones/notificaciones/leer-todas');
     return response.data;
   },
 
@@ -47,7 +47,7 @@ export const notificacionesService = {
    * @returns {Promise<object>}
    */
   delete: async (id) => {
-    const response = await api.delete(`/notificaciones/${id}`);
+    const response = await api.delete(`/vacaciones/notificaciones/${id}`);
     return response.data;
   },
 
@@ -57,7 +57,7 @@ export const notificacionesService = {
    * @returns {Promise<object>}
    */
   create: async (notificacionData) => {
-    const response = await api.post('/notificaciones', notificacionData);
+    const response = await api.post('/vacaciones/notificaciones', notificacionData);
     return response.data;
   }
 };

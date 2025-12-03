@@ -21,7 +21,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
 import { notificacionesService } from '../../../services/notificaciones.service';
 
-export default function NotificationPanel({ onClose }) {
+export default function NotificationPanel({ onClose, onNavigate }) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -38,20 +38,32 @@ export default function NotificationPanel({ onClose }) {
       // Formatear notificaciones para que coincidan con la estructura esperada
       const formattedData = data.map(notif => ({
         id: notif.id,
-        type: notif.tipo, // 'success', 'info', 'warning', 'error'
+        type: mapTipoToType(notif.tipo_notificacion),
         title: notif.titulo,
         message: notif.mensaje,
         time: formatRelativeTime(notif.fecha_creacion),
-        read: notif.leido,
+        read: notif.leida,
       }));
       
       setNotifications(formattedData);
+      setError('');
     } catch (err) {
       console.error('Error al cargar notificaciones:', err);
       setError('No se pudieron cargar las notificaciones');
     } finally {
       setLoading(false);
     }
+  };
+
+  const mapTipoToType = (tipoNotificacion) => {
+    const mapping = {
+      'aprobada': 'success',
+      'rechazada': 'error',
+      'recordatorio': 'info',
+      'alerta': 'warning',
+      'info': 'info'
+    };
+    return mapping[tipoNotificacion] || 'info';
   };
 
   const formatRelativeTime = (dateString) => {
@@ -247,7 +259,16 @@ export default function NotificationPanel({ onClose }) {
           textAlign: 'center',
         }}
       >
-        <Button fullWidth size="small" onClick={onClose}>
+        <Button 
+          fullWidth 
+          size="small" 
+          onClick={() => {
+            onClose();
+            if (onNavigate) {
+              onNavigate('notificaciones');
+            }
+          }}
+        >
           Ver todas las notificaciones
         </Button>
       </Box>
