@@ -8,7 +8,7 @@ import { query as dbQuery } from '../db.js';
 // Validar solicitud de vacaciones
 export const validarSolicitud = async (req, res) => {
   try {
-    const empleadoId = req.user?.id;
+    const empleadoId = req.user?.empleado_id;
     if (!empleadoId) {
       return res.status(401).json({ 
         error: 'No autenticado',
@@ -35,8 +35,8 @@ export const validarSolicitud = async (req, res) => {
 // Crear solicitud de vacaciones
 export const crearSolicitud = async (req, res) => {
   try {
-    const usuarioId = req.user?.id;
-    if (!usuarioId) {
+    const empleadoId = req.user?.empleado_id;
+    if (!empleadoId) {
       return res.status(401).json({ 
         error: 'No autenticado',
         detalles: 'Debe iniciar sesión para crear solicitudes' 
@@ -45,10 +45,10 @@ export const crearSolicitud = async (req, res) => {
     
     const solicitudData = {
       ...req.body,
-      empleado_id: usuarioId
+      empleado_id: empleadoId
     };
     
-    const resultado = await vacacionesService.crearSolicitud(solicitudData, usuarioId);
+    const resultado = await vacacionesService.crearSolicitud(solicitudData, empleadoId);
     res.status(201).json(resultado);
   } catch (error) {
     console.error('Error al crear solicitud:', error);
@@ -62,7 +62,7 @@ export const crearSolicitud = async (req, res) => {
 // Obtener resumen de vacaciones del empleado
 export const obtenerResumen = async (req, res) => {
   try {
-    const empleadoId = req.params.empleadoId || req.user?.id;
+    const empleadoId = req.params.empleadoId || req.user?.empleado_id;
     if (!empleadoId) {
       return res.status(401).json({ error: 'No autenticado' });
     }
@@ -80,7 +80,7 @@ export const obtenerResumen = async (req, res) => {
 // Obtener períodos vacacionales del empleado
 export const obtenerPeriodos = async (req, res) => {
   try {
-    const empleadoId = req.params.empleadoId || req.user?.id;
+    const empleadoId = req.params.empleadoId || req.user?.empleado_id;
     if (!empleadoId) {
       return res.status(401).json({ error: 'No autenticado' });
     }

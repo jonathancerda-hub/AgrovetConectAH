@@ -74,7 +74,6 @@ const initialVacationRequests = [
 // ----------------------------------------------------------------
 
 // Datos de ejemplo para mostrar los componentes
-const availableDaysData = { available: 10, taken: 5 };
 const requestsData = [
   { id: 1, requester: 'Juan', startDate: '2025-10-10', endDate: '2025-10-15', status: 'Aprobada' },
   { id: 2, requester: 'Ana', startDate: '2025-11-01', endDate: '2025-11-05', status: 'Pendiente' },
@@ -142,6 +141,7 @@ function App() {
   const [publishedBulletins, setPublishedBulletins] = useState(initialPublicaciones); // Lista de todos los boletines publicados
   const [openSubMenu, setOpenSubMenu] = useState(null); // Controla qué submenú está abierto
   const [calendarEvents, setCalendarEvents] = useState([]); // Eventos del calendario
+  const [availableDaysData, setAvailableDaysData] = useState({ available: 0, taken: 0 }); // Datos de vacaciones del usuario
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -151,6 +151,8 @@ function App() {
     if (user && authService.isAuthenticated()) {
       setCurrentUser(user);
       setIsAuthenticated(true);
+      // Cargar datos de vacaciones del usuario
+      fetchUserVacationData(user.empleadoId);
     }
   }, []);
 
@@ -160,6 +162,34 @@ function App() {
       fetchCalendarEvents();
     }
   }, [selectedMenu.main, currentUser]);
+
+  // Función para obtener datos de vacaciones del usuario
+  const fetchUserVacationData = async (empleadoId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const response = await fetch(`${API_URL}/vacaciones/resumen/${empleadoId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableDaysData({
+          available: data.dias_disponibles || 0,
+          taken: data.dias_usados || 0
+        });
+      } else {
+        console.warn('No se pudieron cargar los datos de vacaciones');
+        setAvailableDaysData({ available: 0, taken: 0 });
+      }
+    } catch (error) {
+      console.error('Error al cargar datos de vacaciones:', error);
+      setAvailableDaysData({ available: 0, taken: 0 });
+    }
+  };
 
   const fetchCalendarEvents = async () => {
     try {
@@ -223,6 +253,10 @@ function App() {
     // Ahora recibimos el objeto user directamente del servicio
     setCurrentUser(user);
     setIsAuthenticated(true);
+    // Cargar datos de vacaciones del usuario
+    if (user.empleadoId) {
+      fetchUserVacationData(user.empleadoId);
+    }
   };
 
   const handleLogout = () => {

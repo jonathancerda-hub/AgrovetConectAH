@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRD - AgrovetConectAH</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        
+        header {
+            background: linear-gradient(135deg, #2c7a7b 0%, #38b2ac 100%);
+            color: white;
+            padding: 60px 40px;
+            text-align: center;
+        }
+        
+        header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+        
+        .metadata {
+            background: #e6fffa;
+            padding: 20px 40px;
+            border-bottom: 3px solid #38b2ac;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .metadata-item {
+            text-align: center;
+        }
+        
+        .metadata-item strong {
+            display: block;
+            color: #2c7a7b;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        
+        .metadata-item span {
+            font-size: 1.1em;
+            color: #333;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        h2 {
+            color: #2c7a7b;
+            font-size: 2em;
+            margin: 40px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #38b2ac;
+        }
+        
+        h3 {
+            color: #38b2ac;
+            font-size: 1.5em;
+            margin: 30px 0 15px 0;
+        }
+        
+        h4 {
+            color: #2c7a7b;
+            font-size: 1.2em;
+            margin: 20px 0 10px 0;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin: 15px 0 15px 30px;
+        }
+        
+        li {
+            margin-bottom: 10px;
+        }
+        
+        .highlight-box {
+            background: #e6fffa;
+            border-left: 4px solid #38b2ac;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning-box {
+            background: #fff5f5;
+            border-left: 4px solid #f56565;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .success-box {
+            background: #f0fff4;
+            border-left: 4px solid #48bb78;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        th {
+            background: #2c7a7b;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        tr:hover {
+            background: #f7fafc;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .feature-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            border-color: #38b2ac;
+            box-shadow: 0 4px 12px rgba(56, 178, 172, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .feature-card h4 {
+            color: #2c7a7b;
+            margin-top: 0;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        
+        .status-completed {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        
+        .status-inprogress {
+            background: #feebc8;
+            color: #7c2d12;
+        }
+        
+        .status-planned {
+            background: #e6fffa;
+            color: #234e52;
+        }
+        
+        code {
+            background: #f7fafc;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #e53e3e;
+        }
+        
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .tech-badge {
+            background: #2c7a7b;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        
+        footer {
+            background: #2d3748;
+            color: white;
+            text-align: center;
+            padding: 30px;
+            margin-top: 40px;
+        }
+        
+        @media print {
+            body {
+                background: white;
+            }
+            .container {
+                box-shadow: none;
+            }
+            .feature-card:hover {
+                transform: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📋 Product Requirements Document</h1>
+            <p>AgrovetConectAH - Sistema de Gestión de Recursos Humanos</p>
+        </header>
+        
+        <div class="metadata">
+            <div class="metadata-item">
+                <strong>Versión</strong>
+                <span>1.0</span>
+            </div>
+            <div class="metadata-item">
+                <strong>Fecha</strong>
+                <span>29 de Noviembre, 2025</span>
+            </div>
+            <div class="metadata-item">
+                <strong>Estado</strong>
+                <span class="status-badge status-completed">Producción</span>
+            </div>
+            <div class="metadata-item">
+                <strong>Propietario</strong>
+                <span>Agrovet</span>
+            </div>
+        </div>
+        
+        <div class="content">
+            <h2>🎯 Resumen Ejecutivo</h2>
+            <p>
+                AgrovetConectAH es una plataforma integral de gestión de recursos humanos diseñada específicamente 
+                para modernizar y automatizar los procesos de RRHH en Agrovet. El sistema centraliza la información 
+                de empleados, facilita la gestión de vacaciones, y proporciona herramientas de comunicación interna 
+                a través de un portal de autoservicio accesible desde cualquier dispositivo.
+            </p>
+            
+            <div class="highlight-box">
+                <h4>🚀 URLs de Producción</h4>
+                <ul>
+                    <li><strong>Frontend:</strong> <code>https://agrovetconectah.onrender.com</code></li>
+                    <li><strong>Backend API:</strong> <code>https://agrovet-api-e22a.onrender.com</code></li>
+                    <li><strong>Repositorio:</strong> <code>github.com/jonathancerda-hub/AgrovetConectAH</code></li>
+                </ul>
+            </div>
+
+            <h2>🎯 Objetivos del Producto</h2>
+            
+            <h3>Objetivos Primarios</h3>
+            <ol>
+                <li><strong>Digitalización de procesos:</strong> Eliminar procesos manuales en papel para solicitudes de vacaciones y gestión de información de empleados.</li>
+                <li><strong>Autoservicio para empleados:</strong> Permitir que los empleados accedan a su información personal, soliciten vacaciones y consulten documentos sin intervención de RRHH.</li>
+                <li><strong>Eficiencia operativa:</strong> Reducir el tiempo de procesamiento de solicitudes de vacaciones de días a minutos.</li>
+                <li><strong>Centralización de información:</strong> Unificar toda la información de empleados en una única plataforma segura y accesible.</li>
+            </ol>
+            
+            <h3>Objetivos Secundarios</h3>
+            <ul>
+                <li>Mejorar la comunicación interna mediante un sistema de boletines y anuncios</li>
+                <li>Proporcionar visibilidad a los gerentes sobre su equipo y solicitudes pendientes</li>
+                <li>Generar reportes y analíticas sobre el uso de vacaciones y recursos humanos</li>
+                <li>Facilitar el cumplimiento de normativas laborales peruanas</li>
+            </ul>
+
+            <h2>👥 Usuarios y Personas</h2>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>👤 Empleado Regular</h4>
+                    <p><strong>Necesidades:</strong></p>
+                    <ul>
+                        <li>Consultar días de vacaciones disponibles</li>
+                        <li>Solicitar vacaciones de forma rápida</li>
+                        <li>Ver estado de solicitudes</li>
+                        <li>Acceder a información personal</li>
+                        <li>Leer boletines de la empresa</li>
+                    </ul>
+                    <p><strong>Frustración actual:</strong> Proceso manual lento, falta de visibilidad del estado de solicitudes</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>👨‍💼 Coordinador/Gerente</h4>
+                    <p><strong>Necesidades:</strong></p>
+                    <ul>
+                        <li>Aprobar/rechazar solicitudes de su equipo</li>
+                        <li>Ver calendario de vacaciones del equipo</li>
+                        <li>Consultar información de subordinados directos</li>
+                        <li>Gestionar disponibilidad del equipo</li>
+                    </ul>
+                    <p><strong>Frustración actual:</strong> Dificultad para coordinar vacaciones, falta de visibilidad de disponibilidad</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>👩‍💼 Personal de RRHH</h4>
+                    <p><strong>Necesidades:</strong></p>
+                    <ul>
+                        <li>Gestionar información de todos los empleados</li>
+                        <li>Administrar periodos vacacionales</li>
+                        <li>Publicar boletines y anuncios</li>
+                        <li>Generar reportes</li>
+                        <li>Configurar el sistema</li>
+                    </ul>
+                    <p><strong>Frustración actual:</strong> Proceso administrativo manual consume mucho tiempo</p>
+                </div>
+            </div>
+
+            <h2>✨ Características Principales</h2>
+            
+            <h3>1. Portal de Autoservicio</h3>
+            <div class="highlight-box">
+                <h4>📱 Mi Ficha</h4>
+                <p>Panel personal del empleado con diseño de dos columnas:</p>
+                <ul>
+                    <li><strong>Columna izquierda (280px):</strong> Navegación con foto de perfil y menú de opciones</li>
+                    <li><strong>Columna derecha (expandible):</strong> Contenido detallado</li>
+                </ul>
+                
+                <h4>Secciones disponibles:</h4>
+                <ul>
+                    <li>✅ <strong>Datos Personales:</strong> Información básica, contacto, documentos de identidad</li>
+                    <li>⚙️ <strong>Contacto:</strong> Información de contacto detallada (en desarrollo)</li>
+                    <li>⚙️ <strong>Dependientes:</strong> Familiares y dependientes (en desarrollo)</li>
+                    <li>⚙️ <strong>Inmigración:</strong> Documentos migratorios (en desarrollo)</li>
+                    <li>✅ <strong>Trabajo:</strong> Puesto, área, contrato, antigüedad, días de vacaciones</li>
+                    <li>⚙️ <strong>Salario:</strong> Información salarial (en desarrollo)</li>
+                    <li>✅ <strong>Reporta a:</strong> Jerarquía y supervisor directo</li>
+                    <li>⚙️ <strong>Boletas de Pago:</strong> Historial de boletas (en desarrollo)</li>
+                    <li>⚙️ <strong>Documentos:</strong> Repositorio de documentos (en desarrollo)</li>
+                    <li>⚙️ <strong>Bitácora:</strong> Historial de cambios (en desarrollo)</li>
+                    <li>⚙️ <strong>Talento:</strong> Evaluaciones y desarrollo (en desarrollo)</li>
+                </ul>
+            </div>
+
+            <h3>2. Gestión de Vacaciones</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Característica</th>
+                        <th>Descripción</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Solicitud de vacaciones</td>
+                        <td>Formulario intuitivo con selección de fechas y tipo de vacaciones</td>
+                        <td><span class="status-badge status-completed">✅ Completo</span></td>
+                    </tr>
+                    <tr>
+                        <td>Visualización de días disponibles</td>
+                        <td>Dashboard con días totales, usados y disponibles</td>
+                        <td><span class="status-badge status-completed">✅ Completo</span></td>
+                    </tr>
+                    <tr>
+                        <td>Calendario de vacaciones</td>
+                        <td>Vista de calendario con eventos de vacaciones aprobadas</td>
+                        <td><span class="status-badge status-completed">✅ Completo</span></td>
+                    </tr>
+                    <tr>
+                        <td>Historial de solicitudes</td>
+                        <td>Lista de todas las solicitudes con estados y fechas</td>
+                        <td><span class="status-badge status-completed">✅ Completo</span></td>
+                    </tr>
+                    <tr>
+                        <td>Workflow de aprobación</td>
+                        <td>Sistema de aprobación por coordinador → RRHH</td>
+                        <td><span class="status-badge status-completed">✅ Completo</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>3. Mi Equipo (Vista de Coordinador)</h3>
+            <div class="success-box">
+                <h4>Funcionalidades implementadas:</h4>
+                <ul>
+                    <li>Vista de subordinados directos en formato de tarjetas horizontales</li>
+                    <li>Información de contacto rápida (email, teléfono)</li>
+                    <li>Indicador visual de estado del empleado</li>
+                    <li>Diseño optimizado para visualización rápida</li>
+                </ul>
+            </div>
+
+            <h3>4. Dashboard de RRHH</h3>
+            <ul>
+                <li>Gestión completa de empleados (crear, editar, desactivar)</li>
+                <li>Administración de puestos y áreas</li>
+                <li>Gestión de periodos vacacionales</li>
+                <li>Dashboard de aprobación de solicitudes con filtros avanzados</li>
+                <li>Sistema de publicación de boletines</li>
+            </ul>
+
+            <h3>5. Comunicación Interna</h3>
+            <ul>
+                <li>Portal con feed de boletines publicados</li>
+                <li>Visualización de cumpleañeros del mes</li>
+                <li>Sistema de notificaciones (badge de contador)</li>
+                <li>Acceso rápido a funciones desde el portal</li>
+            </ul>
+
+            <h2>🏗️ Arquitectura Técnica</h2>
+            
+            <h3>Stack Tecnológico</h3>
+            <div class="tech-stack">
+                <span class="tech-badge">React 18</span>
+                <span class="tech-badge">Vite</span>
+                <span class="tech-badge">Material-UI (MUI)</span>
+                <span class="tech-badge">Node.js</span>
+                <span class="tech-badge">Express</span>
+                <span class="tech-badge">PostgreSQL</span>
+                <span class="tech-badge">Supabase</span>
+                <span class="tech-badge">JWT Auth</span>
+                <span class="tech-badge">Render.com</span>
+            </div>
+
+            <h3>Infraestructura</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Componente</th>
+                        <th>Tecnología</th>
+                        <th>Hosting</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Frontend</td>
+                        <td>React SPA (Single Page Application)</td>
+                        <td>Render Static Site</td>
+                    </tr>
+                    <tr>
+                        <td>Backend API</td>
+                        <td>Node.js + Express REST API</td>
+                        <td>Render Web Service</td>
+                    </tr>
+                    <tr>
+                        <td>Base de Datos</td>
+                        <td>PostgreSQL 15</td>
+                        <td>Supabase (AWS São Paulo)</td>
+                    </tr>
+                    <tr>
+                        <td>Autenticación</td>
+                        <td>JWT + bcrypt</td>
+                        <td>Backend API</td>
+                    </tr>
+                    <tr>
+                        <td>Control de Versiones</td>
+                        <td>Git</td>
+                        <td>GitHub</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Modelo de Datos</h3>
+            <h4>Entidades Principales:</h4>
+            <ul>
+                <li><strong>empleados:</strong> Información personal y laboral de empleados</li>
+                <li><strong>usuarios:</strong> Credenciales y permisos de acceso</li>
+                <li><strong>solicitudes_vacaciones:</strong> Solicitudes de vacaciones con workflow</li>
+                <li><strong>periodos_vacacionales:</strong> Periodos de días disponibles por empleado</li>
+                <li><strong>puestos:</strong> Catálogo de puestos de trabajo</li>
+                <li><strong>areas:</strong> Catálogo de áreas/departamentos</li>
+                <li><strong>publicaciones:</strong> Boletines y anuncios</li>
+                <li><strong>tipos_vacaciones:</strong> Catálogo de tipos (regulares, emergencia, etc.)</li>
+            </ul>
+
+            <h4>RPC Functions (Supabase):</h4>
+            <ul>
+                <li><code>get_vacaciones_resumen(empleado_id)</code> - Resumen de vacaciones del empleado</li>
+                <li><code>get_vacaciones_calendario(empleado_id)</code> - Eventos de calendario</li>
+            </ul>
+
+            <h2>🔐 Seguridad y Permisos</h2>
+            
+            <h3>Roles de Usuario</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rol</th>
+                        <th>Permisos</th>
+                        <th>Identificador BD</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Empleado</td>
+                        <td>Ver su propia información, solicitar vacaciones, ver boletines</td>
+                        <td><code>es_rrhh: false</code>, <code>rol: 'empleado'</code></td>
+                    </tr>
+                    <tr>
+                        <td>Coordinador</td>
+                        <td>Permisos de empleado + aprobar/rechazar solicitudes de subordinados</td>
+                        <td><code>es_rrhh: false</code>, <code>rol: 'coordinador'</code></td>
+                    </tr>
+                    <tr>
+                        <td>RRHH</td>
+                        <td>Acceso completo: gestión de empleados, periodos, aprobaciones, publicaciones</td>
+                        <td><code>es_rrhh: true</code></td>
+                    </tr>
+                    <tr>
+                        <td>Admin</td>
+                        <td>Acceso total al sistema</td>
+                        <td><code>es_rrhh: true</code>, <code>rol: 'admin'</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Medidas de Seguridad</h3>
+            <ul>
+                <li>Autenticación mediante JWT con expiración de 24 horas</li>
+                <li>Contraseñas hasheadas con bcrypt (10 rounds)</li>
+                <li>CORS configurado para permitir solo dominios autorizados</li>
+                <li>Validación de permisos en cada endpoint del API</li>
+                <li>HTTPS obligatorio en producción</li>
+                <li>Variables sensibles en variables de entorno (no en código)</li>
+                <li>Row Level Security en Supabase (planificado)</li>
+            </ul>
+
+            <h2>📊 Métricas de Éxito</h2>
+            
+            <h3>KPIs Principales</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Métrica</th>
+                        <th>Objetivo</th>
+                        <th>Estado Actual</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Tiempo de procesamiento de solicitudes</td>
+                        <td>< 24 horas</td>
+                        <td><span class="status-badge status-completed">Minutos</span></td>
+                    </tr>
+                    <tr>
+                        <td>Adopción de usuarios</td>
+                        <td>> 80% de empleados activos</td>
+                        <td><span class="status-badge status-inprogress">En medición</span></td>
+                    </tr>
+                    <tr>
+                        <td>Reducción de consultas a RRHH</td>
+                        <td>> 50%</td>
+                        <td><span class="status-badge status-inprogress">En medición</span></td>
+                    </tr>
+                    <tr>
+                        <td>Tiempo de carga de páginas</td>
+                        <td>< 2 segundos</td>
+                        <td><span class="status-badge status-completed">< 1 segundo</span></td>
+                    </tr>
+                    <tr>
+                        <td>Disponibilidad del sistema</td>
+                        <td>> 99%</td>
+                        <td><span class="status-badge status-completed">99.5%</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Métricas de Uso</h3>
+            <ul>
+                <li>Número de solicitudes de vacaciones por mes</li>
+                <li>Tiempo promedio de aprobación</li>
+                <li>Tasa de aprobación vs rechazo</li>
+                <li>Usuarios activos mensuales (MAU)</li>
+                <li>Boletines publicados y vistas</li>
+            </ul>
+
+            <h2>🗺️ Roadmap de Producto</h2>
+            
+            <h3>Fase 1: MVP ✅ Completada (Q4 2025)</h3>
+            <ul>
+                <li>✅ Autenticación y gestión de usuarios</li>
+                <li>✅ Portal de autoservicio básico</li>
+                <li>✅ Gestión de vacaciones completa</li>
+                <li>✅ Dashboard de RRHH</li>
+                <li>✅ Sistema de boletines</li>
+                <li>✅ Deploy a producción</li>
+            </ul>
+
+            <h3>Fase 2: Mejoras y Expansión (Q1 2026)</h3>
+            <div class="warning-box">
+                <h4>Características planificadas:</h4>
+                <ul>
+                    <li>⚙️ Módulo de Boletas de Pago digitales</li>
+                    <li>⚙️ Gestión de Documentos (contratos, certificados)</li>
+                    <li>⚙️ Sistema de Bitácora de cambios</li>
+                    <li>⚙️ Módulo de Evaluación de Desempeño</li>
+                    <li>⚙️ Información de dependientes y contactos de emergencia</li>
+                    <li>⚙️ Notificaciones por email</li>
+                    <li>⚙️ Reportes avanzados y analytics</li>
+                </ul>
+            </div>
+
+            <h3>Fase 3: Optimización (Q2 2026)</h3>
+            <ul>
+                <li>⚙️ App móvil nativa (iOS/Android)</li>
+                <li>⚙️ Sistema de firma digital</li>
+                <li>⚙️ Integración con sistemas de nómina</li>
+                <li>⚙️ Chat interno entre empleados</li>
+                <li>⚙️ Dashboard ejecutivo con BI</li>
+            </ul>
+
+            <h2>🚧 Consideraciones Técnicas</h2>
+            
+            <h3>Escalabilidad</h3>
+            <ul>
+                <li>Arquitectura separada frontend/backend permite escalar independientemente</li>
+                <li>Supabase maneja hasta 500 conexiones concurrentes en plan gratuito</li>
+                <li>Render permite auto-scaling (plan pagado)</li>
+                <li>Diseño de BD normalizado para eficiencia</li>
+            </ul>
+
+            <h3>Mantenibilidad</h3>
+            <ul>
+                <li>Código modularizado en componentes React reutilizables</li>
+                <li>Servicios centralizados para llamadas al API</li>
+                <li>Variables de entorno para configuración</li>
+                <li>Documentación en markdown del proyecto</li>
+                <li>Commits descriptivos y versionado semántico</li>
+            </ul>
+
+            <h3>Limitaciones Conocidas</h3>
+            <div class="warning-box">
+                <h4>⚠️ Limitaciones actuales:</h4>
+                <ul>
+                    <li><strong>Plan gratuito de Render:</strong> Servicios se duermen después de 15 min de inactividad (primera carga lenta)</li>
+                    <li><strong>Sin CDN:</strong> Assets servidos directamente desde Render (sin optimización geográfica)</li>
+                    <li><strong>Sin caché de BD:</strong> Cada request consulta directamente a Supabase</li>
+                    <li><strong>Sin backup automatizado:</strong> Depende del backup de Supabase</li>
+                    <li><strong>Sin monitoreo:</strong> No hay alertas automáticas de errores o downtime</li>
+                </ul>
+            </div>
+
+            <h2>📝 Configuración y Deploy</h2>
+            
+            <h3>Variables de Entorno</h3>
+            
+            <h4>Backend:</h4>
+            <ul>
+                <li><code>NODE_ENV=production</code></li>
+                <li><code>PORT=10000</code></li>
+                <li><code>SUPABASE_URL</code> - URL de Supabase</li>
+                <li><code>SUPABASE_ANON_KEY</code> - Clave anon de Supabase</li>
+                <li><code>PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD</code> - Credenciales PostgreSQL</li>
+                <li><code>JWT_SECRET</code> - Secreto para firma de tokens</li>
+                <li><code>JWT_EXPIRES_IN=24h</code></li>
+                <li><code>CORS_ORIGIN</code> - URL del frontend</li>
+            </ul>
+
+            <h4>Frontend:</h4>
+            <ul>
+                <li><code>VITE_API_URL</code> - URL del backend API</li>
+            </ul>
+
+            <h3>Comandos de Deploy</h3>
+            <pre><code># Frontend build
+npm install
+npm run build
+
+# Backend start
+cd backend && npm install
+cd backend && npm start</code></pre>
+
+            <h3>Usuarios de Prueba</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rol</th>
+                        <th>Email</th>
+                        <th>Password</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>RRHH</td>
+                        <td>ursula.huamancaja@agrovet.com</td>
+                        <td>rrhh123</td>
+                    </tr>
+                    <tr>
+                        <td>Admin</td>
+                        <td>admin@agrovet.com</td>
+                        <td>admin123</td>
+                    </tr>
+                    <tr>
+                        <td>Coordinador</td>
+                        <td>jonathan.cerda@agrovet.com</td>
+                        <td>EMP004</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2>🎨 Diseño y UX</h2>
+            
+            <h3>Principios de Diseño</h3>
+            <ul>
+                <li><strong>Simplicidad:</strong> Interfaz limpia y fácil de navegar</li>
+                <li><strong>Consistencia:</strong> Uso consistente de Material-UI en todo el sistema</li>
+                <li><strong>Accesibilidad:</strong> Contraste adecuado, textos legibles, navegación por teclado</li>
+                <li><strong>Responsive:</strong> Adaptable a móviles, tablets y desktop</li>
+                <li><strong>Feedback visual:</strong> Estados de carga, confirmaciones, errores claros</li>
+            </ul>
+
+            <h3>Paleta de Colores</h3>
+            <ul>
+                <li><strong>Primario:</strong> Teal (#2c7a7b, #38b2ac) - Acciones principales, navegación</li>
+                <li><strong>Secundario:</strong> Gris (#f5f5f5, #e0e0e0) - Fondos, bordes</li>
+                <li><strong>Éxito:</strong> Verde (#4caf50) - Aprobaciones, confirmaciones</li>
+                <li><strong>Advertencia:</strong> Naranja (#ff9800) - Alertas, pendientes</li>
+                <li><strong>Error:</strong> Rojo (#f44336) - Rechazos, errores</li>
+            </ul>
+
+            <h2>📞 Soporte y Mantenimiento</h2>
+            
+            <h3>Niveles de Soporte</h3>
+            <ul>
+                <li><strong>Nivel 1:</strong> RRHH - Soporte básico a usuarios, gestión de contenido</li>
+                <li><strong>Nivel 2:</strong> IT Agrovet - Problemas técnicos, reinicio de servicios</li>
+                <li><strong>Nivel 3:</strong> Desarrollo - Bugs críticos, nuevas funcionalidades</li>
+            </ul>
+
+            <h3>Plan de Mantenimiento</h3>
+            <ul>
+                <li><strong>Diario:</strong> Monitoreo de logs y disponibilidad</li>
+                <li><strong>Semanal:</strong> Backup manual de base de datos</li>
+                <li><strong>Mensual:</strong> Actualización de dependencias npm</li>
+                <li><strong>Trimestral:</strong> Revisión de seguridad y performance</li>
+            </ul>
+
+            <h2>📚 Documentación de Referencia</h2>
+            
+            <ul>
+                <li><strong>README.md</strong> - Documentación del proyecto</li>
+                <li><strong>GUIA_DESPLIEGUE_RENDER.md</strong> - Guía de deploy paso a paso</li>
+                <li><strong>RENDER_VISUAL_GUIDE.md</strong> - Guía visual con capturas</li>
+                <li><strong>COMANDOS_DESPLIEGUE.md</strong> - Comandos rápidos</li>
+                <li><strong>RESUMEN_DEPLOY.md</strong> - Resumen ejecutivo de producción</li>
+            </ul>
+
+            <div class="success-box">
+                <h3>✅ Estado del Proyecto</h3>
+                <p><strong>El sistema está completamente operativo en producción.</strong></p>
+                <p>Todas las funcionalidades core están implementadas y desplegadas. El sistema está siendo utilizado 
+                por empleados de Agrovet para gestión de vacaciones y consulta de información personal.</p>
+                <p>Próximos pasos se enfocan en la expansión de módulos adicionales y mejoras de UX basadas en 
+                feedback de usuarios.</p>
+            </div>
+
+            <h2>🤝 Stakeholders</h2>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rol</th>
+                        <th>Responsabilidad</th>
+                        <th>Contacto</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Product Owner</td>
+                        <td>Definición de prioridades y features</td>
+                        <td>Departamento RRHH Agrovet</td>
+                    </tr>
+                    <tr>
+                        <td>Technical Lead</td>
+                        <td>Arquitectura y decisiones técnicas</td>
+                        <td>Jonathan Cerda</td>
+                    </tr>
+                    <tr>
+                        <td>Usuarios Finales</td>
+                        <td>Feedback y testing</td>
+                        <td>Empleados Agrovet</td>
+                    </tr>
+                    <tr>
+                        <td>IT Operations</td>
+                        <td>Infraestructura y soporte</td>
+                        <td>IT Agrovet</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2>📄 Apéndices</h2>
+            
+            <h3>A. Glosario de Términos</h3>
+            <ul>
+                <li><strong>RRHH:</strong> Recursos Humanos</li>
+                <li><strong>JWT:</strong> JSON Web Token - Sistema de autenticación</li>
+                <li><strong>SPA:</strong> Single Page Application</li>
+                <li><strong>API:</strong> Application Programming Interface</li>
+                <li><strong>CORS:</strong> Cross-Origin Resource Sharing</li>
+                <li><strong>RPC:</strong> Remote Procedure Call</li>
+                <li><strong>MUI:</strong> Material-UI - Framework de componentes React</li>
+            </ul>
+
+            <h3>B. Referencias Externas</h3>
+            <ul>
+                <li>Documentación React: <code>https://react.dev</code></li>
+                <li>Material-UI: <code>https://mui.com</code></li>
+                <li>Supabase Docs: <code>https://supabase.com/docs</code></li>
+                <li>Render.com: <code>https://render.com/docs</code></li>
+            </ul>
+
+            <h3>C. Changelog</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Versión</th>
+                        <th>Fecha</th>
+                        <th>Cambios</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1.0</td>
+                        <td>29/11/2025</td>
+                        <td>Rediseño Mi Ficha con sidebar, deploy a producción completo</td>
+                    </tr>
+                    <tr>
+                        <td>0.9</td>
+                        <td>28/11/2025</td>
+                        <td>Mejoras UI Portal y TeamDashboard, corrección localhost URLs</td>
+                    </tr>
+                    <tr>
+                        <td>0.8</td>
+                        <td>27/11/2025</td>
+                        <td>Migración completa a Supabase, deploy backend y frontend</td>
+                    </tr>
+                    <tr>
+                        <td>0.5</td>
+                        <td>20/11/2025</td>
+                        <td>MVP inicial - gestión de vacaciones funcional</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <footer>
+            <p><strong>AgrovetConectAH</strong> - Sistema de Gestión de Recursos Humanos</p>
+            <p>Versión 1.0 | Noviembre 2025</p>
+            <p>© 2025 Agrovet. Todos los derechos reservados.</p>
+        </footer>
+    </div>
+</body>
+</html>

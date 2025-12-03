@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'moment/locale/es';
@@ -14,7 +14,9 @@ import {
   Card,
   CardContent,
   Divider,
-  Tooltip
+  Tooltip,
+  CircularProgress,
+  Alert
 } from '@mui/material';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
@@ -22,6 +24,7 @@ import TodayIcon from '@mui/icons-material/Today';
 import EventIcon from '@mui/icons-material/Event';
 import BeachAccessIcon from '@mui/icons-material/BeachAccess';
 import CelebrationIcon from '@mui/icons-material/Celebration';
+import { authService } from '../../../services/auth.service';
 
 // Configurar moment en español
 moment.locale('es', {
@@ -101,9 +104,111 @@ const diasFestivos2025 = [
   { date: '2025-12-31', name: 'Fin de Año', tipo: 'festivo' },
 ];
 
-const VacationCalendar = ({ events }) => {
+const VacationCalendar = ({ events: propEvents }) => {
   const [date, setDate] = useState(new Date());
   const [view, setView] = useState('month');
+  const [vacacionesUsuario, setVacacionesUsuario] = useState([]);
+  const [vacacionesEquipo, setVacacionesEquipo] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // Cargar vacaciones del usuario y su equipo
+  useEffect(() => {
+    const fetchVacaciones = async () => {
+      try {
+        setLoading(true);
+        const currentUser = authService.getCurrentUser();
+        if (!currentUser?.empleadoId) {
+          setLoading(false);
+          return;
+        }
+
+        const token = localStorage.getItem('token');
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+
+        // 1. Cargar mis solicitudes aprobadas
+        const misSolicitudesResponse = await fetch(`${API_URL}/vacaciones/solicitudes/${currentUser.empleadoId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (misSolicitudesResponse.ok) {
+          const misSolicitudes = await misSolicitudesResponse.json();
+          const misVacaciones = misSolicitudes
+            .filter(s => s.estado === 'aprobada')
+            .map(solicitud => ({
+              id: `usuario-${solicitud.id}`,
+              title: `Mis Vacaciones (${solicitud.dias_solicitados} días)`,
+              start: new Date(solicitud.fecha_inicio),
+              end: new Date(solicitud.fecha_fin),
+              empleado: 'Yo',
+              dias: solicitud.dias_solicitados,
+              tipo: 'vacacion-usuario'
+            }));
+          setVacacionesUsuario(misVacaciones);
+        }
+
+        // 2. Cargar vacaciones de mi equipo (si tengo subordinados)
+        const equipoResponse = await fetch(`${API_URL}/aprobacion/subordinados`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (equipoResponse.ok) {
+          const { subordinados } = await equipoResponse.json();
+          
+          if (subordinados && subordinados.length > 0) {
+            // Cargar solicitudes de cada subordinado
+            const vacacionesEquipoPromises = subordinados.map(async (subordinado) => {
+              try {
+                const solicitudesResponse = await fetch(`${API_URL}/vacaciones/solicitudes/${subordinado.id}`, {
+                  headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                  }
+                });
+                
+                if (solicitudesResponse.ok) {
+                  const solicitudes = await solicitudesResponse.json();
+                  return solicitudes
+                    .filter(s => s.estado === 'aprobada')
+                    .map(solicitud => ({
+                      id: `equipo-${solicitud.id}`,
+                      title: `${subordinado.nombres} ${subordinado.apellidos} (${solicitud.dias_solicitados} días)`,
+                      start: new Date(solicitud.fecha_inicio),
+                      end: new Date(solicitud.fecha_fin),
+                      empleado: `${subordinado.nombres} ${subordinado.apellidos}`,
+                      dias: solicitud.dias_solicitados,
+                      tipo: 'vacacion-equipo'
+                    }));
+                }
+                return [];
+              } catch (err) {
+                console.error(`Error cargando vacaciones de ${subordinado.nombres}:`, err);
+                return [];
+              }
+            });
+
+            const vacacionesEquipoArrays = await Promise.all(vacacionesEquipoPromises);
+            const vacacionesEquipoFlat = vacacionesEquipoArrays.flat();
+            setVacacionesEquipo(vacacionesEquipoFlat);
+          }
+        }
+
+      } catch (err) {
+        console.error('Error al cargar vacaciones:', err);
+        setError('No se pudieron cargar las vacaciones');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVacaciones();
+  }, []);
 
   // Combinar eventos de vacaciones con feriados
   const feriadosEvents = feriadosPeru2025.map(feriado => {
@@ -131,7 +236,9 @@ const VacationCalendar = ({ events }) => {
   });
 
   const allEvents = [
-    ...events.map(e => ({ ...e, tipo: 'vacacion' })),
+    ...vacacionesUsuario,
+    ...vacacionesEquipo,
+    ...(propEvents || []).map(e => ({ ...e, tipo: 'vacacion' })),
     ...feriadosEvents,
     ...festivosEvents
   ];
@@ -147,6 +254,12 @@ const VacationCalendar = ({ events }) => {
     } else if (event.tipo === 'festivo') {
       backgroundColor = '#f57c00';
       borderColor = '#ef6c00';
+    } else if (event.tipo === 'vacacion-usuario') {
+      backgroundColor = '#2e7d32'; // Verde para mis vacaciones
+      borderColor = '#1b5e20';
+    } else if (event.tipo === 'vacacion-equipo') {
+      backgroundColor = '#1976d2'; // Azul para vacaciones del equipo
+      borderColor = '#1565c0';
     } else if (event.tipo === 'vacacion') {
       backgroundColor = '#1976d2';
       borderColor = '#1565c0';
@@ -197,6 +310,8 @@ const VacationCalendar = ({ events }) => {
     moment(event.start).isSame(date, 'month')
   );
 
+  const vacacionesUsuarioCount = currentMonthEvents.filter(e => e.tipo === 'vacacion-usuario').length;
+  const vacacionesEquipoCount = currentMonthEvents.filter(e => e.tipo === 'vacacion-equipo').length;
   const vacacionesCount = currentMonthEvents.filter(e => e.tipo === 'vacacion').length;
   const feriadosCount = currentMonthEvents.filter(e => e.tipo === 'feriado').length;
   const festivosCount = currentMonthEvents.filter(e => e.tipo === 'festivo').length;
@@ -226,12 +341,30 @@ const VacationCalendar = ({ events }) => {
         </Typography>
       </Box>
       <Stack direction="row" spacing={1}>
-        <Chip 
-          label={`${vacacionesCount} Vacaciones`}
-          size="small"
-          icon={<BeachAccessIcon />}
-          sx={{ bgcolor: '#1976d2', color: 'white' }}
-        />
+        {vacacionesUsuarioCount > 0 && (
+          <Chip 
+            label={`${vacacionesUsuarioCount} Mis Vacaciones`}
+            size="small"
+            icon={<BeachAccessIcon />}
+            sx={{ bgcolor: '#2e7d32', color: 'white' }}
+          />
+        )}
+        {vacacionesEquipoCount > 0 && (
+          <Chip 
+            label={`${vacacionesEquipoCount} Equipo`}
+            size="small"
+            icon={<BeachAccessIcon />}
+            sx={{ bgcolor: '#1976d2', color: 'white' }}
+          />
+        )}
+        {vacacionesCount > 0 && (
+          <Chip 
+            label={`${vacacionesCount} Otras`}
+            size="small"
+            icon={<BeachAccessIcon />}
+            sx={{ bgcolor: '#1976d2', color: 'white' }}
+          />
+        )}
         <Chip 
           label={`${feriadosCount} Feriados`}
           size="small"
@@ -270,58 +403,86 @@ const VacationCalendar = ({ events }) => {
   return (
     <Card>
       <CardContent>
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="h5" fontWeight={700} gutterBottom>
-            📅 Calendario de Vacaciones y Feriados
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Planifica tu tiempo libre y consulta los días feriados de Perú
-          </Typography>
-        </Box>
-        
-        <Divider sx={{ mb: 3 }} />
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <>
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="h5" fontWeight={700} gutterBottom>
+                📅 Calendario de Vacaciones y Feriados
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {vacacionesEquipo.length > 0 
+                  ? 'Tus vacaciones y las de tu equipo' 
+                  : 'Planifica tu tiempo libre y consulta los días feriados de Perú'}
+              </Typography>
+            </Box>
+            
+            {error && (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
 
-        {/* Leyenda */}
-        <Box sx={{ 
-          display: 'flex', 
-          gap: 2, 
-          mb: 3, 
-          flexWrap: 'wrap',
-          p: 2,
-          bgcolor: '#f5f5f5',
-          borderRadius: 2
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Divider sx={{ mb: 3 }} />
+
+            {/* Leyenda */}
             <Box sx={{ 
-              width: 16, 
-              height: 16, 
-              bgcolor: '#1976d2', 
-              borderRadius: 1,
-              border: '2px solid #1565c0'
-            }} />
-            <Typography variant="body2" fontWeight={600}>Vacaciones</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Box sx={{ 
-              width: 16, 
-              height: 16, 
-              bgcolor: '#d32f2f', 
-              borderRadius: 1,
-              border: '2px solid #c62828'
-            }} />
-            <Typography variant="body2" fontWeight={600}>Feriados Nacionales</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Box sx={{ 
-              width: 16, 
-              height: 16, 
-              bgcolor: '#f57c00', 
-              borderRadius: 1,
-              border: '2px solid #ef6c00'
-            }} />
-            <Typography variant="body2" fontWeight={600}>Días Festivos</Typography>
-          </Box>
-        </Box>
+              display: 'flex', 
+              gap: 2, 
+              mb: 3, 
+              flexWrap: 'wrap',
+              p: 2,
+              bgcolor: '#f5f5f5',
+              borderRadius: 2
+            }}>
+              {vacacionesUsuario.length > 0 && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ 
+                    width: 16, 
+                    height: 16, 
+                    bgcolor: '#2e7d32', 
+                    borderRadius: 1,
+                    border: '2px solid #1b5e20'
+                  }} />
+                  <Typography variant="body2" fontWeight={600}>Mis Vacaciones</Typography>
+                </Box>
+              )}
+              {vacacionesEquipo.length > 0 && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ 
+                    width: 16, 
+                    height: 16, 
+                    bgcolor: '#1976d2', 
+                    borderRadius: 1,
+                    border: '2px solid #1565c0'
+                  }} />
+                  <Typography variant="body2" fontWeight={600}>Vacaciones del Equipo</Typography>
+                </Box>
+              )}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ 
+                  width: 16, 
+                  height: 16, 
+                  bgcolor: '#d32f2f', 
+                  borderRadius: 1,
+                  border: '2px solid #c62828'
+                }} />
+                <Typography variant="body2" fontWeight={600}>Feriados Nacionales</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ 
+                  width: 16, 
+                  height: 16, 
+                  bgcolor: '#f57c00', 
+                  borderRadius: 1,
+                  border: '2px solid #ef6c00'
+                }} />
+                <Typography variant="body2" fontWeight={600}>Días Festivos</Typography>
+              </Box>
+            </Box>
 
         {/* Calendario */}
         <Box sx={{ 
@@ -436,6 +597,8 @@ const VacationCalendar = ({ events }) => {
               ))}
           </Box>
         </Box>
+          </>
+        )}
       </CardContent>
     </Card>
   );

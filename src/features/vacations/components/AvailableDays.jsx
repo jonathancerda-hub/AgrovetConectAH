@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Typography, Paper, Box, Button, Card, CardContent, LinearProgress, Chip, Divider } from '@mui/material';
 import BeachAccessIcon from '@mui/icons-material/BeachAccess';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
@@ -12,6 +12,7 @@ import {
   PieChart,
   pieArcLabelClasses,
 } from '@mui/x-charts';
+import { authService } from '../../../services/auth.service';
 
 // Componente KPI Card mejorado
 const KPICard = ({ title, value, subtitle, icon: Icon, color, trend }) => (
@@ -63,12 +64,64 @@ const KPICard = ({ title, value, subtitle, icon: Icon, color, trend }) => (
 
 const AvailableDays = ({ available, taken }) => {
   const [rerenderKey, setRerenderKey] = useState(0);
+  const [solicitudesData, setSolicitudesData] = useState({
+    pendientes: 0,
+    aprobadas: 0,
+    porMes: []
+  });
+
+  // Cargar datos de solicitudes del usuario
+  useEffect(() => {
+    const fetchSolicitudes = async () => {
+      try {
+        const currentUser = authService.getCurrentUser();
+        if (!currentUser?.empleadoId) return;
+
+        const token = localStorage.getItem('token');
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+        
+        const response = await fetch(`${API_URL}/vacaciones/solicitudes/${currentUser.empleadoId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Contar solicitudes por estado
+          const pendientes = data.filter(s => s.estado === 'pendiente').length;
+          const aprobadas = data.filter(s => s.estado === 'aprobada').length;
+          
+          // Agrupar por mes para el gráfico
+          const porMes = Array(12).fill(0);
+          data.forEach(solicitud => {
+            if (solicitud.estado === 'aprobada' && solicitud.fecha_inicio) {
+              const mes = new Date(solicitud.fecha_inicio).getMonth();
+              porMes[mes] += solicitud.dias_solicitados || 0;
+            }
+          });
+
+          setSolicitudesData({
+            pendientes,
+            aprobadas,
+            porMes
+          });
+        }
+      } catch (error) {
+        console.error('Error al cargar solicitudes:', error);
+      }
+    };
+
+    fetchSolicitudes();
+  }, []);
 
   // Calcular métricas
   const totalDays = available + taken;
   const usagePercentage = totalDays > 0 ? ((taken / totalDays) * 100).toFixed(1) : 0;
-  const pendingRequests = 2; // Esto debería venir de props o API
-  const approvedRequests = 5; // Esto debería venir de props o API
+  const pendingRequests = solicitudesData.pendientes;
+  const approvedRequests = solicitudesData.aprobadas;
 
   // Datos para el gráfico de pastel
   const pieChartData = [
@@ -76,8 +129,8 @@ const AvailableDays = ({ available, taken }) => {
     { name: 'Tomados', value: taken, label: `${taken} días` },
   ];
 
-  // Datos de ejemplo para gráficos de tendencia (deberían venir de la API)
-  const monthlyData = [3, 5, 2, 4, 6, 3, 4, 5, 2, 3, 4, taken];
+  // Datos para gráfico de tendencia mensual
+  const monthlyData = solicitudesData.porMes;
   const monthLabels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
   const requestsData = [
