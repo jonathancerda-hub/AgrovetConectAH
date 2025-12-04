@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Drawer, List, ListItem, ListItemIcon, ListItemText, AppBar, Toolbar, Typography, Box, Collapse, ListItemButton, Button } from '@mui/material';
+import { Drawer, List, ListItem, ListItemIcon, ListItemText, AppBar, Toolbar, Typography, Box, ListItemButton, Button, Tooltip } from '@mui/material';
 import { authService } from './services/auth.service';
 import { publicacionesService } from './services/publicaciones.service';
 import PersonIcon from '@mui/icons-material/Person';
@@ -15,8 +15,6 @@ import Login from './features/vacations/components/Login';
 import NewCollaboratorForm from './features/vacations/components/NewCollaboratorForm';
 import GestionEmpleados from './features/vacations/components/GestionEmpleados';
 import AprobacionSolicitudes from './features/vacations/components/AprobacionSolicitudes';
-import ExpandLess from '@mui/icons-material/ExpandLess';
-import ExpandMore from '@mui/icons-material/ExpandMore';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import ListAltIcon from '@mui/icons-material/ListAlt';
@@ -40,19 +38,21 @@ import TeamDashboard from './features/vacations/components/TeamDashboard';
 import TopBar from './features/vacations/components/TopBar';
 import { CssBaseline, useTheme, useMediaQuery } from '@mui/material';
 
-// Importaciones para RRHH
-import DashboardRRHH from './features/vacations/components/DashboardRRHH';
-import ControlVacacionesEmpleado from './features/vacations/components/ControlVacacionesEmpleado';
-import HistorialVacaciones from './features/vacations/components/HistorialVacaciones';
-
-// Importaciones para Boletines
-import NewBulletinForm from './features/vacations/components/NewBulletinForm'; // Corregido
-import PortalPage from './features/vacations/components/PortalPage'; // Corregido
+// Importaciones de páginas con tabs
+import VacacionesPage from './features/vacations/components/VacacionesPage';
+import RRHHPage from './features/vacations/components/RRHHPage';
+import EquipoPage from './features/vacations/components/EquipoPage';
+import BoletinesPage from './features/vacations/components/BoletinesPage';
 import ProcessRequestPage from './features/vacations/components/ProcessRequestPage';
 
 // Importación para Notificaciones
 import NotificationsPage from './features/vacations/components/NotificationsPage';
 import NotificationsIcon from '@mui/icons-material/Notifications';
+import WifiIcon from '@mui/icons-material/Wifi';
+import ContactsIcon from '@mui/icons-material/Contacts';
+
+// Importación para Directorio
+import DirectorioPage from './features/vacations/components/DirectorioPage';
 
 const drawerWidth = 240;
 
@@ -113,29 +113,12 @@ const ControlVacacionesComponent = () => (
 );
 const HistorialesComponent = () => <Typography>Página de Historiales</Typography>;
 
-const rrhhItems = [
-  { text: 'Dashboard RRHH', icon: <DashboardIcon />, component: <DashboardRRHH /> },
-  { text: 'Control de Vacaciones', icon: <FactCheckIcon />, component: <ControlVacacionesEmpleado /> },
-  { text: 'Historial', icon: <HistoryIcon />, component: <HistorialVacaciones /> },
-];
-
 // Placeholder component para Mi Equipo
 const SolicitarColaboradorComponent = () => <Typography>Página para Solicitar Colaborador</Typography>;
 
-const equipoItems = [
-  { text: 'Solicitar Colaborador', icon: <PersonAddIcon />, component: <NewCollaboratorForm /> },
-  { text: 'Equipo', icon: <PeopleIcon />, component: <TeamDashboard /> },
-];
-
-// Items para el nuevo menú de Boletines
-const boletinesItems = [
-  { text: 'Crear Boletín', icon: <AddToPhotosIcon />, component: null },
-  { text: 'Vista Preliminar', icon: <DynamicFeedIcon />, component: null },
-];
-
 
 function App() {
-  const [selectedMenu, setSelectedMenu] = useState({ main: 'portal', sub: 0 });
+  const [selectedMenu, setSelectedMenu] = useState('portal');
   const [drawerOpen, setDrawerOpen] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState(null); // Estado para el usuario logueado
@@ -143,7 +126,6 @@ function App() {
   const [stagedBulletins, setStagedBulletins] = useState([]); // Boletines en espera de revisión
   const [vacationRequests, setVacationRequests] = useState(initialVacationRequests); // Estado para las solicitudes de vacaciones
   const [publishedBulletins, setPublishedBulletins] = useState(initialPublicaciones); // Lista de todos los boletines publicados
-  const [openSubMenu, setOpenSubMenu] = useState(null); // Controla qué submenú está abierto
   const [calendarEvents, setCalendarEvents] = useState([]); // Eventos del calendario
   const [availableDaysData, setAvailableDaysData] = useState({ available: 0, taken: 0 }); // Datos de vacaciones del usuario
   const theme = useTheme();
@@ -162,10 +144,10 @@ function App() {
 
   // Cargar eventos del calendario cuando se accede a vacaciones
   useEffect(() => {
-    if (selectedMenu.main === 'vacaciones' && currentUser) {
+    if (selectedMenu === 'vacaciones' && currentUser) {
       fetchCalendarEvents();
     }
-  }, [selectedMenu.main, currentUser]);
+  }, [selectedMenu, currentUser]);
 
   // Función para obtener datos de vacaciones del usuario
   const fetchUserVacationData = async (empleadoId) => {
@@ -226,31 +208,13 @@ function App() {
     }
   };
 
-  // Definir items de vacaciones dentro del componente para usar el estado
-  const vacacionesItems = [
-    { text: 'Dashboard', icon: <EventAvailableIcon />, component: <AvailableDays available={availableDaysData.available} taken={availableDaysData.taken} /> },
-    { text: 'Formulario de Solicitud', icon: <AssignmentIcon />, component: null },
-    { text: 'Calendario', icon: <CalendarMonthIcon />, component: <VacationCalendar events={calendarEvents} /> },
-    { text: 'Lista de Solicitudes', icon: <ListAltIcon />, component: <RequestsList /> },
-    { text: 'Aprobar Solicitudes', icon: <FactCheckIcon />, component: <AprobacionSolicitudes /> },
-  ];
-
   const handleDrawerToggle = () => {
     setDrawerOpen((prev) => !prev);
   };
 
-  const handleMenuClick = (main, sub = 0) => {
-    setSelectedMenu({ main, sub });
+  const handleMenuClick = (menuName) => {
+    setSelectedMenu(menuName);
     if (isMobile) setDrawerOpen(false);
-  };
-
-  const handleSubMenuToggle = (menuName) => {
-    if (!drawerOpen) {
-      setDrawerOpen(true);
-      setOpenSubMenu(menuName);
-    } else {
-      setOpenSubMenu(prev => (prev === menuName ? null : menuName));
-    }
   };
 
   const handleLogin = (user) => {
@@ -267,14 +231,13 @@ function App() {
     authService.logout();
     setCurrentUser(null);
     setIsAuthenticated(false);
-    setSelectedMenu({ main: 'portal', sub: 0 });
+    setSelectedMenu('portal');
   };
 
   const handleAddBulletin = (newBulletin) => {
     setStagedBulletins((prevBulletins) => [newBulletin, ...prevBulletins]);
     // En una app real, aquí también harías una llamada a tu backend.
     alert('¡Boletín creado! Ahora está en "Vista Preliminar" para su revisión.');
-    handleMenuClick('boletines', 1); // Navega a "Vista Preliminar"
   };
 
   const handlePublishBulletin = async (bulletinId) => {
@@ -344,12 +307,11 @@ function App() {
     );
     alert(`La solicitud ha sido ${decision.toLowerCase()} con éxito.`);
     setRequestToProcess(null); // Vuelve al panel de aprobación
-    handleMenuClick('vacaciones', 4); // Navega al panel de aprobación
+    handleMenuClick('vacaciones'); // Navega a vacaciones
   };
 
   let mainContent;
   let pageTitle = 'Portal'; // Título por defecto
-  let breadcrumbs = []; // Breadcrumbs dinámicos
 
   if (requestToProcess) {
     const requester = users.find(u => u.id === requestToProcess.requesterId);
@@ -360,53 +322,46 @@ function App() {
       onGoBack={() => setRequestToProcess(null)}
     />;
     pageTitle = `Procesando Solicitud #${requestToProcess.id}`;
-    breadcrumbs = [
-      { text: 'Vacaciones', action: 'vacaciones' },
-      { text: 'Aprobar Solicitudes', action: 'vacaciones' },
-      { text: `Solicitud #${requestToProcess.id}` }
-    ];
-  } else if (selectedMenu.main === 'portal') {
+  } else if (selectedMenu === 'portal') {
     mainContent = <Portal publicaciones={publishedBulletins} onNavigate={handleMenuClick} />; // Pasamos toda la lista de publicaciones
     pageTitle = 'Portal';
-    breadcrumbs = [{ text: 'Portal' }];
-  } else if (selectedMenu.main === 'ficha') {
+  } else if (selectedMenu === 'ficha') {
     mainContent = <MiFicha currentUser={currentUser} />;
-    breadcrumbs = [{ text: 'Mi Ficha' }];
-  } else if (selectedMenu.main === 'vacaciones') {
-    const selectedItem = vacacionesItems[selectedMenu.sub];
-    pageTitle = selectedItem.text;
-    breadcrumbs = [{ text: 'Vacaciones' }];
-    if (selectedItem.text === 'Formulario de Solicitud') {
-      mainContent = <RequestForm onNewRequest={handleNewRequest} />;
-    } else {
-      mainContent = selectedItem.component;
-    }
-  } else if (selectedMenu.main === 'rrhh') {
-    mainContent = rrhhItems[selectedMenu.sub].component;
-    pageTitle = rrhhItems[selectedMenu.sub].text;
-    breadcrumbs = [{ text: 'Dashboard RRHH' }];
-  } else if (selectedMenu.main === 'empleados') {
+    pageTitle = 'Mi Ficha';
+  } else if (selectedMenu === 'vacaciones') {
+    mainContent = (
+      <VacacionesPage 
+        availableDaysData={availableDaysData}
+        calendarEvents={calendarEvents}
+        onNewRequest={handleNewRequest}
+      />
+    );
+    pageTitle = 'Vacaciones';
+  } else if (selectedMenu === 'rrhh') {
+    mainContent = <RRHHPage />;
+    pageTitle = 'Dashboard RRHH';
+  } else if (selectedMenu === 'empleados') {
     mainContent = <GestionEmpleados />;
     pageTitle = 'Gestión de Empleados';
-    breadcrumbs = [{ text: 'Gestión de Empleados' }];
-  } else if (selectedMenu.main === 'notificaciones') {
+  } else if (selectedMenu === 'notificaciones') {
     mainContent = <NotificationsPage />;
-    pageTitle = 'Mis Notificaciones';
-    breadcrumbs = [{ text: 'Notificaciones' }];
-  } else if (selectedMenu.main === 'equipo') {
-    mainContent = equipoItems[selectedMenu.sub].component;
-    pageTitle = equipoItems[selectedMenu.sub].text;
-    breadcrumbs = [{ text: 'Mi Equipo' }];
-  } else if (selectedMenu.main === 'boletines') {
-    if (selectedMenu.sub === 0) { // Crear Boletín
-      mainContent = <NewBulletinForm onAddBulletin={handleAddBulletin} onGoToPortal={() => handleMenuClick('portal')} />;
-      pageTitle = 'Crear Boletín';
-      breadcrumbs = [{ text: 'Boletines' }];
-    } else { // Vista Preliminar
-      mainContent = <PortalPage bulletins={stagedBulletins} onPublish={handlePublishBulletin} />;
-      pageTitle = 'Vista Preliminar de Boletines';
-      breadcrumbs = [{ text: 'Boletines' }];
-    }
+    pageTitle = 'Notificaciones';
+  } else if (selectedMenu === 'directorio') {
+    mainContent = <DirectorioPage />;
+    pageTitle = 'Directorio';
+  } else if (selectedMenu === 'equipo') {
+    mainContent = <EquipoPage />;
+    pageTitle = 'Mi Equipo';
+  } else if (selectedMenu === 'boletines') {
+    mainContent = (
+      <BoletinesPage 
+        stagedBulletins={stagedBulletins}
+        onAddBulletin={handleAddBulletin}
+        onPublish={handlePublishBulletin}
+        onGoToPortal={() => handleMenuClick('portal')}
+      />
+    );
+    pageTitle = 'Boletines';
   }
 
   // Si el usuario no está autenticado, muestra solo el componente Login.
@@ -430,7 +385,6 @@ function App() {
         <TopBar 
           onMenuClick={handleDrawerToggle} 
           title={pageTitle} 
-          breadcrumbs={breadcrumbs}
           onNavigate={handleMenuClick}
           onLogout={handleLogout}
         />
@@ -490,20 +444,20 @@ function App() {
               }}
             />
           ) : (
-            <Box sx={{ 
-              width: 36, 
-              height: 36, 
-              borderRadius: '8px',
-              background: 'linear-gradient(135deg, #2a9d8f 0%, #264653 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontWeight: 700,
-              fontSize: '18px'
-            }}>
-              C
-            </Box>
+            <Tooltip title="ConectAH" placement="right" arrow>
+              <Box sx={{ 
+                width: 36, 
+                height: 36, 
+                borderRadius: '8px',
+                background: 'linear-gradient(135deg, #2a9d8f 0%, #264653 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white'
+              }}>
+                <WifiIcon sx={{ fontSize: 24 }} />
+              </Box>
+            </Tooltip>
           )}
         </Box>
         <Box sx={{ flex: 1, overflowY: 'auto' }}>
@@ -526,139 +480,199 @@ function App() {
             </Typography>
           )}
             <ListItem disablePadding sx={{ display: 'block' }}>
-              <ListItemButton
-                selected={selectedMenu.main === 'portal'}
-                onClick={() => handleMenuClick('portal')}
-                sx={{
-                  minHeight: 48,
-                  mx: 2,
-                  justifyContent: drawerOpen ? 'initial' : 'center',
-                  borderRadius: 1,
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                  },
-                  '&.Mui-selected': {
-                    color: '#fff',
-                    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                    '& .MuiListItemIcon-root': {
-                      color: '#fff',
-                    },
-                  },
-                  '&.Mui-selected:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                  },
-                  px: 2.5,
-                }}
-              >
-                <ListItemIcon
+              <Tooltip title={!drawerOpen ? "Portal" : ""} placement="right" arrow>
+                <ListItemButton
+                  selected={selectedMenu.main === 'portal'}
+                  onClick={() => handleMenuClick('portal')}
                   sx={{
-                    minWidth: 0,
-                    mr: drawerOpen ? 3 : 'auto',
-                    justifyContent: 'center',
-                    transition: (theme) => theme.transitions.create('margin', {
-                      easing: theme.transitions.easing.sharp,
-                      duration: theme.transitions.duration.enteringScreen,
-                    }),
-                  }}>
-                  <HomeIcon />
-                </ListItemIcon>
-                {drawerOpen && <ListItemText primary="Portal" sx={{ opacity: drawerOpen ? 1 : 0 }} />}
-              </ListItemButton>
+                    minHeight: 48,
+                    mx: 2,
+                    justifyContent: drawerOpen ? 'initial' : 'center',
+                    borderRadius: 1,
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                    },
+                    '&.Mui-selected': {
+                      color: '#fff',
+                      backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                      '& .MuiListItemIcon-root': {
+                        color: '#fff',
+                      },
+                    },
+                    '&.Mui-selected:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                    },
+                    px: 2.5,
+                  }}
+                >
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 0,
+                      mr: drawerOpen ? 3 : 'auto',
+                      justifyContent: 'center',
+                      transition: (theme) => theme.transitions.create('margin', {
+                        easing: theme.transitions.easing.sharp,
+                        duration: theme.transitions.duration.enteringScreen,
+                      }),
+                    }}>
+                    <HomeIcon />
+                  </ListItemIcon>
+                  {drawerOpen && <ListItemText primary="Portal" sx={{ opacity: drawerOpen ? 1 : 0 }} />}
+                </ListItemButton>
+              </Tooltip>
             </ListItem>
 
             <ListItem disablePadding sx={{ display: 'block' }}>
-              <ListItemButton
-                selected={selectedMenu.main === 'ficha'}
-                onClick={() => handleMenuClick('ficha')}
-                sx={{
-                  minHeight: 48,
-                  mx: 2,
-                  justifyContent: drawerOpen ? 'initial' : 'center',
-                  borderRadius: 1,
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                  },
-                  '&.Mui-selected': {
-                    color: '#fff',
-                    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                    '& .MuiListItemIcon-root': {
-                      color: '#fff',
-                    },
-                  },
-                  '&.Mui-selected:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                  },
-                  px: 2.5,
-                }}
-              >
-                <ListItemIcon
+              <Tooltip title={!drawerOpen ? "Mi ficha" : ""} placement="right" arrow>
+                <ListItemButton
+                  selected={selectedMenu === 'ficha'}
+                  onClick={() => handleMenuClick('ficha')}
                   sx={{
-                    minWidth: 0,
-                    mr: drawerOpen ? 3 : 'auto',
-                    justifyContent: 'center',
-                    transition: (theme) => theme.transitions.create('margin', {
-                      easing: theme.transitions.easing.sharp,
-                      duration: theme.transitions.duration.enteringScreen,
-                    }),
-                  }}>
-                  <PersonIcon />
-                </ListItemIcon>
-                {drawerOpen && <ListItemText primary="Mi ficha" sx={{ opacity: drawerOpen ? 1 : 0 }} />}
-              </ListItemButton>
+                    minHeight: 48,
+                    mx: 2,
+                    justifyContent: drawerOpen ? 'initial' : 'center',
+                    borderRadius: 1,
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                    },
+                    '&.Mui-selected': {
+                      color: '#fff',
+                      backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                      '& .MuiListItemIcon-root': {
+                        color: '#fff',
+                      },
+                    },
+                    '&.Mui-selected:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                    },
+                    px: 2.5,
+                  }}
+                >
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 0,
+                      mr: drawerOpen ? 3 : 'auto',
+                      justifyContent: 'center',
+                      transition: (theme) => theme.transitions.create('margin', {
+                        easing: theme.transitions.easing.sharp,
+                        duration: theme.transitions.duration.enteringScreen,
+                      }),
+                    }}>
+                    <PersonIcon />
+                  </ListItemIcon>
+                  {drawerOpen && <ListItemText primary="Mi ficha" sx={{ opacity: drawerOpen ? 1 : 0 }} />}
+                </ListItemButton>
+              </Tooltip>
             </ListItem>
 
             <ListItem disablePadding sx={{ display: 'block' }}>
-              <ListItemButton
-                selected={selectedMenu.main === 'notificaciones'}
-                onClick={() => handleMenuClick('notificaciones')}
-                sx={{
-                  minHeight: 48,
-                  mx: 2,
-                  justifyContent: drawerOpen ? 'initial' : 'center',
-                  borderRadius: 1,
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                  },
-                  '&.Mui-selected': {
-                    color: '#fff',
-                    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                    '& .MuiListItemIcon-root': {
-                      color: '#fff',
-                    },
-                  },
-                  '&.Mui-selected:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                  },
-                  px: 2.5,
-                }}
-              >
-                <ListItemIcon
+              <Tooltip title={!drawerOpen ? "Notificaciones" : ""} placement="right" arrow>
+                <ListItemButton
+                  selected={selectedMenu === 'notificaciones'}
+                  onClick={() => handleMenuClick('notificaciones')}
                   sx={{
-                    minWidth: 0,
-                    mr: drawerOpen ? 3 : 'auto',
-                    justifyContent: 'center',
-                    transition: (theme) => theme.transitions.create('margin', {
-                      easing: theme.transitions.easing.sharp,
-                      duration: theme.transitions.duration.enteringScreen,
-                    }),
-                  }}>
-                  <NotificationsIcon />
-                </ListItemIcon>
-                {drawerOpen && <ListItemText primary="Notificaciones" sx={{ opacity: drawerOpen ? 1 : 0 }} />}
-              </ListItemButton>
+                    minHeight: 48,
+                    mx: 2,
+                    justifyContent: drawerOpen ? 'initial' : 'center',
+                    borderRadius: 1,
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                    },
+                    '&.Mui-selected': {
+                      color: '#fff',
+                      backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                      '& .MuiListItemIcon-root': {
+                        color: '#fff',
+                      },
+                    },
+                    '&.Mui-selected:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                    },
+                    px: 2.5,
+                  }}
+                >
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 0,
+                      mr: drawerOpen ? 3 : 'auto',
+                      justifyContent: 'center',
+                      transition: (theme) => theme.transitions.create('margin', {
+                        easing: theme.transitions.easing.sharp,
+                        duration: theme.transitions.duration.enteringScreen,
+                      }),
+                    }}>
+                    <NotificationsIcon />
+                  </ListItemIcon>
+                  {drawerOpen && <ListItemText primary="Notificaciones" sx={{ opacity: drawerOpen ? 1 : 0 }} />}
+                </ListItemButton>
+              </Tooltip>
             </ListItem>
 
             <ListItem disablePadding sx={{ display: 'block' }}>
-              <ListItemButton
-                onClick={() => handleSubMenuToggle('equipo')}
-                sx={{
-                  minHeight: 48,
-                  mx: 2,
-                  justifyContent: drawerOpen ? 'initial' : 'center',
-                  borderRadius: 1,
-                  backgroundColor: openSubMenu === 'equipo' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+              <Tooltip title={!drawerOpen ? "Directorio" : ""} placement="right" arrow>
+                <ListItemButton
+                  selected={selectedMenu === 'directorio'}
+                  onClick={() => handleMenuClick('directorio')}
+                  sx={{
+                    minHeight: 48,
+                    mx: 2,
+                    justifyContent: drawerOpen ? 'initial' : 'center',
+                    borderRadius: 1,
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                    },
+                    '&.Mui-selected': {
+                      color: '#fff',
+                      backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                      '& .MuiListItemIcon-root': {
+                        color: '#fff',
+                      },
+                    },
+                    '&.Mui-selected:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                    },
+                    px: 2.5,
+                  }}
+                >
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 0,
+                      mr: drawerOpen ? 3 : 'auto',
+                      justifyContent: 'center',
+                      transition: (theme) => theme.transitions.create('margin', {
+                        easing: theme.transitions.easing.sharp,
+                        duration: theme.transitions.duration.enteringScreen,
+                      }),
+                    }}>
+                    <ContactsIcon />
+                  </ListItemIcon>
+                  {drawerOpen && <ListItemText primary="Directorio" sx={{ opacity: drawerOpen ? 1 : 0 }} />}
+                </ListItemButton>
+              </Tooltip>
+            </ListItem>
+
+            <ListItem disablePadding sx={{ display: 'block' }}>
+              <Tooltip title={!drawerOpen ? "Mi Equipo" : ""} placement="right" arrow>
+                <ListItemButton
+                  selected={selectedMenu === 'equipo'}
+                  onClick={() => handleMenuClick('equipo')}
+                  sx={{
+                    minHeight: 48,
+                    mx: 2,
+                    justifyContent: drawerOpen ? 'initial' : 'center',
+                    borderRadius: 1,
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                    },
+                    '&.Mui-selected': {
+                      color: '#fff',
+                      backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                      '& .MuiListItemIcon-root': {
+                        color: '#fff',
+                      },
+                  },
+                  '&.Mui-selected:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
                   },
                   px: 2.5,
                 }}
@@ -676,283 +690,188 @@ function App() {
                   <GroupsIcon />
                 </ListItemIcon>
                 {drawerOpen && <ListItemText primary="Mi Equipo" sx={{ opacity: drawerOpen ? 1 : 0 }} />}
-                {drawerOpen && (openSubMenu === 'equipo' ? <ExpandLess /> : <ExpandMore />)}
               </ListItemButton>
+              </Tooltip>
             </ListItem>
-            <Collapse in={openSubMenu === 'equipo' && drawerOpen} timeout="auto" unmountOnExit>
-              <Box sx={{ position: 'relative', pl: 0 }}>
-                {/* vertical line */}
-                <Box sx={{ position: 'absolute', left: drawerOpen ? 40 : 28, top: 12, bottom: 12, width: 2, bgcolor: 'rgba(255,255,255,0.06)', borderRadius: 1 }} />
-                <List component="div" disablePadding>
-                  {equipoItems.map((item, idx) => (
-                    <ListItem key={item.text} disablePadding sx={{ display: 'block' }}>
-                      <ListItemButton
-                        sx={{
-                          pl: 4,
-                          minHeight: 40,
-                          '&:hover': {
-                            backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                          },
-                          '&.Mui-selected': {
-                            backgroundColor: 'transparent',
-                            '& .MuiListItemText-primary': {
-                              color: '#fff',
-                              fontWeight: 600,
-                            }
-                          },
-                        }}
-                        selected={selectedMenu.main === 'equipo' && selectedMenu.sub === idx}
-                        onClick={() => handleMenuClick('equipo', idx)}
-                      >
-                        <ListItemIcon sx={{ minWidth: 0, mr: 2, justifyContent: 'center', alignItems: 'center' }}>
-                          <Box sx={{ width: 8, height: 8, bgcolor: 'rgba(255,255,255,0.9)', borderRadius: '50%', boxShadow: '0 0 0 3px rgba(255,255,255,0.04)' }} />
-                        </ListItemIcon>
-                        <ListItemText primary={item.text} primaryTypographyProps={{ style: { fontSize: '0.875rem', color: 'inherit' } }} />
-                      </ListItemButton>
-                    </ListItem>
-                  ))}
-                </List>
-              </Box>
-            </Collapse>
 
             <ListItem disablePadding sx={{ display: 'block' }}>
-              <ListItemButton
-                onClick={() => handleSubMenuToggle('vacaciones')}
-                sx={{
-                  minHeight: 48,
-                  mx: 2,
-                  justifyContent: drawerOpen ? 'initial' : 'center',
-                  borderRadius: 1,
-                  backgroundColor: openSubMenu === 'vacaciones' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                  },
-                  px: 2.5,
-                }}
-              >
-                <ListItemIcon
+              <Tooltip title={!drawerOpen ? "Vacaciones" : ""} placement="right" arrow>
+                <ListItemButton
+                  selected={selectedMenu === 'vacaciones'}
+                  onClick={() => handleMenuClick('vacaciones')}
                   sx={{
-                    minWidth: 0,
-                    mr: drawerOpen ? 3 : 'auto',
-                    justifyContent: 'center',
-                    transition: (theme) => theme.transitions.create('margin', {
-                      easing: theme.transitions.easing.sharp,
-                      duration: theme.transitions.duration.enteringScreen,
-                    }),
-                  }}>
-                  <EventAvailableIcon />
-                </ListItemIcon>
-                {drawerOpen && <ListItemText primary="Vacaciones" sx={{ opacity: drawerOpen ? 1 : 0 }} />}
-                {drawerOpen && (openSubMenu === 'vacaciones' ? <ExpandLess /> : <ExpandMore />)}
-              </ListItemButton>
+                    minHeight: 48,
+                    mx: 2,
+                    justifyContent: drawerOpen ? 'initial' : 'center',
+                    borderRadius: 1,
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                    },
+                    '&.Mui-selected': {
+                      color: '#fff',
+                      backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                      '& .MuiListItemIcon-root': {
+                        color: '#fff',
+                      },
+                    },
+                    '&.Mui-selected:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                    },
+                    px: 2.5,
+                  }}
+                >
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 0,
+                      mr: drawerOpen ? 3 : 'auto',
+                      justifyContent: 'center',
+                      transition: (theme) => theme.transitions.create('margin', {
+                        easing: theme.transitions.easing.sharp,
+                        duration: theme.transitions.duration.enteringScreen,
+                      }),
+                    }}>
+                    <EventAvailableIcon />
+                  </ListItemIcon>
+                  {drawerOpen && <ListItemText primary="Vacaciones" sx={{ opacity: drawerOpen ? 1 : 0 }} />}
+                </ListItemButton>
+              </Tooltip>
             </ListItem>
-            <Collapse in={openSubMenu === 'vacaciones' && drawerOpen} timeout="auto" unmountOnExit>
-              <Box sx={{ position: 'relative', pl: 0 }}>
-                <Box sx={{ position: 'absolute', left: drawerOpen ? 40 : 28, top: 12, bottom: 12, width: 2, bgcolor: 'rgba(255,255,255,0.06)', borderRadius: 1 }} />
-                <List component="div" disablePadding>
-                  {vacacionesItems.map((item, idx) => (
-                    <ListItem key={item.text} disablePadding sx={{ display: 'block' }}>
-                      <ListItemButton 
-                        sx={{
-                          pl: 4,
-                          minHeight: 40,
-                          '&:hover': {
-                            backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                          },
-                          '&.Mui-selected': {
-                            backgroundColor: 'transparent',
-                            '& .MuiListItemText-primary': {
-                              color: '#fff',
-                              fontWeight: 600,
-                            }
-                          },
-                        }}
-                        selected={selectedMenu.main === 'vacaciones' && selectedMenu.sub === idx}
-                        onClick={() => handleMenuClick('vacaciones', idx)}
-                      >
-                        <ListItemIcon sx={{ minWidth: 0, mr: 2, justifyContent: 'center', alignItems: 'center' }}>
-                          <Box sx={{ width: 8, height: 8, bgcolor: 'rgba(255,255,255,0.9)', borderRadius: '50%', boxShadow: '0 0 0 3px rgba(255,255,255,0.04)' }} />
-                        </ListItemIcon>
-                        <ListItemText primary={item.text} primaryTypographyProps={{ style: { fontSize: '0.875rem', color: 'inherit' } }} />
-                      </ListItemButton>
-                    </ListItem>
-                  ))}
-                </List>
-              </Box>
-            </Collapse>
 
             {/* Solo mostrar Dashboard RRHH para usuarios RRHH */}
             {currentUser?.esRrhh && (
-            <>
+              <ListItem disablePadding sx={{ display: 'block' }}>
+                <Tooltip title={!drawerOpen ? "Dashboard RRHH" : ""} placement="right" arrow>
+                  <ListItemButton
+                    selected={selectedMenu === 'rrhh'}
+                    onClick={() => handleMenuClick('rrhh')}
+                    sx={{
+                      minHeight: 48,
+                      mx: 2,
+                      justifyContent: drawerOpen ? 'initial' : 'center',
+                      borderRadius: 1,
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                      },
+                      '&.Mui-selected': {
+                        color: '#fff',
+                        backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                        '& .MuiListItemIcon-root': {
+                          color: '#fff',
+                        },
+                      },
+                      '&.Mui-selected:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                      },
+                      px: 2.5,
+                    }}
+                  >
+                    <ListItemIcon
+                      sx={{
+                      minWidth: 0,
+                      mr: drawerOpen ? 3 : 'auto',
+                      justifyContent: 'center',
+                      transition: (theme) => theme.transitions.create('margin', {
+                        easing: theme.transitions.easing.sharp,
+                        duration: theme.transitions.duration.enteringScreen,
+                      }),
+                    }}>
+                    <DashboardIcon />
+                  </ListItemIcon>
+                  {drawerOpen && <ListItemText primary="Dashboard RRHH" sx={{ opacity: drawerOpen ? 1 : 0 }} />}
+                </ListItemButton>
+              </Tooltip>
+              </ListItem>
+            )}
+
+            {/* Menú Boletines - Solo para usuarios RRHH */}
+            {currentUser?.esRrhh && (
             <ListItem disablePadding sx={{ display: 'block' }}>
-              <ListItemButton
-                onClick={() => handleSubMenuToggle('rrhh')}
-                sx={{
-                  minHeight: 48,
-                  mx: 2,
-                  justifyContent: drawerOpen ? 'initial' : 'center',
-                  borderRadius: 1,
-                  backgroundColor: openSubMenu === 'rrhh' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                  },
-                  px: 2.5,
-                }}
-              >
-                <ListItemIcon
+              <Tooltip title={!drawerOpen ? "Boletines" : ""} placement="right" arrow>
+                <ListItemButton
+                  selected={selectedMenu === 'boletines'}
+                  onClick={() => handleMenuClick('boletines')}
                   sx={{
-                    minWidth: 0,
-                    mr: drawerOpen ? 3 : 'auto',
-                    justifyContent: 'center',
+                    minHeight: 48,
+                    mx: 2,
+                    justifyContent: drawerOpen ? 'initial' : 'center',
+                    borderRadius: 1,
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                    },
+                    '&.Mui-selected': {
+                      color: '#fff',
+                      backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                      '& .MuiListItemIcon-root': {
+                        color: '#fff',
+                      },
+                    },
+                    '&.Mui-selected:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                    },
+                    px: 2.5,
+                  }}
+                >
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 0,
+                      mr: drawerOpen ? 3 : 'auto',
+                      justifyContent: 'center',
                     transition: (theme) => theme.transitions.create('margin', {
                       easing: theme.transitions.easing.sharp,
                       duration: theme.transitions.duration.enteringScreen,
                     }),
-                  }}>
-                  <DashboardIcon />
-                </ListItemIcon>
-                {drawerOpen && <ListItemText primary="Dashboard RRHH" sx={{ opacity: drawerOpen ? 1 : 0 }} />}
-                {drawerOpen && (openSubMenu === 'rrhh' ? <ExpandLess /> : <ExpandMore />)}
-              </ListItemButton>
-            </ListItem>
-            <Collapse in={openSubMenu === 'rrhh' && drawerOpen} timeout="auto" unmountOnExit>
-              <Box sx={{ position: 'relative', pl: 0 }}>
-                <Box sx={{ position: 'absolute', left: drawerOpen ? 40 : 28, top: 12, bottom: 12, width: 2, bgcolor: 'rgba(255,255,255,0.06)', borderRadius: 1 }} />
-                <List component="div" disablePadding>
-                  {rrhhItems.map((item, idx) => (
-                    <ListItem key={item.text} disablePadding sx={{ display: 'block' }}>
-                      <ListItemButton
-                        sx={{
-                          pl: 4,
-                          minHeight: 40,
-                          '&:hover': {
-                            backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                          },
-                          '&.Mui-selected': {
-                            backgroundColor: 'transparent',
-                            '& .MuiListItemText-primary': {
-                              color: '#fff',
-                              fontWeight: 600,
-                            }
-                          },
-                        }}
-                        selected={selectedMenu.main === 'rrhh' && selectedMenu.sub === idx}
-                        onClick={() => handleMenuClick('rrhh', idx)}
-                      >
-                        <ListItemIcon sx={{ minWidth: 0, mr: 2, justifyContent: 'center', alignItems: 'center' }}>
-                          <Box sx={{ width: 8, height: 8, bgcolor: 'rgba(255,255,255,0.9)', borderRadius: '50%', boxShadow: '0 0 0 3px rgba(255,255,255,0.04)' }} />
-                        </ListItemIcon>
-                        <ListItemText primary={item.text} primaryTypographyProps={{ style: { fontSize: '0.875rem', color: 'inherit' } }} />
-                      </ListItemButton>
-                    </ListItem>
-                  ))}
-                </List>
-              </Box>
-            </Collapse>
-
-            {/* Menú Boletines */}
-            <ListItem disablePadding sx={{ display: 'block' }}>
-              <ListItemButton
-                onClick={() => handleSubMenuToggle('boletines')}
-                sx={{
-                  minHeight: 48,
-                  mx: 2,
-                  justifyContent: drawerOpen ? 'initial' : 'center',
-                  borderRadius: 1,
-                  backgroundColor: openSubMenu === 'boletines' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                  },
-                  px: 2.5,
-                }}
-              >
-                <ListItemIcon
-                  sx={{
-                    minWidth: 0,
-                    mr: drawerOpen ? 3 : 'auto',
-                    justifyContent: 'center',
                   }}>
                   <CampaignIcon />
                 </ListItemIcon>
                 {drawerOpen && <ListItemText primary="Boletines" sx={{ opacity: drawerOpen ? 1 : 0 }} />}
-                {drawerOpen && (openSubMenu === 'boletines' ? <ExpandLess /> : <ExpandMore />)}
               </ListItemButton>
+              </Tooltip>
             </ListItem>
-            <Collapse in={openSubMenu === 'boletines' && drawerOpen} timeout="auto" unmountOnExit>
-              <Box sx={{ position: 'relative', pl: 0 }}>
-                <Box sx={{ position: 'absolute', left: drawerOpen ? 40 : 28, top: 12, bottom: 12, width: 2, bgcolor: 'rgba(255,255,255,0.06)', borderRadius: 1 }} />
-                <List component="div" disablePadding>
-                  {boletinesItems.map((item, idx) => (
-                    <ListItem key={item.text} disablePadding sx={{ display: 'block' }}>
-                      <ListItemButton
-                        sx={{
-                          pl: 4,
-                          minHeight: 40,
-                          '&:hover': {
-                            backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                          },
-                          '&.Mui-selected': {
-                            backgroundColor: 'transparent',
-                            '& .MuiListItemText-primary': { color: '#fff', fontWeight: 600 }
-                          },
-                        }}
-                        selected={selectedMenu.main === 'boletines' && selectedMenu.sub === idx}
-                        onClick={() => handleMenuClick('boletines', idx)}
-                      >
-                        <ListItemIcon sx={{ minWidth: 0, mr: 2, justifyContent: 'center', alignItems: 'center' }}>
-                          <Box sx={{ width: 8, height: 8, bgcolor: 'rgba(255,255,255,0.9)', borderRadius: '50%', boxShadow: '0 0 0 3px rgba(255,255,255,0.04)' }} />
-                        </ListItemIcon>
-                        <ListItemText primary={item.text} primaryTypographyProps={{ style: { fontSize: '0.875rem', color: 'inherit' } }} />
-                      </ListItemButton>
-                    </ListItem>
-                  ))}
-                </List>
-              </Box>
-            </Collapse>
-            </>
             )}
 
             {/* Solo mostrar Gestión de Empleados para usuarios RRHH */}
             {currentUser?.esRrhh && (
             <ListItem disablePadding sx={{ display: 'block' }}>
-              <ListItemButton
-                selected={selectedMenu.main === 'empleados'}
-                onClick={() => handleMenuClick('empleados')}
-                sx={{
-                  minHeight: 48,
-                  mx: 2,
-                  justifyContent: drawerOpen ? 'initial' : 'center',
-                  borderRadius: 1,
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                  },
-                  '&.Mui-selected': {
-                    color: '#fff',
-                    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                    '& .MuiListItemIcon-root': {
-                      color: '#fff',
-                    },
-                  },
-                  '&.Mui-selected:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                  },
-                  px: 2.5,
-                }}
-              >
-                <ListItemIcon
+              <Tooltip title={!drawerOpen ? "Gestión de Empleados" : ""} placement="right" arrow>
+                <ListItemButton
+                  selected={selectedMenu.main === 'empleados'}
+                  onClick={() => handleMenuClick('empleados')}
                   sx={{
-                    minWidth: 0,
-                    mr: drawerOpen ? 3 : 'auto',
-                    justifyContent: 'center',
-                    transition: (theme) => theme.transitions.create('margin', {
-                      easing: theme.transitions.easing.sharp,
-                      duration: theme.transitions.duration.enteringScreen,
-                    }),
-                  }}>
-                  <GroupIcon />
-                </ListItemIcon>
-                {drawerOpen && <ListItemText primary="Gestión de Empleados" sx={{ opacity: drawerOpen ? 1 : 0 }} />}
-              </ListItemButton>
+                    minHeight: 48,
+                    mx: 2,
+                    justifyContent: drawerOpen ? 'initial' : 'center',
+                    borderRadius: 1,
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                    },
+                    '&.Mui-selected': {
+                      color: '#fff',
+                      backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                      '& .MuiListItemIcon-root': {
+                        color: '#fff',
+                      },
+                    },
+                    '&.Mui-selected:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                    },
+                    px: 2.5,
+                  }}
+                >
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 0,
+                      mr: drawerOpen ? 3 : 'auto',
+                      justifyContent: 'center',
+                      transition: (theme) => theme.transitions.create('margin', {
+                        easing: theme.transitions.easing.sharp,
+                        duration: theme.transitions.duration.enteringScreen,
+                      }),
+                    }}>
+                    <GroupIcon />
+                  </ListItemIcon>
+                  {drawerOpen && <ListItemText primary="Gestión de Empleados" sx={{ opacity: drawerOpen ? 1 : 0 }} />}
+                </ListItemButton>
+              </Tooltip>
             </ListItem>
             )}
           </List>
