@@ -24,8 +24,3 @@ yarn-error.log*
 # Archivos del sistema operativo
 .DS_Store
 Thumbs.db
-
-# Archivos de auditoría y limpieza
-AUDITORIA_SEGURIDAD.md
-RESUMEN_LIMPIEZA.md
-CORREGIR_SEGURIDAD.ps1
