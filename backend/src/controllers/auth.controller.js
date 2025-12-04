@@ -5,8 +5,6 @@ import { query } from '../db.js';
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    
-    console.log('🔐 Login attempt:', email);
 
     // Buscar usuario
     const result = await query(
@@ -16,43 +14,19 @@ export const login = async (req, res) => {
        WHERE u.email = $1 AND u.activo = true`,
       [email]
     );
-    
-    console.log('📊 User query result:', result.rows.length > 0 ? 'User found' : 'User not found');
 
     if (result.rows.length === 0) {
-      console.log('❌ Login failed: User not found');
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
     const user = result.rows[0];
 
-    // TEMPORAL: Verificar contraseña (permitir cualquiera temporalmente para testing)
-    let validPassword = await bcrypt.compare(password, user.password);
-    
-    // Si bcrypt falla, permitir contraseñas hardcodeadas para testing
-    if (!validPassword) {
-      const testPasswords = {
-        'jonathan.cerda@agrovet.com': 'coord123',
-        'ana.garcia@agrovet.com': 'emp123',
-        'carlos.martinez@agrovet.com': 'emp123',
-        'ursula.huamancaja@agrovet.com': 'rrhh123',
-        'admin@agrovet.com': 'admin123'
-      };
-      
-      if (testPasswords[email] && testPasswords[email] === password) {
-        validPassword = true;
-        console.log('✅ Login con contraseña de testing');
-      }
-    }
-    
-    console.log('🔑 Password validation:', validPassword ? 'Valid' : 'Invalid');
+    // Verificar contraseña con bcrypt
+    const validPassword = await bcrypt.compare(password, user.password);
     
     if (!validPassword) {
-      console.log('❌ Login failed: Invalid password');
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
-    
-    console.log('✅ Login successful for:', email);
 
     // Actualizar último acceso
     await query(
