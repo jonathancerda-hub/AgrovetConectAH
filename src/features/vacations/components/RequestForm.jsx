@@ -34,7 +34,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
 import moment from 'moment';
 import 'moment/locale/es';
-import * as vacacionesService from '../../../services/vacaciones.service';
+import vacacionesService from '../../../services/vacaciones.service';
 
 moment.locale('es');
 
@@ -48,6 +48,7 @@ const RequestForm = ({ onSuccess }) => {
   const [validacion, setValidacion] = useState(null);
   const [periodos, setPeriodos] = useState([]);
   const [resumen, setResumen] = useState(null);
+  const [solicitudesExistentes, setSolicitudesExistentes] = useState([]);
   
   // Estados para dialogs y snackbars
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
@@ -61,16 +62,18 @@ const RequestForm = ({ onSuccess }) => {
   
   const cargarDatos = async () => {
     try {
-      const [periodosData, resumenData] = await Promise.all([
+      const [periodosData, resumenData, solicitudesData] = await Promise.all([
         vacacionesService.obtenerPeriodos().catch(() => []),
         vacacionesService.obtenerResumen().catch(() => ({
           dias_disponibles: 0,
           dias_usados: 0,
           dias_pendientes: 0
-        }))
+        })),
+        vacacionesService.obtenerMisSolicitudes().catch(() => [])
       ]);
       setPeriodos(periodosData);
       setResumen(resumenData);
+      setSolicitudesExistentes(solicitudesData || []);
     } catch (error) {
       console.error('Error al cargar datos:', error);
       // Datos por defecto si falla
@@ -80,6 +83,7 @@ const RequestForm = ({ onSuccess }) => {
         dias_usados: 0,
         dias_pendientes: 0
       });
+      setSolicitudesExistentes([]);
     }
   };
   
@@ -95,6 +99,52 @@ const RequestForm = ({ onSuccess }) => {
   const validarSolicitud = async () => {
     setValidando(true);
     try {
+      const inicio = fechaInicio.clone().startOf('day');
+      const fin = fechaFin.clone().startOf('day');
+      
+      // 1. VALIDACIÓN FRONTEND: Verificar cruce con solicitudes existentes
+      const solicitudesCruzadas = solicitudesExistentes.filter(sol => {
+        // Solo verificar solicitudes pendientes o aprobadas
+        if (sol.estado === 'rechazada' || sol.estado === 'cancelada') {
+          return false;
+        }
+        
+        const solInicio = moment(sol.fecha_inicio).startOf('day');
+        const solFin = moment(sol.fecha_fin).startOf('day');
+        
+        // Detectar cualquier tipo de solapamiento:
+        // Caso 1: Nueva solicitud empieza durante una existente
+        // Caso 2: Nueva solicitud termina durante una existente
+        // Caso 3: Nueva solicitud envuelve completamente una existente
+        // Caso 4: Nueva solicitud está dentro de una existente
+        return (
+          (inicio.isSameOrAfter(solInicio) && inicio.isSameOrBefore(solFin)) || // empieza durante
+          (fin.isSameOrAfter(solInicio) && fin.isSameOrBefore(solFin)) ||       // termina durante
+          (inicio.isSameOrBefore(solInicio) && fin.isSameOrAfter(solFin)) ||    // envuelve
+          (inicio.isSameOrAfter(solInicio) && fin.isSameOrBefore(solFin))       // está dentro
+        );
+      });
+      
+      if (solicitudesCruzadas.length > 0) {
+        const mensajesCruce = solicitudesCruzadas.map(sol => {
+          const estadoTexto = sol.estado === 'pendiente' ? 'pendiente de aprobación' : 'aprobada';
+          return `Ya tienes una solicitud ${estadoTexto} del ${moment(sol.fecha_inicio).format('DD/MM/YYYY')} al ${moment(sol.fecha_fin).format('DD/MM/YYYY')}`;
+        });
+        
+        setValidacion({
+          valida: false,
+          errores: [
+            'Las fechas seleccionadas se cruzan con solicitudes existentes:',
+            ...mensajesCruce
+          ],
+          advertencias: [],
+          alertas: []
+        });
+        setValidando(false);
+        return;
+      }
+      
+      // 2. VALIDACIÓN BACKEND: Reglas de negocio
       const resultado = await vacacionesService.validarSolicitud({
         fecha_inicio: fechaInicio.format('YYYY-MM-DD'),
         fecha_fin: fechaFin.format('YYYY-MM-DD')
@@ -147,6 +197,9 @@ const RequestForm = ({ onSuccess }) => {
       setFechaFin(null);
       setMotivo('');
       setValidacion(null);
+      
+      // Recargar solicitudes para actualizar la lista
+      await cargarDatos();
       
       // Mostrar dialog de éxito
       setDialogExito(true);
