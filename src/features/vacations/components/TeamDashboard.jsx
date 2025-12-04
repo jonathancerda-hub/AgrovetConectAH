@@ -14,6 +14,7 @@ export default function TeamDashboard() {
   const [teamMembers, setTeamMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [empleadosDeVacaciones, setEmpleadosDeVacaciones] = useState([]);
   const [stats, setStats] = useState({
     totalMiembros: 0,
     activos: 0,
@@ -46,11 +47,68 @@ export default function TeamDashboard() {
       console.log('📊 Datos recibidos:', data);
       console.log('📊 Subordinados:', data.subordinados);
       
-      setTeamMembers(data.subordinados || []);
+      const subordinados = data.subordinados || [];
+      setTeamMembers(subordinados);
+
+      // Obtener vacaciones de CADA subordinado (igual que el calendario)
+      let empleadosEnVacaciones = [];
+      
+      if (subordinados.length > 0) {
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        console.log('📅 Fecha HOY:', hoy.toISOString().split('T')[0]);
+
+        // Cargar solicitudes de cada subordinado
+        const vacacionesPromises = subordinados.map(async (subordinado) => {
+          try {
+            const solicitudesResponse = await fetch(`${API_URL}/vacaciones/solicitudes/${subordinado.id}`, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            if (solicitudesResponse.ok) {
+              const solicitudes = await solicitudesResponse.json();
+              
+              // Filtrar solo aprobadas y activas HOY
+              const activas = solicitudes.filter(sol => {
+                if (sol.estado !== 'aprobada') return false;
+                
+                const inicio = new Date(sol.fecha_inicio);
+                const fin = new Date(sol.fecha_fin);
+                inicio.setHours(0, 0, 0, 0);
+                fin.setHours(0, 0, 0, 0);
+                
+                return hoy >= inicio && hoy <= fin;
+              });
+
+              if (activas.length > 0) {
+                console.log(`🏖️ ${subordinado.nombres} ${subordinado.apellidos} está de vacaciones:`, activas);
+                return {
+                  nombre: `${subordinado.nombres} ${subordinado.apellidos}`,
+                  solicitudes: activas
+                };
+              }
+            }
+          } catch (err) {
+            console.error(`Error al cargar vacaciones de ${subordinado.nombres}:`, err);
+          }
+          return null;
+        });
+
+        const resultados = await Promise.all(vacacionesPromises);
+        empleadosEnVacaciones = resultados.filter(r => r !== null);
+        
+        console.log('👥 Empleados de vacaciones HOY:', empleadosEnVacaciones);
+      }
+
+      setEmpleadosDeVacaciones(empleadosEnVacaciones);
+      
       setStats({
-        totalMiembros: data.subordinados?.length || 0,
-        activos: data.subordinados?.length || 0,
-        deVacaciones: 0 // Esto se puede calcular si tienes el estado
+        totalMiembros: subordinados.length,
+        activos: subordinados.length - empleadosEnVacaciones.length,
+        deVacaciones: empleadosEnVacaciones.length
       });
     } catch (err) {
       console.error('Error al cargar equipo:', err);
@@ -184,46 +242,6 @@ export default function TeamDashboard() {
             </CardContent>
           </Card>
         </Grid>
-
-        <Grid item xs={12} sm={6} md={4}>
-          <Card 
-            elevation={2} 
-            sx={{ 
-              height: '100%',
-              borderLeft: 4, 
-              borderColor: 'success.main',
-              transition: 'transform 0.2s, box-shadow 0.2s',
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: 4
-              }
-            }}
-          >
-            <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 2 }}>
-              <CalendarMonthIcon 
-                sx={{ 
-                  fontSize: 56, 
-                  color: 'success.main'
-                }} 
-              />
-              <Box>
-                <Typography variant="h3" fontWeight={700} color="success.main">
-                  {stats.activos}
-                </Typography>
-                <Typography 
-                  variant="body2" 
-                  color="text.secondary" 
-                  textTransform="uppercase"
-                  fontWeight={600}
-                  letterSpacing={0.5}
-                >
-                  Empleados Activos
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
         <Grid item xs={12} sm={6} md={4}>
           <Card 
             elevation={2} 
@@ -238,27 +256,48 @@ export default function TeamDashboard() {
               }
             }}
           >
-            <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 2 }}>
-              <AccessTimeIcon 
-                sx={{ 
-                  fontSize: 56, 
-                  color: 'warning.main'
-                }} 
-              />
-              <Box>
-                <Typography variant="h3" fontWeight={700} color="warning.main">
-                  {stats.deVacaciones}
-                </Typography>
-                <Typography 
-                  variant="body2" 
-                  color="text.secondary" 
-                  textTransform="uppercase"
-                  fontWeight={600}
-                  letterSpacing={0.5}
-                >
-                  De Vacaciones
-                </Typography>
+            <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1, py: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <AccessTimeIcon 
+                  sx={{ 
+                    fontSize: 56, 
+                    color: 'warning.main'
+                  }} 
+                />
+                <Box>
+                  <Typography variant="h3" fontWeight={700} color="warning.main">
+                    {stats.deVacaciones}
+                  </Typography>
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary" 
+                    textTransform="uppercase"
+                    fontWeight={600}
+                    letterSpacing={0.5}
+                  >
+                    De Vacaciones
+                  </Typography>
+                </Box>
               </Box>
+              {empleadosDeVacaciones.length > 0 && (
+                <Box sx={{ mt: 1, pl: 1 }}>
+                  {empleadosDeVacaciones.map((emp, idx) => (
+                    <Chip
+                      key={idx}
+                      label={emp.nombre}
+                      size="small"
+                      sx={{ 
+                        mb: 0.5, 
+                        mr: 0.5,
+                        bgcolor: 'warning.light',
+                        color: 'warning.dark',
+                        fontWeight: 600,
+                        fontSize: '0.75rem'
+                      }}
+                    />
+                  ))}
+                </Box>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -274,14 +313,9 @@ export default function TeamDashboard() {
           borderBottom: '1px solid',
           borderColor: 'divider'
         }}>
-          <Box>
-            <Typography variant="h6" fontWeight={600}>
-              Mi Equipo
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {teamMembers.length} {teamMembers.length === 1 ? 'persona' : 'personas'} a tu cargo
-            </Typography>
-          </Box>
+          <Typography variant="body2" color="text.secondary">
+            {teamMembers.length} {teamMembers.length === 1 ? 'persona' : 'personas'} a tu cargo
+          </Typography>
         </Box>
 
         <Box sx={{ width: '100%' }}>

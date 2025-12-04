@@ -235,10 +235,11 @@ const VacationCalendar = ({ events: propEvents }) => {
     };
   });
 
+  // Combinar todos los eventos evitando duplicados
+  // Solo usar propEvents si no hay vacaciones cargadas desde la API
   const allEvents = [
     ...vacacionesUsuario,
     ...vacacionesEquipo,
-    ...(propEvents || []).map(e => ({ ...e, tipo: 'vacacion' })),
     ...feriadosEvents,
     ...festivosEvents
   ];
