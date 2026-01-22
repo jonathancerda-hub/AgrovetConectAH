@@ -347,7 +347,7 @@ export default function DashboardRRHH() {
                               {empleado.nombre_completo}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
-                              EMP-{String(empleado.empleado_id).padStart(3, '0')}
+                              {empleado.codigo_empleado || `EMP-${String(empleado.empleado_id).padStart(3, '0')}`}
                             </Typography>
                           </Box>
                         </Box>
@@ -429,10 +429,10 @@ export default function DashboardRRHH() {
           {selectedEmpleado && (
             <Box sx={{ mb: 2 }}>
               <Typography variant="body2" color="text.secondary">
-                Empleado: <strong>{selectedEmpleado.nombres} {selectedEmpleado.apellidos}</strong>
+                Empleado: <strong>{selectedEmpleado.nombre_completo}</strong>
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Días disponibles: <strong>{selectedEmpleado.dias_vacaciones || 0}</strong>
+                Días disponibles: <strong>{selectedEmpleado.dias_disponibles || 0}</strong>
               </Typography>
             </Box>
           )}

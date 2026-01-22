@@ -104,8 +104,10 @@ export const createEmpleado = async (req, res) => {
       puesto_id,
       area_id,
       supervisor_id,
-      tipo_contrato,
+      tipo_trabajador_id,
       fecha_ingreso,
+      fecha_nacimiento,
+      direccion,
       dias_vacaciones
     } = req.body;
 
@@ -129,21 +131,23 @@ export const createEmpleado = async (req, res) => {
     // Crear empleado primero
     const empleadoResult = await query(
       `INSERT INTO empleados 
-       (puesto_id, area_id, supervisor_id, dni, nombres, apellidos, 
-        telefono, tipo_contrato, fecha_ingreso, dias_vacaciones, estado)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'Activo')
+       (puesto_id, area_id, supervisor_id, tipo_trabajador_id, dni, nombres, apellidos, 
+        telefono, fecha_ingreso, fecha_nacimiento, direccion, dias_vacaciones, activo)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, true)
        RETURNING *`,
       [
         puesto_id,
         area_id,
         supervisor_id || null,
+        tipo_trabajador_id || 1,
         dni,
         nombres,
         apellidos,
         telefono || null,
-        tipo_contrato || 'Indefinido',
         fecha_ingreso || new Date(),
-        dias_vacaciones || 15
+        fecha_nacimiento || null,
+        direccion || null,
+        dias_vacaciones || 30
       ]
     );
 
@@ -180,9 +184,12 @@ export const updateEmpleado = async (req, res) => {
       puesto_id,
       area_id,
       supervisor_id,
-      tipo_contrato,
+      tipo_trabajador_id,
+      fecha_ingreso,
+      fecha_nacimiento,
+      direccion,
       dias_vacaciones,
-      estado
+      activo
     } = req.body;
 
     const result = await query(
@@ -194,13 +201,30 @@ export const updateEmpleado = async (req, res) => {
            puesto_id = COALESCE($5, puesto_id),
            area_id = COALESCE($6, area_id),
            supervisor_id = $7,
-           tipo_contrato = COALESCE($8, tipo_contrato),
-           dias_vacaciones = COALESCE($9, dias_vacaciones),
-           estado = COALESCE($10, estado)
-       WHERE id = $11
+           tipo_trabajador_id = COALESCE($8, tipo_trabajador_id),
+           fecha_ingreso = COALESCE($9, fecha_ingreso),
+           fecha_nacimiento = $10,
+           direccion = $11,
+           dias_vacaciones = COALESCE($12, dias_vacaciones),
+           activo = COALESCE($13, activo)
+       WHERE id = $14
        RETURNING *`,
-      [dni, nombres, apellidos, telefono, puesto_id, area_id, supervisor_id, 
-       tipo_contrato, dias_vacaciones, estado, id]
+      [
+        dni, 
+        nombres, 
+        apellidos, 
+        telefono, 
+        puesto_id, 
+        area_id, 
+        supervisor_id,
+        tipo_trabajador_id,
+        fecha_ingreso,
+        fecha_nacimiento,
+        direccion,
+        dias_vacaciones,
+        activo,
+        id
+      ]
     );
 
     if (result.rows.length === 0) {

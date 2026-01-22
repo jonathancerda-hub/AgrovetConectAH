@@ -1,79 +1,233 @@
-# Contexto del Proyecto: Aplicación de Solicitud de Vacaciones
+# Contexto del Proyecto: AgrovetConectAH - Sistema de Gestión de Vacaciones
 
 ## Visión General
 
-Este proyecto parece ser una aplicación web diseñada para gestionar las solicitudes de vacaciones de los empleados. Proporciona una interfaz de usuario para que los empleados puedan solicitar días libres y consultar información relevante como su estado actual de vacaciones y las políticas de la empresa.
+AgrovetConectAH es una aplicación web empresarial diseñada para gestionar las solicitudes de vacaciones de los empleados de Agrovet Market. Proporciona una interfaz completa para que los empleados soliciten días libres, los supervisores gestionen sus equipos, y RRHH administre el sistema centralizadamente. Incluye funcionalidades de red social interna, directorio de empleados, calendario de eventos y gestión de aprobaciones multinivel.
 
 ## Tecnologías Clave
 
-La aplicación utiliza un ecosistema moderno de React para su desarrollo frontend, aprovechando las siguientes librerías y herramientas:
+### Frontend
+-   **React 19.2.0:** Librería principal para construcción de interfaces de usuario
+-   **Material-UI v7:** Framework de componentes con Material Design
+-   **Vite 7.1.9:** Build tool y desarrollo rápido
+-   **React Router DOM:** Navegación y rutas
+-   **React Big Calendar:** Visualización de calendarios con eventos
+-   **Moment.js:** Manipulación y formato de fechas (localización español)
+-   **Emotion:** CSS-in-JS para estilización
+-   **React Hook Form:** Gestión de formularios
+-   **@mui/x-date-pickers:** Selectores de fecha Material-UI
+-   **@mui/x-data-grid:** Tablas avanzadas con paginación
 
--   **React:** Librería principal de JavaScript para la construcción de interfaces de usuario interactivas.
--   **React Hook Form:** Una librería para la gestión de formularios en React, conocida por su rendimiento y flexibilidad. Se utiliza para manejar el estado del formulario y la validación de los campos.
--   **Material-UI (MUI):** Un popular framework de UI para React que implementa el Material Design de Google. Se emplea para el diseño visual, proporcionando componentes preconstruidos como `TextField`, `Button`, `Box`, `Grid`, `Paper`, `Typography`, `Stack`, `Chip`, `Tooltip` e iconos.
--   **Emotion:** Una librería CSS-in-JS utilizada internamente por Material-UI para la estilización de componentes.
--   **Babel:** Un compilador de JavaScript que permite el uso de características modernas de JavaScript y sintaxis JSX, transpilándolas para una mayor compatibilidad con navegadores.
+### Backend (Integración)
+-   **API REST:** Comunicación con backend en Node.js
+-   **JWT:** Autenticación basada en tokens
+-   **PostgreSQL/Supabase:** Base de datos relacional
 
 ## Características Principales
 
-### 1. Formulario de Solicitud de Vacaciones
+### 1. Sistema de Autenticación
+-   **Login JWT:** Autenticación con tokens almacenados en localStorage
+-   **Roles de Usuario:** Empleado, Supervisor, RRHH
+-   **Rutas Protegidas:** Control de acceso basado en roles
+-   **Información de Usuario:** Avatar, nombre completo, puesto, área
 
--   **Entrada de Fechas:** Permite a los usuarios seleccionar una fecha de inicio y una fecha de fin para sus vacaciones.
--   **Información Predefinida:** Muestra automáticamente el tipo de vacaciones (ej. "Regulares") y el período vacacional (ej. "2025-2026"), que parecen ser campos de solo lectura.
--   **Comentarios Opcionales:** Incluye un campo de texto para que los usuarios puedan añadir un motivo o comentarios adicionales a su solicitud.
--   **Validación de Formulario:** Utiliza React Hook Form para validar campos obligatorios, como las fechas de inicio y fin.
--   **Acciones del Formulario:** Botones para "Enviar Solicitud", "Ver mis solicitudes" y "Regresar al Inicio".
+### 2. Portal Principal
+-   **Dashboard Personalizado:** Vista según rol del usuario
+-   **Navegación Lateral:** Sidebar con menús contextuales
+-   **Mi Ficha:** Información personal del empleado
+-   **Notificaciones:** Sistema de alertas en tiempo real
+-   **Búsqueda Global:** Búsqueda de empleados y contenido
 
-### 2. Estado de Vacaciones del Empleado
+### 3. Gestión de Vacaciones
 
--   **Resumen Visual:** Muestra un resumen claro del estado de las vacaciones del empleado, incluyendo:
-    -   Días por Año.
-    -   Días Tomados.
-    -   Días Restantes.
-    -   Días de Antigüedad.
+#### Solicitudes
+-   **Formulario de Solicitud:** 
+    - Selección de fechas con validación
+    - Cálculo automático de días
+    - Motivo obligatorio
+    - Validación en tiempo real de reglas de negocio
+    - **Detección de cruces:** Alerta si las fechas se solapan con solicitudes existentes
+-   **Validaciones Implementadas:**
+    - Días disponibles suficientes
+    - Máximo 5 viernes por período
+    - Si incluye viernes, debe incluir fin de semana completo
+    - No cruces con otras solicitudes (pendientes o aprobadas)
+    - Solicitud antes del día 20 del mes
+-   **Estados:** Pendiente, Aprobada, Rechazada, Cancelada
+-   **Resumen de Saldo:** Días disponibles, usados y pendientes
 
-### 3. Políticas y Reglas de Vacaciones
+#### Calendario de Vacaciones
+-   **Vista Mensual:** Calendario interactivo con react-big-calendar
+-   **Tipos de Eventos:**
+    - Mis vacaciones (verde)
+    - Vacaciones del equipo (azul)
+    - Feriados nacionales de Perú 2025 (rojo)
+    - Días festivos (naranja)
+-   **Contador de Eventos:** Badges con cantidad por tipo
+-   **Navegación:** Cambio de mes y año
+-   **Sin Duplicados:** Eventos únicos por ID
 
--   **Información Detallada:** Proporciona a los usuarios las políticas y recomendaciones de la empresa relacionadas con las solicitudes de vacaciones, tales como:
-    -   La política principal de días anuales otorgados.
-    -   Recomendaciones para incluir fines de semana.
-    -   Flexibilidad en la elección de períodos.
-    -   Tiempo mínimo de aviso previo para las solicitudes.
-    -   Límite máximo de días consecutivos por solicitud.
+#### Aprobación de Solicitudes
+-   **Flujo Multinivel:** Supervisor → RRHH
+-   **Vista de Pendientes:** Lista de solicitudes por aprobar
+-   **Acciones:** Aprobar o Rechazar con comentarios
+-   **Historial:** Registro de todas las acciones
 
-### 4. Dashboard de Recursos Humanos (RRHH)
+### 4. Gestión de Equipos
 
--   **Vista de Control:** Panel de control para el rol de RRHH que muestra información consolidada de todos los empleados.
--   **Información Mostrada:** 
-    -   Empleado (con avatar e inicial)
-    -   Puesto y área de trabajo
-    -   Antigüedad en la empresa
-    -   Días disponibles, tomados y restantes
-    -   Solicitudes pendientes de aprobación
-    -   Última solicitud realizada
-    -   Alertas visuales con código de colores
--   **Estilo de Tabla:** Sigue el estándar de `GestionEmpleados.jsx` con encabezado gris claro (`grey.100`)
--   **Buscador:** Campo de búsqueda para filtrar empleados por nombre o puesto
+#### Mi Equipo (Supervisores)
+-   **Dashboard de Equipo:**
+    - Tarjeta de miembros del equipo (total)
+    - Tarjeta de empleados de vacaciones HOY (con nombres en chips)
+    - Cálculo automático de activos (total - de vacaciones)
+-   **Tabla de Subordinados:**
+    - Empleado con avatar y puesto
+    - Email, área, puesto
+    - Vista completa de 8 personas a cargo
+-   **Solicitar Colaborador:** Formulario para petición de nuevo empleado
+-   **Validación en Tiempo Real:** Verifica vacaciones activas comparando fecha actual
 
-### 5. Gestión de Empleados
+### 5. Directorio de Empleados
+-   **Vista de Tarjetas:** Grid responsive (4 columnas en desktop, 1 en móvil)
+-   **Información por Empleado:**
+    - Avatar con iniciales
+    - Nombre completo
+    - Puesto
+    - Área
+    - Email
+    - Ubicación (si aplica)
+-   **Filtros en Español:**
+    - Búsqueda por nombre (incluye email)
+    - Filtro por título del puesto
+    - Filtro por ubicación
+-   **Tarjetas Uniformes:** Altura fija de 400px con overflow ellipsis
+-   **Botones de Acción:** Reiniciar y Buscar (verde #5cb85c)
 
--   **CRUD de Empleados:** Interfaz para crear, leer, actualizar y eliminar información de empleados.
--   **Campos Gestionados:** DNI, nombre, puesto, área, tipo de contrato, días de vacaciones, estado.
--   **Estilo de Referencia:** Componente `GestionEmpleados.jsx` que define el estándar visual de tablas.
+### 6. Red Social Interna (Boletines - RRHH)
+-   **Restricción de Acceso:** Solo visible para usuarios con rol RRHH
+-   **Publicaciones:** Sistema de comunicación interna
+-   **Gestión de Contenido:** Crear, editar y eliminar boletines
 
-## Estructura del Proyecto (Fragmentos Relevantes)
+### 7. Sistema de Notificaciones
+-   **Tipos de Notificaciones:**
+    - Aprobación de solicitudes
+    - Rechazo de solicitudes
+    - Nuevas solicitudes pendientes
+-   **Indicadores Visuales:** Badge con contador
+-   **Marcado de Leídas:** Control de estado
 
-El archivo `src/features/vacations/components/RequestForm.jsx` sugiere una estructura de directorios basada en características, donde `vacations` es una característica modular y bien definida.
+## Estructura del Proyecto
 
 ```
 reac/
-├── node_modules/
-│   └── ... (dependencias como @emotion, @babel, @mui, react)
-└── src/
-    └── features/
-        └── vacations/
-            └── components/
-                └── RequestForm.jsx
+├── src/
+│   ├── App.jsx                          # Router principal, sidebar, auth
+│   ├── main.jsx                         # Entry point
+│   ├── global.css                       # Estilos globales
+│   ├── features/
+│   │   └── vacations/
+│   │       └── components/
+│   │           ├── VacacionesPage.jsx          # Hub principal vacaciones
+│   │           ├── RequestForm.jsx             # Formulario solicitud + validación cruces
+│   │           ├── RequestsList.jsx            # Lista mis solicitudes
+│   │           ├── VacationCalendar.jsx        # Calendario eventos (sin duplicados)
+│   │           ├── ProcessRequestPage.jsx      # Aprobación solicitudes
+│   │           ├── DirectorioPage.jsx          # Directorio empleados (tarjetas 400px)
+│   │           ├── EquipoPage.jsx              # Gestión equipos (default: Mi Equipo)
+│   │           ├── TeamDashboard.jsx           # Dashboard equipo + vacaciones activas
+│   │           └── NewCollaboratorForm.jsx     # Solicitud colaborador
+│   ├── services/
+│   │   ├── api.js                       # Axios instance con interceptors
+│   │   ├── auth.service.js              # Login, logout, getCurrentUser
+│   │   ├── vacaciones.service.js        # API vacaciones (validación, CRUD)
+│   │   ├── empleados.service.js         # API empleados
+│   │   ├── aprobacion.service.js        # API aprobaciones
+│   │   ├── notificaciones.service.js    # API notificaciones
+│   │   └── publicaciones.service.js     # API boletines
+│   └── index.html                       # HTML con favicon WiFi SVG
+├── backend/
+│   ├── src/
+│   │   ├── server.js                    # Express server
+│   │   ├── db.js                        # PostgreSQL connection
+│   │   ├── controllers/                 # Lógica de negocio
+│   │   ├── routes/                      # Endpoints API
+│   │   ├── middleware/                  # Auth, validación
+│   │   └── services/                    # Servicios backend
+│   └── database/
+│       └── migrations/                  # SQL migrations
+├── docs/                                # Documentación HTML
+├── public/img/                          # Assets estáticos
+├── package.json                         # Dependencies frontend
+├── vite.config.js                       # Vite config
+└── render.yaml                          # Deploy config
 ```
 
-El componente `RequestForm.jsx` está dividido en dos columnas principales: una para el formulario de solicitud y otra para mostrar el estado de las vacaciones y las políticas.
+## Reglas de Negocio Implementadas
+
+### Validación de Solicitudes
+1. **Días Disponibles:** Verificar saldo suficiente
+2. **Viernes Limitados:** Máximo 5 viernes por período de 30 días
+3. **Regla de Fin de Semana:** Si incluye viernes, debe tomar sábado y domingo
+4. **Anticipación:** Solicitar antes del día 20 del mes
+5. **Bloques Recomendados:** Al menos 2 bloques de 7 días continuos al año
+6. **Cruce de Fechas:** No permitir solapamiento con solicitudes existentes (pendientes/aprobadas)
+
+### Detección de Cruces (Frontend + Backend)
+-   **Validación Frontend:** Compara fechas con solicitudes existentes antes de enviar
+-   **Casos Detectados:**
+    - Nueva solicitud empieza durante una existente
+    - Nueva solicitud termina durante una existente
+    - Nueva solicitud envuelve completamente una existente
+    - Nueva solicitud está dentro de una existente
+-   **Mensaje Claro:** Indica qué solicitud(es) está(n) en conflicto y su estado
+-   **Ignorar Rechazadas:** Solo valida contra pendientes y aprobadas
+
+### Flujo de Aprobación
+1. Empleado solicita → Estado: Pendiente
+2. Supervisor aprueba → RRHH revisa
+3. RRHH aprueba → Estado: Aprobada
+4. Cualquier rechazo → Estado: Rechazada (con motivo)
+
+## Mejoras UX Recientes
+
+### DirectorioPage
+-   ✅ Tarjetas uniformes 400px altura fija
+-   ✅ Grid 4 columnas desktop, 1 columna móvil
+-   ✅ Filtros en español
+-   ✅ Búsqueda incluye email
+-   ✅ Overflow ellipsis para textos largos
+
+### EquipoPage
+-   ✅ Tab por defecto: "Mi Equipo" (dashboard)
+-   ✅ Tarjeta "De Vacaciones" muestra contador y nombres
+-   ✅ Validación en tiempo real de vacaciones activas HOY
+-   ✅ Reducción de títulos duplicados (mejor jerarquía visual)
+
+### VacationCalendar
+-   ✅ Eliminación de eventos duplicados (propEvents)
+-   ✅ IDs únicos por tipo: `usuario-`, `equipo-`, `feriado-`, `festivo-`
+-   ✅ Combinación de 4 fuentes sin duplicar
+
+### RequestForm
+-   ✅ Validación de cruces de fechas en tiempo real
+-   ✅ Mensajes claros de error con fechas conflictivas
+-   ✅ Recarga automática de solicitudes después de crear
+-   ✅ Import correcto de vacacionesService (default export)
+
+### App.jsx
+-   ✅ Boletines restringido a rol RRHH (`currentUser?.esRrhh`)
+-   ✅ Favicon WiFi SVG en index.html
+
+## Próximas Mejoras Potenciales
+-   [ ] Notificaciones push en tiempo real
+-   [ ] Exportación de reportes a PDF/Excel
+-   [ ] Dashboard analytics para RRHH
+-   [ ] Integración con calendario externo (Google Calendar)
+-   [ ] Gestión de permisos y licencias médicas
+-   [ ] Firma digital de aprobaciones
+-   [ ] Historial de cambios de solicitudes
+
+## Datos de Perú 2025
+-   **Feriados Nacionales:** 13 días (incluye Fiestas Patrias, Navidad, Año Nuevo)
+-   **Días Festivos:** 6 adicionales (San Valentín, Día de la Madre, Padre, etc.)
+-   **Localización:** moment.js configurado en español peruano

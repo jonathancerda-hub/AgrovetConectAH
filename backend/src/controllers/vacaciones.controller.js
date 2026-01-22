@@ -480,6 +480,10 @@ export const obtenerControlRRHH = async (req, res) => {
     const query = `
       SELECT 
         e.id as empleado_id,
+        e.codigo_empleado,
+        e.nombres,
+        e.apellidos,
+        e.email,
         e.nombres || ' ' || e.apellidos as nombre_completo,
         a.nombre as area,
         p.nombre as puesto,
@@ -505,7 +509,7 @@ export const obtenerControlRRHH = async (req, res) => {
       LEFT JOIN periodos_vacacionales pv ON e.id = pv.empleado_id 
         AND pv.estado = 'activo'
       WHERE e.activo = true
-      GROUP BY e.id, e.nombres, e.apellidos, a.nombre, p.nombre
+      GROUP BY e.id, e.codigo_empleado, e.nombres, e.apellidos, e.email, a.nombre, p.nombre
       ORDER BY e.apellidos, e.nombres
     `;
     
@@ -690,5 +694,104 @@ export const obtenerHistorialVacaciones = async (req, res) => {
       error: 'Error al obtener el historial de vacaciones',
       detalles: error.message 
     });
+  }
+};
+
+// Obtener detalle de vacaciones de un empleado por mes/año
+export const obtenerDetalleEmpleado = async (req, res) => {
+  try {
+    const { empleadoId } = req.params;
+
+    // Obtener todas las solicitudes aprobadas del empleado
+    const query = `
+      SELECT 
+        sv.id,
+        sv.fecha_inicio,
+        sv.fecha_fin,
+        sv.dias_solicitados,
+        sv.motivo,
+        sv.estado,
+        sv.fecha_aprobacion,
+        TO_CHAR(sv.fecha_inicio, 'YYYY-MM') as mes_anio,
+        EXTRACT(YEAR FROM sv.fecha_inicio) as anio,
+        EXTRACT(MONTH FROM sv.fecha_inicio) as mes
+      FROM solicitudes_vacaciones sv
+      WHERE sv.empleado_id = $1
+        AND sv.estado IN ('aprobada', 'completada')
+      ORDER BY sv.fecha_inicio DESC
+    `;
+
+    const result = await dbQuery(query, [empleadoId]);
+
+    // Función para contar días especiales (viernes, sábados, domingos)
+    const contarDiasEspeciales = (fechaInicio, fechaFin) => {
+      const inicio = new Date(fechaInicio + 'T00:00:00');
+      const fin = new Date(fechaFin + 'T00:00:00');
+      
+      let viernes = 0;
+      let sabados = 0;
+      let domingos = 0;
+      
+      let fecha = new Date(inicio);
+      while (fecha <= fin) {
+        const diaSemana = fecha.getDay(); // 0=Domingo, 1=Lunes, ..., 5=Viernes, 6=Sábado
+        if (diaSemana === 5) viernes++;
+        else if (diaSemana === 6) sabados++;
+        else if (diaSemana === 0) domingos++;
+        fecha.setDate(fecha.getDate() + 1);
+      }
+      
+      return { viernes, sabados, domingos, finesDeSemana: sabados + domingos };
+    };
+
+    // Meses en español
+    const mesesES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+    // Agrupar por mes/año y calcular días especiales
+    const porMes = result.rows.reduce((acc, solicitud) => {
+      const key = solicitud.mes_anio;
+      const diasEspeciales = contarDiasEspeciales(solicitud.fecha_inicio, solicitud.fecha_fin);
+      
+      if (!acc[key]) {
+        const mesNombre = `${mesesES[parseInt(solicitud.mes) - 1]} ${solicitud.anio}`;
+        acc[key] = {
+          mes_anio: key,
+          mes_nombre: mesNombre,
+          anio: solicitud.anio,
+          mes: solicitud.mes,
+          total_dias: 0,
+          total_viernes: 0,
+          total_fines_semana: 0,
+          solicitudes: []
+        };
+      }
+      
+      acc[key].total_dias += parseInt(solicitud.dias_solicitados) || 0;
+      acc[key].total_viernes += diasEspeciales.viernes;
+      acc[key].total_fines_semana += diasEspeciales.finesDeSemana;
+      acc[key].solicitudes.push({
+        ...solicitud,
+        dias_especiales: diasEspeciales
+      });
+      return acc;
+    }, {});
+
+    // Convertir a array y ordenar por año/mes descendente
+    const detallePorMes = Object.values(porMes).sort((a, b) => {
+      if (a.anio !== b.anio) return b.anio - a.anio;
+      return b.mes - a.mes;
+    });
+
+    res.json({
+      empleado_id: empleadoId,
+      total_registros: result.rows.length,
+      total_dias_tomados: result.rows.reduce((sum, s) => sum + (parseInt(s.dias_solicitados) || 0), 0),
+      detalle_por_mes: detallePorMes,
+      todas_solicitudes: result.rows
+    });
+  } catch (error) {
+    console.error('Error al obtener detalle del empleado:', error);
+    res.status(500).json({ error: 'Error al obtener el detalle' });
   }
 };

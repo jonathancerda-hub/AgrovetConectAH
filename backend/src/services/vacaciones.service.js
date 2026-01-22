@@ -493,6 +493,53 @@ class VacacionesService {
         WHERE id = $2
       `, [detalles.diasCalendario, periodoId]);
 
+      // 6. Crear notificación para el jefe inmediato
+      try {
+        // Obtener datos del empleado y su supervisor
+        const empleadoQuery = `
+          SELECT 
+            e.supervisor_id,
+            e.nombres || ' ' || e.apellidos as nombre_empleado,
+            s.id as supervisor_empleado_id
+          FROM empleados e
+          LEFT JOIN empleados s ON e.supervisor_id = s.id
+          WHERE e.id = $1
+        `;
+        const empleadoData = await dbQuery(empleadoQuery, [solicitudData.empleado_id]);
+        
+        if (empleadoData.rows.length > 0 && empleadoData.rows[0].supervisor_empleado_id) {
+          const { nombre_empleado, supervisor_empleado_id } = empleadoData.rows[0];
+          
+          // Crear notificación para el supervisor
+          const notificacionQuery = `
+            INSERT INTO notificaciones_vacaciones (
+              solicitud_id,
+              destinatario_id,
+              tipo_notificacion,
+              titulo,
+              mensaje,
+              leida
+            ) VALUES ($1, $2, $3, $4, $5, $6)
+          `;
+          
+          await dbQuery(notificacionQuery, [
+            solicitudId,
+            supervisor_empleado_id,
+            'nueva_solicitud',
+            'Nueva solicitud de vacaciones',
+            `${nombre_empleado} ha solicitado vacaciones del ${solicitudData.fecha_inicio} al ${solicitudData.fecha_fin} (${detalles.diasCalendario} días)`,
+            false
+          ]);
+          
+          console.log(`✅ Notificación enviada al supervisor (ID: ${supervisor_empleado_id})`);
+        } else {
+          console.log('⚠️ El empleado no tiene supervisor asignado, no se envió notificación');
+        }
+      } catch (notifError) {
+        // No fallar la solicitud si falla la notificación
+        console.error('⚠️ Error al crear notificación para supervisor:', notifError.message);
+      }
+
       return {
         success: true,
         solicitudId,

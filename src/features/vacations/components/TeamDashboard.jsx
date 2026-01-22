@@ -32,6 +32,14 @@ export default function TeamDashboard() {
       // Obtener subordinados directos del usuario actual
       const token = localStorage.getItem('token');
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      
+      // 🔍 DEBUG: Ver información del usuario actual
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      console.log('🔍 DEBUG TeamDashboard:');
+      console.log('  - API_URL:', API_URL);
+      console.log('  - Usuario local:', userData);
+      console.log('  - Token existe:', !!token);
+      
       const response = await fetch(`${API_URL}/aprobacion/subordinados`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -46,9 +54,18 @@ export default function TeamDashboard() {
       const data = await response.json();
       console.log('📊 Datos recibidos:', data);
       console.log('📊 Subordinados:', data.subordinados);
+      console.log('📊 Estadísticas:', data.estadisticas);
       
       const subordinados = data.subordinados || [];
       setTeamMembers(subordinados);
+
+      // Mostrar estadísticas si están disponibles
+      if (data.estadisticas) {
+        console.log(`👥 Equipo completo: ${data.estadisticas.total} personas`);
+        console.log(`   - Directos: ${data.estadisticas.directos}`);
+        console.log(`   - Indirectos: ${data.estadisticas.indirectos}`);
+        console.log(`   - Niveles de jerarquía: ${data.estadisticas.niveles}`);
+      }
 
       // Obtener vacaciones de CADA subordinado (igual que el calendario)
       let empleadosEnVacaciones = [];
@@ -145,6 +162,7 @@ export default function TeamDashboard() {
           </Avatar>
           <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <Typography variant="body2" fontWeight={600} sx={{ lineHeight: 1.3 }}>
+              {params.row.nivel_jerarquico > 1 ? '   '.repeat(params.row.nivel_jerarquico - 1) + '└─ ' : ''}
               {params.row.nombres} {params.row.apellidos}
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.2 }}>
@@ -167,10 +185,18 @@ export default function TeamDashboard() {
       minWidth: 180
     },
     {
-      field: 'puesto',
-      headerName: 'Puesto',
-      flex: 1,
-      minWidth: 180
+      field: 'nivel_jerarquico',
+      headerName: 'Nivel',
+      width: 80,
+      align: 'center',
+      renderCell: (params) => (
+        <Chip 
+          label={`N${params.value}`} 
+          size="small"
+          color={params.value === 1 ? 'primary' : 'default'}
+          sx={{ fontWeight: 600 }}
+        />
+      )
     }
   ];
 

@@ -163,6 +163,35 @@ export const aprobarRechazarSolicitud = async (req, res) => {
       );
     }
 
+    // Crear notificación para el empleado sobre la decisión
+    try {
+      const mensaje = accion === 'aprobar' 
+        ? `Tu solicitud de vacaciones del ${new Date(solicitud.fecha_inicio).toLocaleDateString()} al ${new Date(solicitud.fecha_fin).toLocaleDateString()} ha sido APROBADA`
+        : `Tu solicitud de vacaciones del ${new Date(solicitud.fecha_inicio).toLocaleDateString()} al ${new Date(solicitud.fecha_fin).toLocaleDateString()} ha sido RECHAZADA${comentarios ? '. Motivo: ' + comentarios : ''}`;
+      
+      await dbQuery(
+        `INSERT INTO notificaciones_vacaciones (
+          solicitud_id,
+          destinatario_id,
+          tipo_notificacion,
+          titulo,
+          mensaje,
+          leida
+        ) VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          id,
+          solicitud.empleado_id,
+          accion === 'aprobar' ? 'solicitud_aprobada' : 'solicitud_rechazada',
+          accion === 'aprobar' ? 'Solicitud Aprobada' : 'Solicitud Rechazada',
+          mensaje,
+          false
+        ]
+      );
+      console.log(`✅ Notificación enviada al empleado (ID: ${solicitud.empleado_id})`);
+    } catch (notifError) {
+      console.error('⚠️ Error al crear notificación para empleado:', notifError.message);
+    }
+
     res.json({
       mensaje: `Solicitud ${nuevoEstado.toLowerCase()} exitosamente`,
       solicitud: {
@@ -180,32 +209,31 @@ export const aprobarRechazarSolicitud = async (req, res) => {
 };
 
 /**
- * Obtener subordinados directos de un supervisor
+ * Obtener subordinados de un supervisor (toda la jerarquía)
+ * Incluye subordinados directos e indirectos (equipo completo)
  */
 export const getSubordinados = async (req, res) => {
   try {
     const { empleado_id } = req.user;
-
+    
+    // Usar función RPC de Supabase para obtener subordinados
     const result = await dbQuery(
-      `SELECT 
-        e.id,
-        e.email,
-        e.nombres,
-        e.apellidos,
-        e.nombres || ' ' || e.apellidos as nombre_completo,
-        p.nombre as puesto,
-        a.nombre as area
-       FROM empleados e
-       LEFT JOIN puestos p ON e.puesto_id = p.id
-       LEFT JOIN areas a ON e.area_id = a.id
-       WHERE e.supervisor_id = $1 AND e.activo = true
-       ORDER BY e.nombres, e.apellidos`,
+      `SELECT * FROM get_subordinados($1)`,
       [empleado_id]
     );
 
+    // Estadísticas adicionales
+    const stats = {
+      directos: result.rows.filter(e => e.nivel_jerarquico === 1).length,
+      indirectos: result.rows.filter(e => e.nivel_jerarquico > 1).length,
+      total: result.rows.length,
+      niveles: Math.max(...result.rows.map(e => e.nivel_jerarquico), 0)
+    };
+
     res.json({
       subordinados: result.rows,
-      total: result.rows.length
+      total: result.rows.length,
+      estadisticas: stats
     });
   } catch (error) {
     console.error('Error al obtener subordinados:', error);

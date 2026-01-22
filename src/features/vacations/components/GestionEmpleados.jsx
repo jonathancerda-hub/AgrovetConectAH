@@ -41,11 +41,14 @@ export default function GestionEmpleados() {
   const [filteredEmpleados, setFilteredEmpleados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [editingEmpleado, setEditingEmpleado] = useState(null);
   const [puestos, setPuestos] = useState([]);
   const [areas, setAreas] = useState([]);
+  const [supervisores, setSupervisores] = useState([]);
+  const [tiposTrabajador, setTiposTrabajador] = useState([]);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -56,9 +59,12 @@ export default function GestionEmpleados() {
     telefono: '',
     puesto_id: '',
     area_id: '',
-    tipo_contrato: 'Indefinido',
+    supervisor_id: '',
+    tipo_trabajador_id: 1,
     fecha_ingreso: new Date().toISOString().split('T')[0],
-    dias_vacaciones: 15
+    fecha_nacimiento: '',
+    direccion: '',
+    dias_vacaciones: 30
   });
 
   useEffect(() => {
@@ -86,10 +92,23 @@ export default function GestionEmpleados() {
         empleadosService.getAreas()
       ]);
       
+      console.log('📊 Empleados cargados:', empleadosData.length);
+      console.log('📊 Primer empleado:', empleadosData[0]);
+      
       setEmpleados(empleadosData);
       setFilteredEmpleados(empleadosData);
       setPuestos(puestosData);
       setAreas(areasData);
+      setSupervisores(empleadosData); // Todos los empleados pueden ser supervisores
+      
+      // Cargar tipos de trabajador
+      const tiposResponse = await fetch('http://localhost:3001/api/vacaciones/tipos-trabajador', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      const tiposData = await tiposResponse.json();
+      setTiposTrabajador(tiposData);
+      
+      setError('');
     } catch (err) {
       console.error('Error al cargar datos:', err);
       setError('No se pudieron cargar los empleados');
@@ -109,9 +128,13 @@ export default function GestionEmpleados() {
         telefono: empleado.telefono || '',
         puesto_id: empleado.puesto_id || '',
         area_id: empleado.area_id || '',
-        tipo_contrato: empleado.tipo_contrato || 'Indefinido',
+        supervisor_id: empleado.supervisor_id || '',
+        tipo_trabajador_id: empleado.tipo_trabajador_id || 1,
         fecha_ingreso: empleado.fecha_ingreso?.split('T')[0] || '',
-        dias_vacaciones: empleado.dias_vacaciones || 15
+        fecha_nacimiento: empleado.fecha_nacimiento?.split('T')[0] || '',
+        direccion: empleado.direccion || '',
+        dias_vacaciones: empleado.dias_vacaciones || 30,
+        activo: empleado.activo !== false
       });
     } else {
       setEditingEmpleado(null);
@@ -123,9 +146,14 @@ export default function GestionEmpleados() {
         telefono: '',
         puesto_id: '',
         area_id: '',
-        tipo_contrato: 'Indefinido',
+        supervisor_id: '',
+        tipo_trabajador_id: 1,
         fecha_ingreso: new Date().toISOString().split('T')[0],
-        dias_vacaciones: 15
+        fecha_nacimiento: '',
+        direccion: '',
+        dias_vacaciones: 30,
+        activo: true,
+        password: ''
       });
     }
     setOpenDialog(true);
@@ -164,14 +192,38 @@ export default function GestionEmpleados() {
 
   const handleSubmit = async () => {
     try {
+      const dataToSend = {
+        dni: formData.dni,
+        nombres: formData.nombres,
+        apellidos: formData.apellidos,
+        email: formData.email,
+        telefono: formData.telefono,
+        puesto_id: formData.puesto_id,
+        area_id: formData.area_id,
+        supervisor_id: formData.supervisor_id || null,
+        tipo_trabajador_id: formData.tipo_trabajador_id || 1,
+        fecha_ingreso: formData.fecha_ingreso,
+        fecha_nacimiento: formData.fecha_nacimiento || null,
+        direccion: formData.direccion || null,
+        dias_vacaciones: formData.dias_vacaciones,
+        activo: formData.activo
+      };
+
       if (editingEmpleado) {
-        await empleadosService.update(editingEmpleado.id, formData);
+        await empleadosService.update(editingEmpleado.id, dataToSend);
+        setSuccess('Empleado actualizado correctamente');
       } else {
-        await empleadosService.create({ ...formData, password: 'temp123', rol: 'empleado' });
+        await empleadosService.create({ 
+          ...dataToSend, 
+          password: formData.password || 'temp123', 
+          rol: 'empleado' 
+        });
+        setSuccess('Empleado creado correctamente');
       }
       
       await fetchData();
       handleCloseDialog();
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       console.error('Error al guardar empleado:', err);
       setError(err.response?.data?.error || 'Error al guardar el empleado');
@@ -233,6 +285,12 @@ export default function GestionEmpleados() {
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
           {error}
+        </Alert>
+      )}
+
+      {success && (
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess('')}>
+          {success}
         </Alert>
       )}
 
@@ -327,7 +385,7 @@ export default function GestionEmpleados() {
                         <EditIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
-                    {empleado.estado === 'Activo' && (
+                    {empleado.activo && (
                       <Tooltip title="Desactivar">
                         <IconButton
                           size="small"
@@ -347,13 +405,23 @@ export default function GestionEmpleados() {
       </TableContainer>
 
       {/* Dialog para crear/editar empleado */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {editingEmpleado ? 'Editar Empleado' : 'Nuevo Empleado'}
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="lg" fullWidth>
+        <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <PersonIcon />
+            {editingEmpleado ? 'Editar Empleado' : 'Nuevo Empleado'}
+          </Box>
         </DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} sm={6}>
+        <DialogContent dividers>
+          <Grid container spacing={3} sx={{ mt: 0 }}>
+            {/* Sección: Datos Personales */}
+            <Grid item xs={12}>
+              <Typography variant="h6" sx={{ color: 'primary.main', mb: 2, fontWeight: 600 }}>
+                📋 Datos Personales
+              </Typography>
+            </Grid>
+            
+            <Grid item xs={12} sm={4}>
               <TextField
                 fullWidth
                 label="DNI"
@@ -370,6 +438,60 @@ export default function GestionEmpleados() {
                 }}
               />
             </Grid>
+            
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                label="Nombres"
+                name="nombres"
+                value={formData.nombres}
+                onChange={handleInputChange}
+                required
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                label="Apellidos"
+                name="apellidos"
+                value={formData.apellidos}
+                onChange={handleInputChange}
+                required
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Fecha de Nacimiento"
+                name="fecha_nacimiento"
+                type="date"
+                value={formData.fecha_nacimiento}
+                onChange={handleInputChange}
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Dirección"
+                name="direccion"
+                value={formData.direccion}
+                onChange={handleInputChange}
+                multiline
+                rows={1}
+              />
+            </Grid>
+
+            {/* Sección: Contacto */}
+            <Grid item xs={12}>
+              <Typography variant="h6" sx={{ color: 'primary.main', mb: 2, mt: 2, fontWeight: 600 }}>
+                📞 Contacto
+              </Typography>
+            </Grid>
+
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -389,26 +511,7 @@ export default function GestionEmpleados() {
                 }}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Nombres"
-                name="nombres"
-                value={formData.nombres}
-                onChange={handleInputChange}
-                required
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Apellidos"
-                name="apellidos"
-                value={formData.apellidos}
-                onChange={handleInputChange}
-                required
-              />
-            </Grid>
+            
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -425,6 +528,14 @@ export default function GestionEmpleados() {
                 }}
               />
             </Grid>
+
+            {/* Sección: Información Laboral */}
+            <Grid item xs={12}>
+              <Typography variant="h6" sx={{ color: 'primary.main', mb: 2, mt: 2, fontWeight: 600 }}>
+                💼 Información Laboral
+              </Typography>
+            </Grid>
+
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -435,6 +546,9 @@ export default function GestionEmpleados() {
                 onChange={handleInputChange}
                 required
               >
+                <MenuItem value="">
+                  <em>Seleccione un puesto</em>
+                </MenuItem>
                 {puestos.map((puesto) => (
                   <MenuItem key={puesto.id} value={puesto.id}>
                     {puesto.nombre}
@@ -442,6 +556,7 @@ export default function GestionEmpleados() {
                 ))}
               </TextField>
             </Grid>
+            
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -452,6 +567,9 @@ export default function GestionEmpleados() {
                 onChange={handleInputChange}
                 required
               >
+                <MenuItem value="">
+                  <em>Seleccione un área</em>
+                </MenuItem>
                 {areas.map((area) => (
                   <MenuItem key={area.id} value={area.id}>
                     {area.nombre}
@@ -459,22 +577,47 @@ export default function GestionEmpleados() {
                 ))}
               </TextField>
             </Grid>
+
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
                 select
-                label="Tipo de Contrato"
-                name="tipo_contrato"
-                value={formData.tipo_contrato}
+                label="Jefe Directo"
+                name="supervisor_id"
+                value={formData.supervisor_id || ''}
                 onChange={handleInputChange}
+                helperText="Seleccione el supervisor directo del empleado"
               >
-                <MenuItem value="Indefinido">Indefinido</MenuItem>
-                <MenuItem value="Plazo Fijo">Plazo Fijo</MenuItem>
-                <MenuItem value="Prácticas">Prácticas</MenuItem>
-                <MenuItem value="Temporal">Temporal</MenuItem>
+                <MenuItem value="">
+                  <em>Sin supervisor</em>
+                </MenuItem>
+                {supervisores.map((supervisor) => (
+                  <MenuItem key={supervisor.id} value={supervisor.id}>
+                    {supervisor.nombres} {supervisor.apellidos} - {supervisor.puesto || 'Sin puesto'}
+                  </MenuItem>
+                ))}
               </TextField>
             </Grid>
+
             <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                select
+                label="Tipo de Trabajador"
+                name="tipo_trabajador_id"
+                value={formData.tipo_trabajador_id || 1}
+                onChange={handleInputChange}
+                helperText="Define los días de vacaciones base"
+              >
+                {tiposTrabajador.map((tipo) => (
+                  <MenuItem key={tipo.id} value={tipo.id}>
+                    {tipo.nombre} ({tipo.dias_vacaciones} días)
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+
+            <Grid item xs={12} sm={4}>
               <TextField
                 fullWidth
                 label="Fecha de Ingreso"
@@ -485,7 +628,8 @@ export default function GestionEmpleados() {
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            
+            <Grid item xs={12} sm={4}>
               <TextField
                 fullWidth
                 label="Días de Vacaciones"
@@ -493,18 +637,61 @@ export default function GestionEmpleados() {
                 type="number"
                 value={formData.dias_vacaciones}
                 onChange={handleInputChange}
+                helperText="Días anuales de vacaciones"
               />
             </Grid>
+
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                select
+                label="Estado"
+                name="activo"
+                value={formData.activo ? '1' : '0'}
+                onChange={(e) => setFormData({ ...formData, activo: e.target.value === '1' })}
+              >
+                <MenuItem value="1">Activo</MenuItem>
+                <MenuItem value="0">Inactivo</MenuItem>
+              </TextField>
+            </Grid>
+
+            {!editingEmpleado && (
+              <>
+                <Grid item xs={12}>
+                  <Typography variant="h6" sx={{ color: 'primary.main', mb: 2, mt: 2, fontWeight: 600 }}>
+                    🔐 Credenciales de Acceso
+                  </Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Contraseña"
+                    name="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    required={!editingEmpleado}
+                    helperText="Mínimo 6 caracteres"
+                  />
+                </Grid>
+              </>
+            )}
           </Grid>
         </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={handleCloseDialog}>Cancelar</Button>
+        <DialogActions sx={{ p: 2, bgcolor: 'grey.50' }}>
+          <Button onClick={handleCloseDialog} variant="outlined">
+            Cancelar
+          </Button>
           <Button
             variant="contained"
             onClick={handleSubmit}
+            startIcon={<PersonIcon />}
             sx={{
               background: 'linear-gradient(135deg, #2a9d8f 0%, #264653 100%)',
-              color: 'white'
+              color: 'white',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #238277 0%, #1d3a45 100%)',
+              }
             }}
           >
             {editingEmpleado ? 'Guardar Cambios' : 'Crear Empleado'}

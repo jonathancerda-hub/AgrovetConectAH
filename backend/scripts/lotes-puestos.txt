@@ -1,0 +1,36 @@
+﻿-- LOTE 1: Empleados 1 a 30
+
+UPDATE empleados e SET puesto_id = p.id FROM puestos p WHERE e.codigo_empleado = 'AGV0002' AND p.nombre = 'Director General';
+UPDATE empleados e SET puesto_id = p.id FROM puestos p WHERE e.codigo_empleado = 'AGV0010' AND p.nombre = 'Supervisor de Recepcion, Materiales y Despachos a Maquilas';
+python : Traceback (most recent call last):
+En línea: 1 Carácter: 1
++ python generar-lotes-puestos.py 2>&1 | 
+Out-File -Encoding UTF8 lotes- ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified:  
+   (Traceback (most recent call last)::Stri  
+  ng) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandE 
+   rror
+ 
+  File "C:\Users\jcerda\Desktop\reac\backend\
+scripts\generar-lotes-puestos.py", line 29, 
+in <module>
+    print(f"UPDATE empleados e SET puesto_id 
+= p.id FROM puestos p WHERE 
+e.codigo_empleado = '{codigo}' AND p.nombre 
+= '{cargo_limpio}';")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^
+  File 
+"C:\Python313\Lib\encodings\cp1252.py", line 
+19, in encode
+    return codecs.charmap_encode(input,self.e
+rrors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't 
+encode character '\ufffd' in position 129: 
+character maps to <undefined>
