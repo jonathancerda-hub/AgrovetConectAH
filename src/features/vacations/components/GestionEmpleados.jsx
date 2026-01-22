@@ -102,7 +102,8 @@ export default function GestionEmpleados() {
       setSupervisores(empleadosData); // Todos los empleados pueden ser supervisores
       
       // Cargar tipos de trabajador
-      const tiposResponse = await fetch('http://localhost:3001/api/vacaciones/tipos-trabajador', {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const tiposResponse = await fetch(`${API_URL}/vacaciones/tipos-trabajador`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       const tiposData = await tiposResponse.json();
