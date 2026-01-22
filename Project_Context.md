@@ -218,6 +218,30 @@ reac/
 -   ✅ Boletines restringido a rol RRHH (`currentUser?.esRrhh`)
 -   ✅ Favicon WiFi SVG en index.html
 
+## Seguridad
+
+### Alerta de Seguridad GitHub - 22 de enero de 2026 ✅ RESUELTA
+
+**Problema Detectado:**
+- GitHub Secret Scanning detectó `SUPABASE_SERVICE_ROLE_KEY` expuesta en commit `1fc92d16`
+- Archivo: `backend/scripts/cargar-empleados-api.js` línea 12
+- Riesgo: Acceso total a base de datos bypasseando RLS
+
+**Acciones Tomadas:**
+1. ✅ Código refactorizado para usar variables de entorno (commit `d60d793`)
+2. ✅ Nueva Secret Key generada en Supabase: `sb_secret_M_LcE...`
+3. ✅ Script `cargar-empleados-api.js` actualizado con `dotenv`
+4. ✅ Validación de variables de entorno implementada
+5. ✅ Legacy JWT keys deshabilitadas en Supabase Dashboard
+6. ✅ Documentación actualizada con placeholders seguros (commit `3ce47fa`)
+
+**Lecciones Aprendidas:**
+- ❌ Nunca hardcodear secrets en código
+- ✅ Usar siempre `process.env` y archivos `.env`
+- ✅ Verificar `.gitignore` incluye archivos sensibles
+- ✅ Migrar a nuevas Secret Keys de Supabase (formato `sb_secret_...`)
+- ✅ Deshabilitar claves comprometidas inmediatamente
+
 ## Próximas Mejoras Potenciales
 -   [ ] Notificaciones push en tiempo real
 -   [ ] Exportación de reportes a PDF/Excel
