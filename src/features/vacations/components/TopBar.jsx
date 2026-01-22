@@ -303,24 +303,6 @@ export default function TopBar({ onMenuClick, title, breadcrumbs = [], onNavigat
           </Zoom>
 
           <Zoom in timeout={400}>
-            <Tooltip title="Guardar">
-              <IconButton
-                color="inherit"
-                sx={{
-                  color: 'text.secondary',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'scale(1.1)',
-                    color: 'primary.main',
-                  },
-                }}
-              >
-                <SaveIcon />
-              </IconButton>
-            </Tooltip>
-          </Zoom>
-
-          <Zoom in timeout={500}>
             <Tooltip title="Notificaciones">
               <IconButton
                 color="inherit"
@@ -341,26 +323,7 @@ export default function TopBar({ onMenuClick, title, breadcrumbs = [], onNavigat
             </Tooltip>
           </Zoom>
 
-          <Zoom in timeout={600}>
-            <Tooltip title="Ayuda">
-              <IconButton
-                color="inherit"
-                sx={{
-                  color: 'text.secondary',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'scale(1.1)',
-                    color: 'primary.main',
-                  },
-                }}
-                onClick={handleHelpClick}
-              >
-                <HelpOutlineIcon />
-              </IconButton>
-            </Tooltip>
-          </Zoom>
-
-          <Zoom in timeout={700}>
+          <Zoom in timeout={500}>
             <Tooltip title="Abrir ajustes">
               <IconButton
                 onClick={handleOpenUserMenu}
