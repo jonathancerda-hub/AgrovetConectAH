@@ -93,14 +93,17 @@ O ejecuta el script:
 ```env
 NODE_ENV=production
 PORT=10000
-SUPABASE_URL=https://uakdewhjlgbxpyjllhqg.supabase.co
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2Rld2hqbGdieHB5amxsaHFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxNjk5NDQsImV4cCI6MjA3OTc0NTk0NH0.D7OIEJ5xltJk2eefh0wBbEU-V2D2K_Wy8SSoWgK54vM
-PGHOST=aws-1-sa-east-1.pooler.supabase.com
+# 🔐 Obtener de: https://supabase.com/dashboard/project/TU_PROYECTO/settings/api
+SUPABASE_URL=https://TU_PROYECTO.supabase.co
+SUPABASE_ANON_KEY=TU_ANON_KEY_DE_SUPABASE_DASHBOARD
+# 🔐 Obtener de: https://supabase.com/dashboard/project/TU_PROYECTO/settings/database
+PGHOST=aws-X-sa-east-1.pooler.supabase.com
 PGPORT=5432
 PGDATABASE=postgres
-PGUSER=postgres.uakdewhjlgbxpyjilhqg
-PGPASSWORD=Agrovet2025-
-JWT_SECRET=CAMBIAR_POR_VALOR_ALEATORIO_SUPER_SECRETO_123456789
+PGUSER=postgres.TU_PROYECTO
+PGPASSWORD=TU_PASSWORD_DE_SUPABASE
+# 🔐 Generar con: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+JWT_SECRET=CAMBIAR_POR_VALOR_ALEATORIO_GENERADO
 JWT_EXPIRES_IN=24h
 CORS_ORIGIN=https://agrovet-frontend.onrender.com
 ```

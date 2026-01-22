@@ -33,20 +33,20 @@ Dashboard → New + → Web Service
 Click en **Add Environment Variable** para cada una:
 
 ```
-Variable                  | Value
+Variable                  | Value / Dónde obtener
 --------------------------|------------------------------------------
 NODE_ENV                  | production
 PORT                      | 10000
-SUPABASE_URL              | https://uakdewhjlgbxpyjllhqg.supabase.co
-SUPABASE_ANON_KEY         | eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2Rld2hqbGdieHB5amxsaHFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxNjk5NDQsImV4cCI6MjA3OTc0NTk0NH0.D7OIEJ5xltJk2eefh0wBbEU-V2D2K_Wy8SSoWgK54vM
-PGHOST                    | aws-1-sa-east-1.pooler.supabase.com
+SUPABASE_URL              | https://TU_PROYECTO.supabase.co (Dashboard → Settings → API)
+SUPABASE_ANON_KEY         | TU_ANON_KEY (Dashboard → Settings → API → anon/public)
+PGHOST                    | aws-X-region.pooler.supabase.com (Dashboard → Settings → Database)
 PGPORT                    | 5432
 PGDATABASE                | postgres
-PGUSER                    | postgres.uakdewhjlgbxpyjilhqg
-PGPASSWORD                | Agrovet2025-
-JWT_SECRET                | agrovet_prod_secret_2025_CAMBIAR_POR_ALGO_ALEATORIO
+PGUSER                    | postgres.TU_PROYECTO (Dashboard → Settings → Database)
+PGPASSWORD                | TU_PASSWORD (Dashboard → Settings → Database)
+JWT_SECRET                | [Generar con crypto.randomBytes(64)]
 JWT_EXPIRES_IN            | 24h
-CORS_ORIGIN               | https://agrovet-frontend.onrender.com
+CORS_ORIGIN               | https://tu-frontend.onrender.com
 ```
 
 ⚠️ **IMPORTANTE**: 

@@ -3,13 +3,26 @@ import path from 'path';
 import bcrypt from 'bcrypt';
 import { fileURLToPath } from 'url';
 import fetch from 'node-fetch';
+import dotenv from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const SUPABASE_URL = 'https://uakdewhjlgbxpyjllhqg.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2Rld2hqbGdieHB5amxsaHFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxNjk5NDQsImV4cCI6MjA3OTc0NTk0NH0.D7OIEJ5xltJk2eefh0wBbEU-V2D2K_Wy8SSoWgK54vM';
-const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2Rld2hqbGdieHB5amxsaHFnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDE2OTk0NCwiZXhwIjoyMDc5NzQ1OTQ0fQ.j7j1_lrwX4gPwGPQwqHYBLUUMCADGw3Y9BaLqCkG9Jc';
+// Cargar variables de entorno desde backend/.env
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
+
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Validar que las variables de entorno estén configuradas
+if (!SUPABASE_URL || !SUPABASE_KEY || !SERVICE_ROLE_KEY) {
+  console.error('❌ ERROR: Faltan variables de entorno. Verifica backend/.env');
+  console.error('   SUPABASE_URL:', SUPABASE_URL ? '✓' : '✗');
+  console.error('   SUPABASE_ANON_KEY:', SUPABASE_KEY ? '✓' : '✗');
+  console.error('   SUPABASE_SERVICE_ROLE_KEY:', SERVICE_ROLE_KEY ? '✓' : '✗');
+  process.exit(1);
+}
 
 async function main() {
   console.log('🔌 Cargando empleados via API REST de Supabase...\n');
