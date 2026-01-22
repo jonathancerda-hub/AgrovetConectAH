@@ -635,43 +635,131 @@
                 <div class="content" id="gestion">
                     <h2>👥 Gestión de Empleados</h2>
                     
+                    <div class="info-box">
+                        <strong>🎯 Nuevo:</strong> Formulario completo con todos los campos organizados por secciones para una mejor gestión del personal.
+                    </div>
+
                     <h3>➕ Crear Nuevo Empleado</h3>
-                    <ol>
-                        <li>Click en el botón <code>+ Nuevo Empleado</code></li>
-                        <li>Completa todos los campos obligatorios (marcados con *)</li>
-                        <li>Selecciona el tipo de trabajador (determina días de vacaciones)</li>
-                        <li>Asigna puesto, área y supervisor</li>
-                        <li>Click en <code>Guardar</code></li>
-                    </ol>
+                    <p>El formulario está organizado en 4 secciones principales:</p>
+                    
+                    <h4>📋 Datos Personales</h4>
+                    <ul>
+                        <li><strong>DNI:</strong> Documento de identidad (requerido)</li>
+                        <li><strong>Nombres:</strong> Nombres completos (requerido)</li>
+                        <li><strong>Apellidos:</strong> Apellidos completos (requerido)</li>
+                        <li><strong>Fecha de Nacimiento:</strong> Para cálculos de edad y estadísticas</li>
+                        <li><strong>Dirección:</strong> Dirección de residencia</li>
+                    </ul>
+
+                    <h4>📞 Información de Contacto</h4>
+                    <ul>
+                        <li><strong>Email:</strong> Correo electrónico único (requerido, no se puede cambiar después)</li>
+                        <li><strong>Teléfono:</strong> Número de contacto</li>
+                    </ul>
+
+                    <h4>💼 Información Laboral</h4>
+                    <ul>
+                        <li><strong>Puesto:</strong> Selecciona de la lista de puestos activos (requerido)</li>
+                        <li><strong>Área:</strong> Departamento o área de trabajo (requerido)</li>
+                        <li><strong>Jefe Directo:</strong> Supervisor inmediato del empleado
+                            <ul>
+                                <li>Se muestra una lista de todos los empleados activos</li>
+                                <li>Formato: "Nombre Apellido - Puesto"</li>
+                                <li>Puede dejarse sin supervisor si es necesario</li>
+                            </ul>
+                        </li>
+                        <li><strong>Tipo de Trabajador:</strong> Define los días base de vacaciones
+                            <ul>
+                                <li><em>Plazo Indeterminado:</em> 30 días anuales</li>
+                                <li><em>Plazo Fijo:</em> 15 días anuales</li>
+                                <li><em>Prácticas:</em> 0 días anuales</li>
+                            </ul>
+                        </li>
+                        <li><strong>Fecha de Ingreso:</strong> Fecha de inicio laboral</li>
+                        <li><strong>Días de Vacaciones:</strong> Días anuales asignados (por defecto: 30)</li>
+                        <li><strong>Estado:</strong> Activo o Inactivo</li>
+                    </ul>
+
+                    <h4>🔐 Credenciales de Acceso (Solo al crear)</h4>
+                    <ul>
+                        <li><strong>Contraseña:</strong> Contraseña inicial del empleado (mínimo 6 caracteres)</li>
+                    </ul>
+
+                    <div class="tip-box">
+                        <strong>💡 Consejo:</strong> Al crear un empleado, se generará automáticamente un código único (formato AGV####). La contraseña puede ser cambiada después por el empleado.
+                    </div>
 
                     <h3>✏️ Editar Empleado</h3>
                     <ol>
-                        <li>Busca al empleado en la tabla</li>
-                        <li>Click en el icono de editar (lápiz)</li>
-                        <li>Modifica los campos necesarios</li>
-                        <li>Click en <code>Actualizar</code></li>
-                    </ol>
-
-                    <h3>🗑️ Dar de Baja a Empleado</h3>
-                    <ol>
-                        <li>Busca al empleado en la tabla</li>
-                        <li>Click en el icono de eliminar (papelera)</li>
-                        <li>Confirma la operación</li>
-                        <li>El sistema cambiará el estado a "Cesado"</li>
+                        <li>Busca al empleado usando la barra de búsqueda</li>
+                        <li>Click en el icono de editar (lápiz azul) en la columna de Acciones</li>
+                        <li>El formulario se abre con todos los datos actuales</li>
+                        <li>Modifica los campos necesarios:
+                            <ul>
+                                <li>Cambiar supervisor para reflejar cambios en el organigrama</li>
+                                <li>Actualizar área por traslados internos</li>
+                                <li>Modificar puesto por promociones</li>
+                                <li>Ajustar días de vacaciones según políticas</li>
+                            </ul>
+                        </li>
+                        <li>Click en <code>Guardar Cambios</code></li>
+                        <li>Aparecerá mensaje de confirmación en verde</li>
                     </ol>
 
                     <div class="warning-box">
-                        <strong>⚠️ Nota:</strong> Los empleados no se eliminan permanentemente, solo cambian a estado "Cesado" para mantener el historial.
+                        <strong>⚠️ Importante:</strong> El campo Email no puede modificarse después de crear el empleado, ya que es el identificador único de acceso al sistema.
                     </div>
 
-                    <h3>🔍 Búsqueda y Filtros</h3>
-                    <p>La tabla de empleados permite:</p>
+                    <h3>🔄 Activar/Desactivar Empleado</h3>
+                    <p>En lugar de eliminar permanentemente, el sistema permite activar o desactivar empleados:</p>
+                    <ol>
+                        <li>En la columna <strong>Estado</strong> verás un chip verde (Activo) o gris (Inactivo)</li>
+                        <li>Click en el icono de papelera roja para desactivar</li>
+                        <li>Los empleados inactivos no pueden solicitar vacaciones</li>
+                        <li>Se mantiene todo el historial para auditorías</li>
+                    </ol>
+
+                    <h3>👤 Rol de RRHH</h3>
+                    <p>Puedes asignar o remover el rol de RRHH a cualquier empleado:</p>
                     <ul>
-                        <li><strong>Búsqueda en tiempo real</strong> por nombre, DNI, email</li>
-                        <li><strong>Ordenamiento</strong> por cualquier columna (click en encabezado)</li>
-                        <li><strong>Paginación</strong> para grandes volúmenes de datos</li>
-                        <li><strong>Exportación</strong> a Excel o PDF</li>
+                        <li>La columna <strong>RRHH</strong> muestra un interruptor (switch)</li>
+                        <li>Activa el interruptor para dar acceso completo al Dashboard RRHH</li>
+                        <li>Los usuarios RRHH pueden:
+                            <ul>
+                                <li>Ver y aprobar todas las solicitudes de vacaciones</li>
+                                <li>Gestionar empleados (crear, editar, desactivar)</li>
+                                <li>Ver reportes y estadísticas completas</li>
+                                <li>Controlar el sistema de vacaciones de toda la empresa</li>
+                            </ul>
+                        </li>
                     </ul>
+
+                    <h3>🔍 Búsqueda y Filtros</h3>
+                    <p>La tabla de empleados incluye funcionalidades avanzadas:</p>
+                    <ul>
+                        <li><strong>Búsqueda en tiempo real:</strong> Filtra por nombre, apellido, DNI, email, código empleado o puesto</li>
+                        <li><strong>Visualización completa:</strong> 
+                            <ul>
+                                <li>Avatar con iniciales del empleado</li>
+                                <li>Código de empleado (formato AGV####)</li>
+                                <li>Puesto y área asignados</li>
+                                <li>Tipo de contrato con días de vacaciones</li>
+                                <li>Estado activo/inactivo</li>
+                                <li>Rol de RRHH</li>
+                            </ul>
+                        </li>
+                        <li><strong>Acciones rápidas:</strong> Editar y desactivar desde la tabla</li>
+                    </ul>
+
+                    <div class="tip-box">
+                        <strong>💡 Casos de uso comunes:</strong>
+                        <ul>
+                            <li><strong>Promoción:</strong> Edita el empleado y cambia su puesto a uno superior</li>
+                            <li><strong>Cambio de área:</strong> Modifica el área y el supervisor si corresponde</li>
+                            <li><strong>Restructuración:</strong> Actualiza los supervisores según nuevo organigrama</li>
+                            <li><strong>Cambio de contrato:</strong> Modifica el tipo de trabajador para ajustar días de vacaciones</li>
+                        </ul>
+                    </div>
                 </div>
 
                 <div class="content" id="proximos">

@@ -850,15 +850,51 @@ import { DataGrid } from '@mui/x-data-grid';
 export default function GestionEmpleados() {
   const [empleados, setEmpleados] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [editingEmpleado, setEditingEmpleado] = useState(null);
+  const [puestos, setPuestos] = useState([]);
+  const [areas, setAreas] = useState([]);
+  const [supervisores, setSupervisores] = useState([]);
+  const [tiposTrabajador, setTiposTrabajador] = useState([]);
+  const [formData, setFormData] = useState({
+    dni: '',
+    nombres: '',
+    apellidos: '',
+    email: '',
+    telefono: '',
+    puesto_id: '',
+    area_id: '',
+    supervisor_id: '',
+    tipo_trabajador_id: 1,
+    fecha_ingreso: new Date().toISOString().split('T')[0],
+    fecha_nacimiento: '',
+    direccion: '',
+    dias_vacaciones: 30,
+    activo: true,
+    password: ''
+  });
 
   useEffect(() => {
-    fetchEmpleados();
+    fetchData();
   }, []);
 
-  const fetchEmpleados = async () => {
+  const fetchData = async () => {
     try {
-      const data = await empleadosService.getAll();
-      setEmpleados(data);
+      const [empleadosData, puestosData, areasData] = await Promise.all([
+        empleadosService.getAll(),
+        empleadosService.getPuestos(),
+        empleadosService.getAreas()
+      ]);
+      
+      setEmpleados(empleadosData);
+      setPuestos(puestosData);
+      setAreas(areasData);
+      setSupervisores(empleadosData); // Todos pueden ser supervisores
+      
+      // Cargar tipos de trabajador
+      const tiposResponse = await fetch('http://localhost:3001/api/vacaciones/tipos-trabajador');
+      const tiposData = await tiposResponse.json();
+      setTiposTrabajador(tiposData);
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -866,14 +902,136 @@ export default function GestionEmpleados() {
     }
   };
 
+  const handleSubmit = async () => {
+    try {
+      const dataToSend = {
+        dni: formData.dni,
+        nombres: formData.nombres,
+        apellidos: formData.apellidos,
+        email: formData.email,
+        telefono: formData.telefono,
+        puesto_id: formData.puesto_id,
+        area_id: formData.area_id,
+        supervisor_id: formData.supervisor_id || null,
+        tipo_trabajador_id: formData.tipo_trabajador_id || 1,
+        fecha_ingreso: formData.fecha_ingreso,
+        fecha_nacimiento: formData.fecha_nacimiento || null,
+        direccion: formData.direccion || null,
+        dias_vacaciones: formData.dias_vacaciones,
+        activo: formData.activo
+      };
+
+      if (editingEmpleado) {
+        await empleadosService.update(editingEmpleado.id, dataToSend);
+      } else {
+        await empleadosService.create({ 
+          ...dataToSend, 
+          password: formData.password || 'temp123', 
+          rol: 'empleado' 
+        });
+      }
+      
+      await fetchData();
+      handleCloseDialog();
+    } catch (err) {
+      console.error('Error:', err);
+    }
+  };
+
   return (
     &lt;Box sx={{ p: 3 }}&gt;
       &lt;Typography variant="h4"&gt;Gestión de Empleados&lt;/Typography&gt;
+      
+      {/* Dialog con formulario completo organizado en secciones */}
+      &lt;Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="lg" fullWidth&gt;
+        &lt;DialogTitle&gt;
+          {editingEmpleado ? 'Editar Empleado' : 'Nuevo Empleado'}
+        &lt;/DialogTitle&gt;
+        &lt;DialogContent dividers&gt;
+          &lt;Grid container spacing={3}&gt;
+            {/* Sección: Datos Personales */}
+            &lt;Grid item xs={12}&gt;
+              &lt;Typography variant="h6"&gt;📋 Datos Personales&lt;/Typography&gt;
+            &lt;/Grid&gt;
+            &lt;Grid item xs={12} sm={4}&gt;
+              &lt;TextField label="DNI" name="dni" required /&gt;
+            &lt;/Grid&gt;
+            &lt;Grid item xs={12} sm={4}&gt;
+              &lt;TextField label="Nombres" name="nombres" required /&gt;
+            &lt;/Grid&gt;
+            &lt;Grid item xs={12} sm={4}&gt;
+              &lt;TextField label="Apellidos" name="apellidos" required /&gt;
+            &lt;/Grid&gt;
+            
+            {/* Sección: Contacto */}
+            &lt;Grid item xs={12}&gt;
+              &lt;Typography variant="h6"&gt;📞 Contacto&lt;/Typography&gt;
+            &lt;/Grid&gt;
+            &lt;Grid item xs={12} sm={6}&gt;
+              &lt;TextField label="Email" type="email" required disabled={!!editingEmpleado} /&gt;
+            &lt;/Grid&gt;
+            &lt;Grid item xs={12} sm={6}&gt;
+              &lt;TextField label="Teléfono" /&gt;
+            &lt;/Grid&gt;
+            
+            {/* Sección: Información Laboral */}
+            &lt;Grid item xs={12}&gt;
+              &lt;Typography variant="h6"&gt;💼 Información Laboral&lt;/Typography&gt;
+            &lt;/Grid&gt;
+            &lt;Grid item xs={12} sm={6}&gt;
+              &lt;TextField select label="Puesto" required&gt;
+                {puestos.map(p =&gt; &lt;MenuItem key={p.id} value={p.id}&gt;{p.nombre}&lt;/MenuItem&gt;)}
+              &lt;/TextField&gt;
+            &lt;/Grid&gt;
+            &lt;Grid item xs={12} sm={6}&gt;
+              &lt;TextField select label="Área" required&gt;
+                {areas.map(a =&gt; &lt;MenuItem key={a.id} value={a.id}&gt;{a.nombre}&lt;/MenuItem&gt;)}
+              &lt;/TextField&gt;
+            &lt;/Grid&gt;
+            &lt;Grid item xs={12} sm={6}&gt;
+              &lt;TextField select label="Jefe Directo" helperText="Supervisor inmediato"&gt;
+                &lt;MenuItem value=""&gt;Sin supervisor&lt;/MenuItem&gt;
+                {supervisores.map(s =&gt; (
+                  &lt;MenuItem key={s.id} value={s.id}&gt;
+                    {s.nombres} {s.apellidos} - {s.puesto || 'Sin puesto'}
+                  &lt;/MenuItem&gt;
+                ))}
+              &lt;/TextField&gt;
+            &lt;/Grid&gt;
+            &lt;Grid item xs={12} sm={6}&gt;
+              &lt;TextField select label="Tipo de Trabajador" helperText="Define días de vacaciones"&gt;
+                {tiposTrabajador.map(t =&gt; (
+                  &lt;MenuItem key={t.id} value={t.id}&gt;
+                    {t.nombre} ({t.dias_vacaciones} días)
+                  &lt;/MenuItem&gt;
+                ))}
+              &lt;/TextField&gt;
+            &lt;/Grid&gt;
+          &lt;/Grid&gt;
+        &lt;/DialogContent&gt;
+        &lt;DialogActions&gt;
+          &lt;Button onClick={handleCloseDialog}&gt;Cancelar&lt;/Button&gt;
+          &lt;Button variant="contained" onClick={handleSubmit}&gt;
+            {editingEmpleado ? 'Guardar Cambios' : 'Crear Empleado'}
+          &lt;/Button&gt;
+        &lt;/DialogActions&gt;
+      &lt;/Dialog&gt;
+      
+      {/* Tabla con información completa */}
       &lt;DataGrid rows={empleados} columns={columns} loading={loading} /&gt;
     &lt;/Box&gt;
   );
 }
 </pre>
+                    <strong>📝 Características clave del componente:</strong>
+                    <ul>
+                        <li><strong>Dialog expandido:</strong> maxWidth="lg" para mostrar todos los campos</li>
+                        <li><strong>Formulario organizado:</strong> 4 secciones con iconos (Datos Personales, Contacto, Laboral, Credenciales)</li>
+                        <li><strong>Dropdowns dinámicos:</strong> Carga puestos, áreas, supervisores y tipos de trabajador desde API</li>
+                        <li><strong>Validaciones:</strong> Email solo lectura al editar, campos requeridos marcados</li>
+                        <li><strong>Tabla mejorada:</strong> Avatar con iniciales, código empleado, tipo contrato, días vacaciones</li>
+                        <li><strong>Switch RRHH:</strong> Permite asignar/remover rol directamente desde la tabla</li>
+                    </ul>
                     </div>
                 </div>
 
@@ -1006,34 +1164,149 @@ Response: { token, user: { id, nombre, rol, empleadoId } }
                     </div>
 
                     <h3>Empleados</h3>
+                    
+                    <div class="info-box">
+                        <strong>🆕 Actualización Enero 2026:</strong> Gestión completa de empleados con formulario expandido, manejo de supervisores jerárquicos y tipos de trabajador.
+                    </div>
+
                     <div class="endpoint-card">
                         <span class="method get">GET</span>
                         <code class="code-inline">/api/empleados</code>
-                        <p>Obtener todos los empleados</p>
+                        <p>Obtener todos los empleados con información completa</p>
+                        <strong>Respuesta incluye:</strong>
+                        <ul>
+                            <li>Datos personales: DNI, nombres, apellidos, fecha_nacimiento, direccion</li>
+                            <li>Contacto: email, telefono</li>
+                            <li>Información laboral: puesto, area, supervisor, tipo_trabajador</li>
+                            <li>Vacaciones: dias_vacaciones, dias_disponibles, dias_usados</li>
+                            <li>Estado: activo, es_rrhh</li>
+                        </ul>
                     </div>
 
                     <div class="endpoint-card">
                         <span class="method get">GET</span>
                         <code class="code-inline">/api/empleados/:id</code>
-                        <p>Obtener empleado por ID</p>
+                        <p>Obtener empleado por ID con detalles completos</p>
                     </div>
 
                     <div class="endpoint-card">
                         <span class="method post">POST</span>
                         <code class="code-inline">/api/empleados</code>
                         <p>Crear nuevo empleado</p>
+                        <strong>Body requerido:</strong>
+                        <pre>{
+  "dni": "12345678",
+  "nombres": "Juan",
+  "apellidos": "Pérez García",
+  "email": "juan.perez@agrovet.com",
+  "telefono": "987654321",
+  "puesto_id": 1,
+  "area_id": 2,
+  "supervisor_id": 10,           // Opcional, ID del jefe directo
+  "tipo_trabajador_id": 1,       // 1=Indeterminado(30d), 2=Fijo(15d), 3=Prácticas(0d)
+  "fecha_ingreso": "2026-01-15",
+  "fecha_nacimiento": "1990-05-20",  // Opcional
+  "direccion": "Av. Principal 123",  // Opcional
+  "dias_vacaciones": 30,
+  "password": "temporal123",
+  "activo": true
+}</pre>
+                        <strong>⚠️ Validaciones:</strong>
+                        <ul>
+                            <li>DNI único en el sistema</li>
+                            <li>Email único (se usa para login)</li>
+                            <li>Puesto y área deben existir y estar activos</li>
+                            <li>Supervisor debe ser un empleado válido</li>
+                            <li>Password mínimo 6 caracteres</li>
+                        </ul>
                     </div>
 
                     <div class="endpoint-card">
                         <span class="method put">PUT</span>
                         <code class="code-inline">/api/empleados/:id</code>
                         <p>Actualizar empleado</p>
+                        <strong>Body permitido (todos opcionales):</strong>
+                        <pre>{
+  "dni": "12345678",
+  "nombres": "Juan Carlos",
+  "apellidos": "Pérez García",
+  "telefono": "987654321",
+  "puesto_id": 5,                // Cambio de puesto (promoción)
+  "area_id": 3,                  // Cambio de área (traslado)
+  "supervisor_id": 15,           // Cambio de supervisor (reestructuración)
+  "tipo_trabajador_id": 1,       // Cambio de tipo de contrato
+  "fecha_ingreso": "2026-01-15",
+  "fecha_nacimiento": "1990-05-20",
+  "direccion": "Nueva dirección",
+  "dias_vacaciones": 30,
+  "activo": false                // Desactivar empleado
+}</pre>
+                        <strong>📝 Notas:</strong>
+                        <ul>
+                            <li>El campo <code>email</code> NO se puede modificar</li>
+                            <li>Se actualizan solo los campos enviados (PATCH-like behavior)</li>
+                            <li>supervisor_id puede ser null para remover supervisor</li>
+                        </ul>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <span class="method patch">PATCH</span>
+                        <code class="code-inline">/api/empleados/:id/rrhh</code>
+                        <p>Asignar o remover rol de RRHH</p>
+                        <strong>Body:</strong>
+                        <pre>{
+  "es_rrhh": true  // o false
+}</pre>
                     </div>
 
                     <div class="endpoint-card">
                         <span class="method delete">DELETE</span>
                         <code class="code-inline">/api/empleados/:id</code>
-                        <p>Eliminar empleado (soft delete)</p>
+                        <p>Desactivar empleado (soft delete)</p>
+                        <p>Cambia el estado <code>activo</code> a <code>false</code>. No elimina datos.</p>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <span class="method get">GET</span>
+                        <code class="code-inline">/api/empleados/puestos</code>
+                        <p>Obtener lista de puestos activos para formularios</p>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <span class="method get">GET</span>
+                        <code class="code-inline">/api/empleados/areas</code>
+                        <p>Obtener lista de áreas activas para formularios</p>
+                    </div>
+
+                    <h4>💡 Casos de Uso Comunes</h4>
+                    <div class="code-box">
+<pre>// 1. Promoción de empleado
+PUT /api/empleados/15
+{
+  "puesto_id": 8,  // Nuevo puesto superior
+  "dias_vacaciones": 35  // Ajuste por antigüedad
+}
+
+// 2. Cambio de área con nuevo supervisor
+PUT /api/empleados/20
+{
+  "area_id": 4,
+  "supervisor_id": 25
+}
+
+// 3. Cambio de contrato (temporal a indefinido)
+PUT /api/empleados/12
+{
+  "tipo_trabajador_id": 1,  // De 2 (Fijo) a 1 (Indeterminado)
+  "dias_vacaciones": 30      // Aumentar de 15 a 30 días
+}
+
+// 4. Reestructuración organizacional
+PUT /api/empleados/30
+{
+  "supervisor_id": 18  // Nuevo jefe directo
+}
+</pre>
                     </div>
 
                     <h3>Vacaciones</h3>
