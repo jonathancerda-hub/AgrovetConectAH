@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 import {
   Box,
   Paper,
@@ -16,7 +17,9 @@ import {
   Grid,
   Button,
   CircularProgress,
-  Alert
+  Alert,
+  IconButton,
+  Tooltip
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -24,7 +27,8 @@ import {
   Download as DownloadIcon,
   CheckCircle as CheckCircleIcon,
   HourglassEmpty as HourglassIcon,
-  Cancel as CancelIcon
+  Cancel as CancelIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 import moment from 'moment';
 import { empleadosService } from '../../../services/empleados.service';
@@ -155,8 +159,79 @@ const HistorialVacaciones = () => {
   };
 
   const exportarExcel = () => {
-    // Placeholder para funcionalidad de exportación
-    alert('Funcionalidad de exportación en desarrollo');
+    try {
+      // Preparar datos para exportación con todas las solicitudes cargadas
+      const datosExcel = solicitudes.map((sol, index) => ({
+        'N°': index + 1,
+        'ID': sol.solicitud_id,
+        'Empleado': sol.nombre_completo,
+        'Área': sol.area || '-',
+        'Puesto': sol.puesto || '-',
+        'Fecha Inicio': moment(sol.fecha_inicio).format('DD/MM/YYYY'),
+        'Fecha Fin': moment(sol.fecha_fin).format('DD/MM/YYYY'),
+        'Días Solicitados': sol.dias_solicitados,
+        'Estado': sol.estado,
+        'Fecha Solicitud': moment(sol.fecha_creacion).format('DD/MM/YYYY HH:mm'),
+        'Fecha Aprobación': sol.fecha_aprobacion 
+          ? moment(sol.fecha_aprobacion).format('DD/MM/YYYY HH:mm')
+          : '-',
+        'Aprobado Por': sol.nombre_aprobador || '-',
+        'Observaciones': sol.observaciones_aprobador || '-'
+      }));
+
+      // Crear libro de trabajo
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(datosExcel);
+
+      // Configurar anchos de columnas para mejor legibilidad
+      const columnWidths = [
+        { wch: 5 },  // N°
+        { wch: 8 },  // ID
+        { wch: 30 }, // Empleado
+        { wch: 25 }, // Área
+        { wch: 35 }, // Puesto
+        { wch: 12 }, // Fecha Inicio
+        { wch: 12 }, // Fecha Fin
+        { wch: 15 }, // Días Solicitados
+        { wch: 12 }, // Estado
+        { wch: 18 }, // Fecha Solicitud
+        { wch: 18 }, // Fecha Aprobación
+        { wch: 25 }, // Aprobado Por
+        { wch: 40 }  // Observaciones
+      ];
+      ws['!cols'] = columnWidths;
+
+      // Agregar hoja al libro
+      XLSX.utils.book_append_sheet(wb, ws, 'Historial Vacaciones');
+
+      // Generar información adicional en una segunda hoja
+      const resumen = [
+        { 'Descripción': 'Total de Solicitudes', 'Valor': totalSolicitudes },
+        { 'Descripción': 'Solicitudes Mostradas', 'Valor': solicitudes.length },
+        { 'Descripción': 'Fecha de Exportación', 'Valor': moment().format('DD/MM/YYYY HH:mm') },
+        { 'Descripción': 'Filtros Aplicados', 'Valor': '' },
+        { 'Descripción': '  - Empleado', 'Valor': filtros.empleadoId ? empleados.find(e => e.id === parseInt(filtros.empleadoId))?.nombres + ' ' + empleados.find(e => e.id === parseInt(filtros.empleadoId))?.apellidos : 'Todos' },
+        { 'Descripción': '  - Estado', 'Valor': filtros.estado || 'Todos' },
+        { 'Descripción': '  - Fecha Inicio Desde', 'Valor': filtros.fechaInicio || 'Sin filtro' },
+        { 'Descripción': '  - Fecha Inicio Hasta', 'Valor': filtros.fechaFin || 'Sin filtro' }
+      ];
+
+      const wsResumen = XLSX.utils.json_to_sheet(resumen);
+      wsResumen['!cols'] = [{ wch: 30 }, { wch: 40 }];
+      XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
+
+      // Generar nombre de archivo con fecha y hora
+      const fecha = moment().format('YYYY-MM-DD_HHmm');
+      const nombreArchivo = `Historial_Vacaciones_${fecha}.xlsx`;
+
+      // Descargar archivo
+      XLSX.writeFile(wb, nombreArchivo);
+
+      console.log(`✅ Archivo ${nombreArchivo} generado exitosamente con ${datosExcel.length} registros`);
+    } catch (error) {
+      console.error('❌ Error al exportar a Excel:', error);
+      alert('Error al generar el archivo Excel. Por favor, intenta de nuevo.');
+    }
   };
 
   return (
@@ -179,6 +254,7 @@ const HistorialVacaciones = () => {
               value={filtros.empleadoId}
               onChange={(e) => handleFiltroChange('empleadoId', e.target.value)}
               size="small"
+              sx={{ minWidth: 200 }}
             >
               <MenuItem value="">Todos</MenuItem>
               {empleados.map((emp) => (
@@ -197,6 +273,7 @@ const HistorialVacaciones = () => {
               value={filtros.estado}
               onChange={(e) => handleFiltroChange('estado', e.target.value)}
               size="small"
+              sx={{ minWidth: 150 }}
             >
               <MenuItem value="">Todos</MenuItem>
               <MenuItem value="Aprobado">Aprobado</MenuItem>
@@ -214,6 +291,7 @@ const HistorialVacaciones = () => {
               onChange={(e) => handleFiltroChange('fechaInicio', e.target.value)}
               InputLabelProps={{ shrink: true }}
               size="small"
+              sx={{ minWidth: 180 }}
             />
           </Grid>
 
@@ -226,38 +304,48 @@ const HistorialVacaciones = () => {
               onChange={(e) => handleFiltroChange('fechaFin', e.target.value)}
               InputLabelProps={{ shrink: true }}
               size="small"
+              sx={{ minWidth: 180 }}
             />
           </Grid>
 
           <Grid item xs={12}>
             <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button
-                variant="outlined"
-                startIcon={<SearchIcon />}
-                onClick={() => cargarHistorial()}
-              >
-                Buscar
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={limpiarFiltros}
-              >
-                Limpiar Filtros
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<RefreshIcon />}
-                onClick={() => cargarHistorial()}
-              >
-                Actualizar
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<DownloadIcon />}
-                onClick={exportarExcel}
-              >
-                Exportar Excel
-              </Button>
+              <Tooltip title="Buscar" arrow>
+                <IconButton
+                  color="primary"
+                  onClick={() => cargarHistorial()}
+                  sx={{ border: 1, borderColor: 'primary.main' }}
+                >
+                  <SearchIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Limpiar Filtros" arrow>
+                <IconButton
+                  color="primary"
+                  onClick={limpiarFiltros}
+                  sx={{ border: 1, borderColor: 'primary.main' }}
+                >
+                  <CloseIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Actualizar" arrow>
+                <IconButton
+                  color="primary"
+                  onClick={() => cargarHistorial()}
+                  sx={{ border: 1, borderColor: 'primary.main' }}
+                >
+                  <RefreshIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Exportar Excel" arrow>
+                <IconButton
+                  color="success"
+                  onClick={exportarExcel}
+                  sx={{ border: 1, borderColor: 'success.main' }}
+                >
+                  <DownloadIcon />
+                </IconButton>
+              </Tooltip>
             </Box>
           </Grid>
         </Grid>

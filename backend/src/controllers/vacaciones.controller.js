@@ -174,8 +174,11 @@ export const obtenerSolicitudesPendientes = async (req, res) => {
   }
 };
 
-// Aprobar solicitud
-export const aprobarSolicitud = async (req, res) => {  
+/**
+ * @deprecated Este endpoint está duplicado. Usar aprobacion.controller.js en su lugar.
+ * La aprobación se hace desde /api/aprobacion/solicitudes/:id
+ */
+export const aprobarSolicitud = async (req, res) => {
   try {
     const { id } = req.params;
     const aprobadorId = req.user?.id;
@@ -502,7 +505,15 @@ export const obtenerControlRRHH = async (req, res) => {
            FROM solicitudes_vacaciones sv 
            WHERE sv.empleado_id = e.id AND sv.estado = 'pendiente'
           ), 0
-        ) as dias_pendientes
+        ) as dias_pendientes,
+        COALESCE(
+          (SELECT SUM(dias_solicitados) 
+           FROM solicitudes_vacaciones sv 
+           WHERE sv.empleado_id = e.id 
+             AND sv.estado = 'aprobada'
+             AND sv.fecha_fin >= CURRENT_DATE
+          ), 0
+        ) as dias_programados
       FROM empleados e
       LEFT JOIN areas a ON e.area_id = a.id
       LEFT JOIN puestos p ON e.puesto_id = p.id

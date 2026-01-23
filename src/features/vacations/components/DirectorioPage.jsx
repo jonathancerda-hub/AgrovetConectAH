@@ -111,9 +111,9 @@ const DirectorioPage = () => {
     <Box sx={{ p: 3 }}>
       {/* Filtros */}
       <Paper elevation={0} sx={{ p: 3, mb: 4, bgcolor: '#ffffff', borderRadius: 2, border: '1px solid #dee2e6' }}>
-        <Grid container spacing={3} alignItems="flex-end">
+        <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={4}>
-            <Typography variant="subtitle2" sx={{ mb: 1, color: '#495057', fontWeight: 500 }}>
+            <Typography variant="subtitle2" sx={{ mb: 0.5, color: '#495057', fontWeight: 500 }}>
               Nombre del Empleado
             </Typography>
             <TextField
@@ -126,25 +126,27 @@ const DirectorioPage = () => {
                 handleFiltroChange('nombre', valor);
               }}
               variant="outlined"
-              size="medium"
+              size="small"
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  bgcolor: '#fff'
+                  bgcolor: '#fff',
+                  height: '40px'
                 }
               }}
             />
           </Grid>
-          <Grid item xs={12} md={3}>
-            <Typography variant="subtitle2" sx={{ mb: 1, color: '#495057', fontWeight: 500 }}>
+          <Grid item xs={12} md={2.5}>
+            <Typography variant="subtitle2" sx={{ mb: 0.5, color: '#495057', fontWeight: 500 }}>
               Título del Puesto
             </Typography>
-            <FormControl fullWidth size="medium">
+            <FormControl fullWidth size="small" sx={{ minWidth: 180 }}>
               <Select
                 value={filtros.puesto}
                 onChange={(e) => handleFiltroChange('puesto', e.target.value)}
                 displayEmpty
                 sx={{
                   bgcolor: '#f8f9fa',
+                  height: '40px',
                   '& .MuiSelect-select': {
                     color: filtros.puesto ? '#212529' : '#6c757d'
                   }
@@ -159,17 +161,18 @@ const DirectorioPage = () => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} md={3}>
-            <Typography variant="subtitle2" sx={{ mb: 1, color: '#495057', fontWeight: 500 }}>
+          <Grid item xs={12} md={2.5}>
+            <Typography variant="subtitle2" sx={{ mb: 0.5, color: '#495057', fontWeight: 500 }}>
               Ubicación
             </Typography>
-            <FormControl fullWidth size="medium">
+            <FormControl fullWidth size="small" sx={{ minWidth: 180 }}>
               <Select
                 value={filtros.area}
                 onChange={(e) => handleFiltroChange('area', e.target.value)}
                 displayEmpty
                 sx={{
                   bgcolor: '#f8f9fa',
+                  height: '40px',
                   '& .MuiSelect-select': {
                     color: filtros.area ? '#212529' : '#6c757d'
                   }
@@ -184,17 +187,16 @@ const DirectorioPage = () => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} md={2}>
-            <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+          <Grid item xs={12} md={3}>
+            <Box sx={{ display: 'flex', gap: 1, mt: { xs: 0, md: 2 } }}>
               <Button
                 variant="outlined"
                 fullWidth
                 onClick={limpiarFiltros}
-                size="large"
                 sx={{ 
                   borderColor: '#6c757d',
                   color: '#6c757d',
-                  height: '56px',
+                  height: '40px',
                   textTransform: 'none',
                   fontWeight: 500,
                   '&:hover': {
@@ -208,11 +210,10 @@ const DirectorioPage = () => {
               <Button
                 variant="contained"
                 fullWidth
-                size="large"
                 onClick={() => aplicarFiltros(filtros)}
                 sx={{ 
                   bgcolor: '#5cb85c',
-                  height: '56px',
+                  height: '40px',
                   textTransform: 'none',
                   fontWeight: 500,
                   '&:hover': { bgcolor: '#4cae4c' }
@@ -232,10 +233,10 @@ const DirectorioPage = () => {
 
       <Grid container spacing={3}>
         {empleadosFiltrados.map((empleado) => (
-          <Grid item xs={12} sm={12} md={3} lg={3} key={empleado.id}>
+          <Grid item xs={12} sm={6} md={3} key={empleado.id}>
             <Card 
               sx={{ 
-                height: '400px',
+                height: '300px',
                 display: 'flex',
                 flexDirection: 'column',
                 transition: 'all 0.3s',
@@ -250,19 +251,20 @@ const DirectorioPage = () => {
             >
               <CardContent sx={{ 
                 textAlign: 'center', 
-                p: 3,
+                p: 2,
                 display: 'flex', 
                 flexDirection: 'column',
                 height: '100%',
                 overflow: 'hidden'
               }}>
+                {/* Avatar - altura fija */}
                 <Avatar
                   sx={{
-                    width: 100,
-                    height: 100,
-                    margin: '0 auto 16px',
+                    width: 60,
+                    height: 60,
+                    margin: '0 auto',
                     bgcolor: '#264653',
-                    fontSize: '2.5rem',
+                    fontSize: '1.5rem',
                     fontWeight: 600,
                     flexShrink: 0
                   }}
@@ -270,18 +272,20 @@ const DirectorioPage = () => {
                   {getIniciales(empleado)}
                 </Avatar>
                 
+                {/* Nombre - altura fija 40px */}
                 <Typography 
-                  variant="h6" 
                   sx={{ 
                     fontWeight: 600, 
                     color: '#264653',
-                    fontSize: '1.05rem',
+                    fontSize: '0.85rem',
                     lineHeight: 1.3,
-                    height: '54px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    height: '40px',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
                     overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    mt: 1.5,
                     mb: 1,
                     flexShrink: 0
                   }}
@@ -289,68 +293,66 @@ const DirectorioPage = () => {
                   {getNombreCompleto(empleado)}
                 </Typography>
 
+                {/* Puesto - altura fija 36px */}
                 <Typography 
-                  variant="body2" 
                   sx={{ 
                     color: '#6c757d',
-                    fontSize: '0.875rem',
-                    height: '24px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    fontSize: '0.75rem',
+                    lineHeight: 1.3,
+                    height: '36px',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    mb: 2,
+                    px: 1,
+                    mb: 1.5,
                     flexShrink: 0
                   }}
                 >
                   {empleado.puesto || '—'}
                 </Typography>
 
+                {/* Información de contacto - altura fija */}
                 <Box sx={{ 
-                  textAlign: 'left', 
                   borderTop: '1px solid #e0e0e0', 
-                  pt: 2,
-                  pb: 1,
-                  mt: 'auto',
+                  pt: 1.5,
+                  width: '100%',
                   flexShrink: 0
                 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5, height: '24px' }}>
-                    <EmailIcon sx={{ mr: 1.5, color: '#2a9d8f', fontSize: 20, flexShrink: 0 }} />
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '20px', mb: 0.75 }}>
+                    <EmailIcon sx={{ fontSize: 16, color: '#2a9d8f', mr: 0.5, flexShrink: 0 }} />
                     <Typography 
-                      variant="body2" 
                       sx={{ 
                         color: '#495057', 
-                        fontSize: '0.85rem',
+                        fontSize: '0.7rem',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
-                        flex: 1
+                        maxWidth: '85%'
                       }}
                     >
                       {empleado.email || '—'}
                     </Typography>
                   </Box>
                   
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5, height: '24px' }}>
-                    <PhoneIcon sx={{ mr: 1.5, color: '#2a9d8f', fontSize: 20, flexShrink: 0 }} />
-                    <Typography variant="body2" sx={{ color: '#495057', fontSize: '0.85rem' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '20px', mb: 0.75 }}>
+                    <PhoneIcon sx={{ fontSize: 16, color: '#2a9d8f', mr: 0.5, flexShrink: 0 }} />
+                    <Typography sx={{ color: '#495057', fontSize: '0.7rem' }}>
                       {empleado.telefono || '—'}
                     </Typography>
                   </Box>
                   
-                  <Box sx={{ display: 'flex', alignItems: 'center', height: '24px' }}>
-                    <BusinessIcon sx={{ mr: 1.5, color: '#2a9d8f', fontSize: 20, flexShrink: 0 }} />
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '20px' }}>
+                    <BusinessIcon sx={{ fontSize: 16, color: '#2a9d8f', mr: 0.5, flexShrink: 0 }} />
                     <Typography 
-                      variant="body2" 
                       sx={{ 
                         color: '#495057', 
-                        fontSize: '0.85rem',
+                        fontSize: '0.7rem',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
-                        flex: 1
+                        maxWidth: '85%'
                       }}
                     >
                       {empleado.area || '—'}

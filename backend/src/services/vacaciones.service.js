@@ -486,13 +486,9 @@ class VacacionesService {
       
       const solicitudId = result.rows[0].id;
 
-      // 5. Actualizar saldo del período
-      await dbQuery(`
-        UPDATE periodos_vacacionales 
-        SET dias_disponibles = dias_disponibles - $1
-        WHERE id = $2
-      `, [detalles.diasCalendario, periodoId]);
-
+      // 5. NO descontar aquí - se descuenta al aprobar la solicitud
+      // El descuento se hace en aprobacion.controller.js al aprobar
+      
       // 6. Crear notificación para el jefe inmediato
       try {
         // Obtener datos del empleado y su supervisor

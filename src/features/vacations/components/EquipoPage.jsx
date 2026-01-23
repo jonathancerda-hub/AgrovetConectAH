@@ -50,6 +50,7 @@ export default function EquipoPage() {
             icon={<PersonAddIcon />} 
             iconPosition="start" 
             label="Solicitar Colaborador" 
+            disabled
           />
           <Tab 
             icon={<PeopleIcon />} 

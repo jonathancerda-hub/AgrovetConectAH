@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import * as XLSX from 'xlsx';
 import {
   Box,
   Card,
@@ -28,7 +29,12 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Divider
+  Divider,
+  Grid,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -38,7 +44,8 @@ import {
   CheckCircle as CheckIcon,
   Visibility as VisibilityIcon,
   ExpandMore as ExpandMoreIcon,
-  CalendarToday as CalendarIcon
+  CalendarToday as CalendarIcon,
+  Info as InfoIcon
 } from '@mui/icons-material';
 import api from '../../../services/api';
 
@@ -47,6 +54,8 @@ const ControlVacacionesEmpleado = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filtroArea, setFiltroArea] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState('');
   const [openDetalle, setOpenDetalle] = useState(false);
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null);
   const [detalleVacaciones, setDetalleVacaciones] = useState(null);
@@ -72,14 +81,57 @@ const ControlVacacionesEmpleado = () => {
     }
   };
 
-  const filtrarEmpleados = () => {
-    if (!searchTerm) return empleados;
+  // Obtener áreas únicas
+  const areasUnicas = useMemo(() => {
+    const areas = [...new Set(empleados.map(emp => emp.area).filter(Boolean))];
+    return areas.sort();
+  }, [empleados]);
+
+  // Función para determinar el estado de un empleado
+  const getEstadoEmpleado = (empleado) => {
+    const diasTotales = empleado.dias_totales || 0;
+    const diasDisponibles = empleado.dias_disponibles || 0;
     
-    return empleados.filter(emp => 
-      emp.nombre_completo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.area?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.puesto?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    if (diasTotales === 0) return 'Sin período';
+    
+    const porcentaje = (diasDisponibles / diasTotales) * 100;
+    
+    if (porcentaje === 0) return 'Agotado';
+    if (porcentaje <= 30) return 'Crítico';
+    if (porcentaje <= 60) return 'Moderado';
+    return 'Disponible';
+  };
+
+  // Función para filtrar empleados
+  const filtrarEmpleados = () => {
+    let filtrados = empleados;
+
+    // Filtro por búsqueda
+    if (searchTerm) {
+      filtrados = filtrados.filter(emp => 
+        emp.nombre_completo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.area?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.puesto?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Filtro por área
+    if (filtroArea) {
+      filtrados = filtrados.filter(emp => emp.area === filtroArea);
+    }
+
+    // Filtro por estado
+    if (filtroEstado) {
+      filtrados = filtrados.filter(emp => getEstadoEmpleado(emp) === filtroEstado);
+    }
+
+    return filtrados;
+  };
+
+  const limpiarFiltros = () => {
+    setSearchTerm('');
+    setFiltroArea('');
+    setFiltroEstado('');
   };
 
   const getProgressColor = (porcentaje) => {
@@ -89,8 +141,69 @@ const ControlVacacionesEmpleado = () => {
   };
 
   const exportarExcel = () => {
-    // Aquí implementarías la exportación a Excel
-    console.log('Exportar a Excel');
+    try {
+      // Obtener empleados filtrados
+      const empleadosFiltrados = filtrarEmpleados();
+
+      // Preparar datos para exportación
+      const datosExcel = empleadosFiltrados.map((emp, index) => {
+        const porcentajeDisponible = emp.dias_totales > 0 
+          ? (emp.dias_disponibles / emp.dias_totales) * 100 
+          : 0;
+        const estado = getEstadoEmpleado(emp);
+
+        return {
+          'N°': index + 1,
+          'Código': emp.codigo_empleado || '-',
+          'Empleado': emp.nombre_completo,
+          'Área': emp.area || '-',
+          'Puesto': emp.puesto || '-',
+          'Días Totales': emp.dias_totales,
+          'Disponibles': emp.dias_disponibles,
+          'Usados': emp.dias_usados,
+          'Programados': emp.dias_programados || 0,
+          'Pendientes': emp.dias_pendientes || 0,
+          '% Uso': `${(100 - porcentajeDisponible).toFixed(1)}%`,
+          'Estado': estado
+        };
+      });
+
+      // Crear libro de trabajo
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(datosExcel);
+
+      // Configurar anchos de columnas
+      const columnWidths = [
+        { wch: 5 },  // N°
+        { wch: 10 }, // Código
+        { wch: 30 }, // Empleado
+        { wch: 25 }, // Área
+        { wch: 35 }, // Puesto
+        { wch: 12 }, // Días Totales
+        { wch: 12 }, // Disponibles
+        { wch: 10 }, // Usados
+        { wch: 13 }, // Programados
+        { wch: 12 }, // Pendientes
+        { wch: 10 }, // % Uso
+        { wch: 12 }  // Estado
+      ];
+      ws['!cols'] = columnWidths;
+
+      // Agregar hoja al libro
+      XLSX.utils.book_append_sheet(wb, ws, 'Control de Vacaciones');
+
+      // Generar nombre de archivo con fecha
+      const fecha = new Date().toLocaleDateString('es-PE').replace(/\//g, '-');
+      const nombreArchivo = `Control_Vacaciones_${fecha}.xlsx`;
+
+      // Descargar archivo
+      XLSX.writeFile(wb, nombreArchivo);
+
+      console.log(`✅ Archivo ${nombreArchivo} generado exitosamente`);
+    } catch (error) {
+      console.error('❌ Error al exportar a Excel:', error);
+      alert('Error al generar el archivo Excel. Por favor, intenta de nuevo.');
+    }
   };
 
   const verDetalle = async (empleado) => {
@@ -152,33 +265,109 @@ const ControlVacacionesEmpleado = () => {
 
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <TextField
-            fullWidth
-            placeholder="Buscar por nombre, área o puesto..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
+          <Grid container spacing={2} alignItems="center">
+            {/* Búsqueda por nombre */}
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="Buscar por nombre, área o puesto..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+
+            {/* Filtro por Área */}
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl fullWidth size="small" sx={{ minWidth: 180 }}>
+                <InputLabel>Área</InputLabel>
+                <Select
+                  value={filtroArea}
+                  label="Área"
+                  onChange={(e) => setFiltroArea(e.target.value)}
+                >
+                  <MenuItem value="">
+                    <em>Todas las áreas</em>
+                  </MenuItem>
+                  {areasUnicas.map(area => (
+                    <MenuItem key={area} value={area}>{area}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {/* Filtro por Estado */}
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl fullWidth size="small" sx={{ minWidth: 180 }}>
+                <InputLabel>Estado</InputLabel>
+                <Select
+                  value={filtroEstado}
+                  label="Estado"
+                  onChange={(e) => setFiltroEstado(e.target.value)}
+                >
+                  <MenuItem value="">
+                    <em>Todos los estados</em>
+                  </MenuItem>
+                  <MenuItem value="Disponible">Disponible</MenuItem>
+                  <MenuItem value="Moderado">Moderado</MenuItem>
+                  <MenuItem value="Crítico">Crítico</MenuItem>
+                  <MenuItem value="Agotado">Agotado</MenuItem>
+                  <MenuItem value="Sin período">Sin período</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {/* Botón Limpiar */}
+            {(searchTerm || filtroArea || filtroEstado) && (
+              <Grid item xs={12} md={2}>
+                <Button
+                  fullWidth
+                  size="small"
+                  variant="outlined"
+                  onClick={limpiarFiltros}
+                  sx={{ height: 40 }}
+                >
+                  Limpiar filtros
+                </Button>
+              </Grid>
+            )}
+          </Grid>
         </CardContent>
       </Card>
 
       <TableContainer component={Paper} sx={{ boxShadow: 3 }}>
-        <Table>
+        <Table sx={{ tableLayout: 'fixed', minWidth: 1200 }}>
           <TableHead>
             <TableRow sx={{ bgcolor: 'grey.100' }}>
-              <TableCell sx={{ fontWeight: 600 }}>Empleado</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Área</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Puesto</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '15%', maxWidth: 200 }}>Empleado</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '8%', maxWidth: 100, fontSize: '0.875rem' }}>Área</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '12%', maxWidth: 150 }}>Puesto</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="center">Días Totales</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="center">Disponibles</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="center">Usados</TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="center">Pendientes</TableCell>
+              <TableCell sx={{ fontWeight: 600 }} align="center">
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                  Programados
+                  <Tooltip title="Días de vacaciones aprobadas que aún no se han gozado (futuras o en curso)" arrow>
+                    <InfoIcon sx={{ fontSize: 16, color: 'info.main', cursor: 'help' }} />
+                  </Tooltip>
+                </Box>
+              </TableCell>
+              <TableCell sx={{ fontWeight: 600 }} align="center">
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                  Pendientes
+                  <Tooltip title="Días en solicitudes que están esperando aprobación" arrow>
+                    <InfoIcon sx={{ fontSize: 16, color: 'warning.main', cursor: 'help' }} />
+                  </Tooltip>
+                </Box>
+              </TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="center">% Uso</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="center">Estado</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="center">Acciones</TableCell>
@@ -187,7 +376,7 @@ const ControlVacacionesEmpleado = () => {
           <TableBody>
             {empleadosFiltrados.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} align="center">
+                <TableCell colSpan={11} align="center">
                   <Typography color="text.secondary" py={3}>
                     No se encontraron empleados
                   </Typography>
@@ -199,6 +388,7 @@ const ControlVacacionesEmpleado = () => {
                   ? (empleado.dias_disponibles / empleado.dias_totales) * 100 
                   : 0;
                 
+                const estado = getEstadoEmpleado(empleado);
                 const necesitaVacaciones = porcentajeDisponible > 70;
                 const enRiesgo = porcentajeDisponible > 90;
 
@@ -210,11 +400,13 @@ const ControlVacacionesEmpleado = () => {
                       '&:nth-of-type(odd)': { bgcolor: 'action.hover' }
                     }}
                   >
-                    <TableCell>
+                    <TableCell sx={{ width: '15%', maxWidth: 200 }}>
                       <Typography fontWeight={600}>{empleado.nombre_completo}</Typography>
                     </TableCell>
-                    <TableCell>{empleado.area || '-'}</TableCell>
-                    <TableCell>{empleado.puesto || '-'}</TableCell>
+                    <TableCell sx={{ width: '8%', maxWidth: 100, fontSize: '0.75rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {empleado.area || '-'}
+                    </TableCell>
+                    <TableCell sx={{ width: '12%', maxWidth: 150, fontSize: '0.875rem' }}>{empleado.puesto || '-'}</TableCell>
                     <TableCell align="center">
                       <Chip label={empleado.dias_totales} color="primary" size="small" />
                     </TableCell>
@@ -226,7 +418,22 @@ const ControlVacacionesEmpleado = () => {
                       />
                     </TableCell>
                     <TableCell align="center">{empleado.dias_usados}</TableCell>
-                    <TableCell align="center">{empleado.dias_pendientes}</TableCell>
+                    <TableCell align="center">
+                      <Chip 
+                        label={empleado.dias_programados || 0} 
+                        color="info" 
+                        size="small"
+                        variant="outlined"
+                      />
+                    </TableCell>
+                    <TableCell align="center">
+                      <Chip 
+                        label={empleado.dias_pendientes || 0} 
+                        color="warning" 
+                        size="small"
+                        variant="outlined"
+                      />
+                    </TableCell>
                     <TableCell align="center">
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Box sx={{ width: '100%', mr: 1 }}>
@@ -243,7 +450,14 @@ const ControlVacacionesEmpleado = () => {
                       </Box>
                     </TableCell>
                     <TableCell align="center">
-                      {enRiesgo ? (
+                      {estado === 'Agotado' ? (
+                        <Chip 
+                          label="Agotado" 
+                          color="error" 
+                          size="small"
+                          sx={{ fontWeight: 600 }}
+                        />
+                      ) : estado === 'Crítico' ? (
                         <Tooltip title="Urgente: Debe tomar vacaciones">
                           <Chip 
                             icon={<WarningIcon />}
@@ -252,20 +466,26 @@ const ControlVacacionesEmpleado = () => {
                             size="small"
                           />
                         </Tooltip>
-                      ) : necesitaVacaciones ? (
+                      ) : estado === 'Moderado' ? (
                         <Tooltip title="Debe programar vacaciones">
                           <Chip 
                             icon={<WarningIcon />}
-                            label="Pendiente" 
+                            label="Moderado" 
                             color="warning" 
                             size="small"
                           />
                         </Tooltip>
-                      ) : (
+                      ) : estado === 'Disponible' ? (
                         <Chip 
                           icon={<CheckIcon />}
-                          label="OK" 
+                          label="Disponible" 
                           color="success" 
+                          size="small"
+                        />
+                      ) : (
+                        <Chip 
+                          label="Sin período" 
+                          color="default" 
                           size="small"
                         />
                       )}

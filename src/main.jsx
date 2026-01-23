@@ -1,6 +1,7 @@
 import React, { useState, useMemo, createContext } from 'react';
 import ReactDOM from 'react-dom/client';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { esES } from '@mui/material/locale';
 import CssBaseline from '@mui/material/CssBaseline';
 import App from './App';
 import './global.css';
@@ -22,45 +23,48 @@ function Main() {
 
   const theme = useMemo(
     () =>
-      createTheme({
-        palette: {
-          mode,
-          ...(mode === 'light'
-            ? {
-                // Paleta para modo claro
-                primary: { main: '#2a9d8f' }, // Un verde azulado profesional
-                secondary: { main: '#718096' }, // Gris para texto secundario
-                background: { default: '#f8f9fa', paper: '#ffffff' },
-                text: { primary: '#2d3748', secondary: '#718096' },
-                error: { main: '#e53e3e' },
-                warning: { main: '#dd6b20' },
-                info: { main: '#3182ce' },
-                success: { main: '#38a169' },
-              }
-            : {
-                // Paleta para modo oscuro
-                primary: { main: '#2a9d8f' },
-                secondary: { main: '#a0aec0' },
-                background: { default: '#1a202c', paper: '#2d3748' },
-                text: { primary: '#e2e8f0', secondary: '#a0aec0' },
-                error: { main: '#fc8181' },
-                warning: { main: '#f6ad55' },
-              }),
-        },
-        components: {
-          MuiTableCell: {
-            styleOverrides: {
-              head: {
-                backgroundColor: '#f5f5f5',
-                color: '#333'
+      createTheme(
+        {
+          palette: {
+            mode,
+            ...(mode === 'light'
+              ? {
+                  // Paleta para modo claro
+                  primary: { main: '#2a9d8f' }, // Un verde azulado profesional
+                  secondary: { main: '#718096' }, // Gris para texto secundario
+                  background: { default: '#f8f9fa', paper: '#ffffff' },
+                  text: { primary: '#2d3748', secondary: '#718096' },
+                  error: { main: '#e53e3e' },
+                  warning: { main: '#dd6b20' },
+                  info: { main: '#3182ce' },
+                  success: { main: '#38a169' },
+                }
+              : {
+                  // Paleta para modo oscuro
+                  primary: { main: '#2a9d8f' },
+                  secondary: { main: '#a0aec0' },
+                  background: { default: '#1a202c', paper: '#2d3748' },
+                  text: { primary: '#e2e8f0', secondary: '#a0aec0' },
+                  error: { main: '#fc8181' },
+                  warning: { main: '#f6ad55' },
+                }),
+          },
+          components: {
+            MuiTableCell: {
+              styleOverrides: {
+                head: {
+                  backgroundColor: '#f5f5f5',
+                  color: '#333'
+                }
               }
             }
-          }
+          },
+          typography: {
+            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'sans-serif'",
+          },
         },
-        typography: {
-          fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'sans-serif'",
-        },
-      }),
+        esES // Localización española para Material-UI
+      ),
     [mode],
   );
 

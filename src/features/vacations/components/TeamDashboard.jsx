@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Grid, Paper, Typography, Card, CardContent, Button, Avatar, Chip, CircularProgress, Alert } from '@mui/material';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Box, Grid, Paper, Typography, Card, CardContent, Button, Avatar, Chip, CircularProgress, Alert, TextField, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import GroupsIcon from '@mui/icons-material/Groups';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -7,6 +7,7 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import PersonIcon from '@mui/icons-material/Person';
+import SearchIcon from '@mui/icons-material/Search';
 import { empleadosService } from '../../../services/empleados.service';
 import { authService } from '../../../services/auth.service';
 
@@ -20,6 +21,11 @@ export default function TeamDashboard() {
     activos: 0,
     deVacaciones: 0
   });
+
+  // Estados para filtros
+  const [filtroNombre, setFiltroNombre] = useState('');
+  const [filtroArea, setFiltroArea] = useState('');
+  const [filtroNivel, setFiltroNivel] = useState('');
 
   useEffect(() => {
     fetchTeamData();
@@ -134,6 +140,43 @@ export default function TeamDashboard() {
       setLoading(false);
     }
   };
+
+  // Obtener áreas únicas
+  const areasUnicas = useMemo(() => {
+    const areas = [...new Set(teamMembers.map(m => m.area).filter(Boolean))];
+    return areas.sort();
+  }, [teamMembers]);
+
+  // Obtener niveles únicos
+  const nivelesUnicos = useMemo(() => {
+    const niveles = [...new Set(teamMembers.map(m => m.nivel_jerarquico).filter(n => n !== null && n !== undefined))];
+    return niveles.sort((a, b) => a - b);
+  }, [teamMembers]);
+
+  // Filtrar miembros del equipo
+  const miembrosFiltrados = useMemo(() => {
+    return teamMembers.filter(miembro => {
+      // Filtro por nombre
+      if (filtroNombre) {
+        const nombreCompleto = `${miembro.nombres} ${miembro.apellidos}`.toLowerCase();
+        if (!nombreCompleto.includes(filtroNombre.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // Filtro por área
+      if (filtroArea && miembro.area !== filtroArea) {
+        return false;
+      }
+
+      // Filtro por nivel
+      if (filtroNivel !== '' && miembro.nivel_jerarquico !== filtroNivel) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [teamMembers, filtroNombre, filtroArea, filtroNivel]);
 
   const columns = [
     {
@@ -330,7 +373,8 @@ export default function TeamDashboard() {
       </Grid>
 
       {/* Sección de Miembros del Equipo */}
-      <Paper elevation={3} sx={{ borderRadius: 2 }}>
+      <Paper elevation={3} sx={{ borderRadius: 2, mt: 3 }}>
+        {/* Header con contador */}
         <Box sx={{ 
           display: 'flex', 
           justifyContent: 'space-between', 
@@ -339,10 +383,115 @@ export default function TeamDashboard() {
           borderBottom: '1px solid',
           borderColor: 'divider'
         }}>
-          <Typography variant="body2" color="text.secondary">
-            {teamMembers.length} {teamMembers.length === 1 ? 'persona' : 'personas'} a tu cargo
+          <Typography variant="h6" fontWeight={600}>
+            Miembros del Equipo
+          </Typography>
+          <Typography variant="body2" color="text.secondary" fontWeight={500}>
+            {miembrosFiltrados.length} de {teamMembers.length} {teamMembers.length === 1 ? 'persona' : 'personas'}
           </Typography>
         </Box>
+
+        {/* Filtros - Solo si hay equipo */}
+        {teamMembers.length > 0 && (
+          <Box sx={{ 
+            p: 3, 
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            backgroundColor: '#f8f9fa'
+          }}>
+            <Grid container spacing={2.5} alignItems="center">
+              {/* Filtro por Nombre */}
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Buscar por nombre"
+                  placeholder="Nombre o apellido"
+                  value={filtroNombre}
+                  onChange={(e) => setFiltroNombre(e.target.value)}
+                  InputProps={{
+                    startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
+                  }}
+                  sx={{
+                    minWidth: 250,
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: 'white'
+                    }
+                  }}
+                />
+              </Grid>
+
+              {/* Filtro por Área */}
+              <Grid item xs={12} sm={6} md={3}>
+                <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
+                  <InputLabel>Área</InputLabel>
+                  <Select
+                    value={filtroArea}
+                    label="Área"
+                    onChange={(e) => setFiltroArea(e.target.value)}
+                    sx={{
+                      backgroundColor: 'white'
+                    }}
+                  >
+                    <MenuItem value="">
+                      <em>Todas</em>
+                    </MenuItem>
+                    {areasUnicas.map(area => (
+                      <MenuItem key={area} value={area}>{area}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              {/* Filtro por Nivel */}
+              <Grid item xs={12} sm={6} md={3}>
+                <FormControl fullWidth size="small" sx={{ minWidth: 180 }}>
+                  <InputLabel>Nivel</InputLabel>
+                  <Select
+                    value={filtroNivel}
+                    label="Nivel"
+                    onChange={(e) => setFiltroNivel(e.target.value)}
+                    sx={{
+                      backgroundColor: 'white'
+                    }}
+                  >
+                    <MenuItem value="">
+                      <em>Todos</em>
+                    </MenuItem>
+                    {nivelesUnicos.map(nivel => (
+                      <MenuItem key={nivel} value={nivel}>
+                        Nivel {nivel}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              {/* Botón limpiar inline */}
+              {(filtroNombre || filtroArea || filtroNivel !== '') && (
+                <Grid item xs={12} md={2}>
+                  <Button 
+                    fullWidth
+                    size="small" 
+                    variant="outlined"
+                    onClick={() => {
+                      setFiltroNombre('');
+                      setFiltroArea('');
+                      setFiltroNivel('');
+                    }}
+                    sx={{ 
+                      textTransform: 'none',
+                      borderRadius: 1,
+                      height: 40
+                    }}
+                  >
+                    Limpiar
+                  </Button>
+                </Grid>
+              )}
+            </Grid>
+          </Box>
+        )}
 
         <Box sx={{ width: '100%' }}>
           {teamMembers.length === 0 ? (
@@ -357,7 +506,7 @@ export default function TeamDashboard() {
             </Box>
           ) : (
             <DataGrid
-              rows={teamMembers}
+              rows={miembrosFiltrados}
               columns={columns}
               pageSize={10}
               rowsPerPageOptions={[5, 10, 25, 50]}
