@@ -487,6 +487,7 @@ export const obtenerControlRRHH = async (req, res) => {
         e.nombres,
         e.apellidos,
         e.email,
+        e.fecha_ingreso,
         e.nombres || ' ' || e.apellidos as nombre_completo,
         a.nombre as area,
         p.nombre as puesto,
@@ -752,7 +753,11 @@ export const obtenerDetalleEmpleado = async (req, res) => {
         fecha.setDate(fecha.getDate() + 1);
       }
       
-      return { viernes, sabados, domingos, finesDeSemana: sabados + domingos };
+      // Contar fines de semana completos (sábado + domingo = 1 fin de semana)
+      // Se cuenta el mínimo entre sábados y domingos
+      const finesDeSemana = Math.min(sabados, domingos);
+      
+      return { viernes, sabados, domingos, finesDeSemana };
     };
 
     // Meses en español

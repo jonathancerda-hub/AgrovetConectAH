@@ -274,6 +274,7 @@ export default function GestionEmpleados() {
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleOpenDialog()}
+          disabled
           sx={{
             background: 'linear-gradient(135deg, #2a9d8f 0%, #264653 100%)',
             color: 'white'

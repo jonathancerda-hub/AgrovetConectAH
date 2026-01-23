@@ -467,46 +467,18 @@ const MiFicha = ({ currentUser }) => {
                   <Typography variant="caption" color="text.secondary" fontWeight={500}>
                     Nombre Completo del Empleado*
                   </Typography>
-                  <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                    <Box 
-                      sx={{ 
-                        flex: 1,
-                        bgcolor: 'white',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: 1,
-                        p: 1.5
-                      }}
-                    >
-                      <Typography variant="body2" fontWeight={500}>
-                        {empleado.nombres?.split(' ')[0] || 'N/A'}
-                      </Typography>
-                    </Box>
-                    <Box 
-                      sx={{ 
-                        flex: 1,
-                        bgcolor: 'white',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: 1,
-                        p: 1.5
-                      }}
-                    >
-                      <Typography variant="body2" fontWeight={500}>
-                        {empleado.nombres?.split(' ')[1] || ''}
-                      </Typography>
-                    </Box>
-                    <Box 
-                      sx={{ 
-                        flex: 1,
-                        bgcolor: 'white',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: 1,
-                        p: 1.5
-                      }}
-                    >
-                      <Typography variant="body2" fontWeight={500}>
-                        {empleado.apellidos || 'N/A'}
-                      </Typography>
-                    </Box>
+                  <Box 
+                    sx={{ 
+                      bgcolor: 'white',
+                      border: '1px solid #e0e0e0',
+                      borderRadius: 1,
+                      p: 1.5,
+                      mt: 1
+                    }}
+                  >
+                    <Typography variant="body2" fontWeight={500}>
+                      {`${empleado.nombres || ''} ${empleado.apellidos || ''}`.trim() || 'N/A'}
+                    </Typography>
                   </Box>
                 </Box>
 
@@ -567,45 +539,6 @@ const MiFicha = ({ currentUser }) => {
                     </Typography>
                   </Box>
                 </Box>
-
-                <Grid container spacing={2} sx={{ mb: 3 }}>
-                  <Grid item xs={6}>
-                    <Typography variant="caption" color="text.secondary" fontWeight={500}>
-                      Fecha de Nacimiento
-                    </Typography>
-                    <Box 
-                      sx={{ 
-                        bgcolor: 'white',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: 1,
-                        p: 1.5,
-                        mt: 1
-                      }}
-                    >
-                      <Typography variant="body2" fontWeight={500}>
-                        {empleado.fecha_nacimiento ? formatearFecha(empleado.fecha_nacimiento) : 'N/A'}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="caption" color="text.secondary" fontWeight={500}>
-                      Género
-                    </Typography>
-                    <Box 
-                      sx={{ 
-                        bgcolor: 'white',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: 1,
-                        p: 1.5,
-                        mt: 1
-                      }}
-                    >
-                      <Typography variant="body2" fontWeight={500}>
-                        {empleado.genero || 'N/A'}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                </Grid>
               </Box>
             )}
 

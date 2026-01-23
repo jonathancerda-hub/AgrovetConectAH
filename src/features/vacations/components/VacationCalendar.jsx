@@ -25,6 +25,7 @@ import EventIcon from '@mui/icons-material/Event';
 import BeachAccessIcon from '@mui/icons-material/BeachAccess';
 import CelebrationIcon from '@mui/icons-material/Celebration';
 import { authService } from '../../../services/auth.service';
+import { feriadosService } from '../../../services/feriados.service';
 
 // Configurar moment en español
 moment.locale('es', {
@@ -109,6 +110,7 @@ const VacationCalendar = ({ events: propEvents }) => {
   const [view, setView] = useState('month');
   const [vacacionesUsuario, setVacacionesUsuario] = useState([]);
   const [vacacionesEquipo, setVacacionesEquipo] = useState([]);
+  const [feriadosData, setFeriadosData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -117,6 +119,16 @@ const VacationCalendar = ({ events: propEvents }) => {
     const fetchVacaciones = async () => {
       try {
         setLoading(true);
+        
+        // Cargar feriados desde la API
+        try {
+          const feriados = await feriadosService.getAll();
+          setFeriadosData(feriados);
+        } catch (feriadosError) {
+          console.error('Error al cargar feriados:', feriadosError);
+          // Continuar aunque falle la carga de feriados
+        }
+        
         const currentUser = authService.getCurrentUser();
         if (!currentUser?.empleadoId) {
           setLoading(false);
@@ -211,23 +223,27 @@ const VacationCalendar = ({ events: propEvents }) => {
   }, []);
 
   // Combinar eventos de vacaciones con feriados
-  const feriadosEvents = feriadosPeru2025.map(feriado => {
-    const [year, month, day] = feriado.date.split('-').map(Number);
-    return {
-      id: `feriado-${feriado.date}`,
-      title: feriado.name,
-      start: new Date(year, month - 1, day), // Usar fecha local
-      end: new Date(year, month - 1, day),
-      tipo: 'feriado',
-      allDay: true,
-    };
-  });
+  const feriadosEvents = feriadosData
+    .filter(f => f.tipo === 'nacional' || f.tipo === 'regional')
+    .map(feriado => {
+      const fechaDate = new Date(feriado.fecha + 'T00:00:00');
+      return {
+        id: `feriado-${feriado.id}`,
+        title: feriado.nombre,
+        start: fechaDate,
+        end: fechaDate,
+        tipo: 'feriado',
+        allDay: true,
+      };
+    });
 
-  const festivosEvents = diasFestivos2025.map(festivo => {
-    const [year, month, day] = festivo.date.split('-').map(Number);
-    return {
-      id: `festivo-${festivo.date}`,
-      title: festivo.name,
+  const festivosEvents = feriadosData
+    .filter(f => f.tipo === 'festivo')
+    .map(festivo => {
+      const fechaDate = new Date(festivo.fecha + 'T00:00:00');
+      return {
+        id: `festivo-${festivo.id}`,
+        title: festivo.nombre,
       start: new Date(year, month - 1, day), // Usar fecha local
       end: new Date(year, month - 1, day),
       tipo: 'festivo',
@@ -284,8 +300,14 @@ const VacationCalendar = ({ events: propEvents }) => {
   // Personalizar el día en el calendario
   const dayPropGetter = (date) => {
     const dateStr = moment(date).format('YYYY-MM-DD');
-    const isFeriado = feriadosPeru2025.some(f => f.date === dateStr);
-    const isFestivo = diasFestivos2025.some(f => f.date === dateStr);
+    const isFeriado = feriadosData.some(f => 
+      moment(f.fecha).format('YYYY-MM-DD') === dateStr && 
+      (f.tipo === 'nacional' || f.tipo === 'regional')
+    );
+    const isFestivo = feriadosData.some(f => 
+      moment(f.fecha).format('YYYY-MM-DD') === dateStr && 
+      f.tipo === 'festivo'
+    );
     
     if (isFeriado) {
       return {
@@ -570,11 +592,14 @@ const VacationCalendar = ({ events: propEvents }) => {
           </Typography>
           <Divider sx={{ mb: 2 }} />
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 1 }}>
-            {feriadosPeru2025
-              .filter(f => moment(f.date).isAfter(moment()))
+            {feriadosData
+              .filter(f => 
+                (f.tipo === 'nacional' || f.tipo === 'regional') && 
+                moment(f.fecha).isAfter(moment())
+              )
               .slice(0, 6)
-              .map((feriado, index) => (
-                <Tooltip key={index} title={`Feriado Nacional`} arrow>
+              .map((feriado) => (
+                <Tooltip key={feriado.id} title={`Feriado ${feriado.tipo === 'nacional' ? 'Nacional' : 'Regional'}`} arrow>
                   <Box sx={{ 
                     p: 1.5, 
                     bgcolor: '#ffebee', 
@@ -586,10 +611,10 @@ const VacationCalendar = ({ events: propEvents }) => {
                   }}>
                     <Box>
                       <Typography variant="body2" fontWeight={600}>
-                        {feriado.name}
+                        {feriado.nombre}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {moment(feriado.date).format('dddd, D [de] MMMM')}
+                        {moment(feriado.fecha).format('dddd, D [de] MMMM')}
                       </Typography>
                     </Box>
                     <CelebrationIcon sx={{ color: '#d32f2f' }} />

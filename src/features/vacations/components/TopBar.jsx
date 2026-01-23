@@ -32,7 +32,6 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import MoreIcon from '@mui/icons-material/MoreVert';
-import SearchIcon from '@mui/icons-material/Search';
 import HomeIcon from '@mui/icons-material/Home';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import PersonIcon from '@mui/icons-material/Person';
@@ -54,8 +53,6 @@ export default function TopBar({ onMenuClick, title, breadcrumbs = [], onNavigat
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
   const [notificationAnchor, setNotificationAnchor] = React.useState(null);
-  const [searchOpen, setSearchOpen] = React.useState(false);
-  const [searchValue, setSearchValue] = React.useState('');
   const [logoutDialogOpen, setLogoutDialogOpen] = React.useState(false);
   const [unreadCount, setUnreadCount] = React.useState(0);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
@@ -143,18 +140,6 @@ export default function TopBar({ onMenuClick, title, breadcrumbs = [], onNavigat
     window.open('/docs/manual-usuario.html', '_blank');
   };
 
-  const handleSearchToggle = () => {
-    setSearchOpen(!searchOpen);
-    if (!searchOpen) {
-      setTimeout(() => document.getElementById('search-input')?.focus(), 100);
-    }
-  };
-
-  const handleSearchChange = (event) => {
-    setSearchValue(event.target.value);
-    // Aquí puedes implementar la lógica de búsqueda
-  };
-
   // Funciones para manejar el Dialog de Logout
   const handleConfirmLogout = () => {
     setLogoutDialogOpen(false);
@@ -166,19 +151,6 @@ export default function TopBar({ onMenuClick, title, breadcrumbs = [], onNavigat
   const handleCancelLogout = () => {
     setLogoutDialogOpen(false);
   };
-
-  // Atajo de teclado Ctrl+K para búsqueda
-  React.useEffect(() => {
-    const handleKeyDown = (event) => {
-      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
-        event.preventDefault();
-        handleSearchToggle();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [searchOpen]);
 
   const mobileMenuId = 'primary-search-account-menu-mobile';
 
@@ -244,65 +216,10 @@ export default function TopBar({ onMenuClick, title, breadcrumbs = [], onNavigat
           )}
         </Box>
 
-        {/* Barra de búsqueda con animación */}
-        <Fade in={searchOpen} timeout={300}>
-          <Box
-            sx={{
-              display: searchOpen ? 'flex' : 'none',
-              position: 'absolute',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              bgcolor: 'background.paper',
-              borderRadius: 2,
-              border: 1,
-              borderColor: 'divider',
-              px: 2,
-              py: 0.5,
-              boxShadow: 2,
-              minWidth: 300,
-              alignItems: 'center',
-            }}
-          >
-            <SearchIcon sx={{ color: 'text.secondary', mr: 1 }} />
-            <InputBase
-              id="search-input"
-              placeholder="Buscar en toda la app..."
-              value={searchValue}
-              onChange={handleSearchChange}
-              sx={{ flex: 1 }}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  setSearchOpen(false);
-                  setSearchValue('');
-                }
-              }}
-            />
-          </Box>
-        </Fade>
-
-        <Box sx={{ flexGrow: searchOpen ? 0 : 1 }} />
+        <Box sx={{ flexGrow: 1 }} />
 
         <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1 }}>
           <Zoom in timeout={300}>
-            <Tooltip title="Buscar (Ctrl + K)">
-              <IconButton
-                color="inherit"
-                sx={{
-                  color: 'text.secondary',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'scale(1.1)',
-                    color: 'primary.main',
-                  },
-                }}
-                onClick={handleSearchToggle}
-              >
-                <SearchIcon />
-              </IconButton>
-            </Tooltip>
-          </Zoom>
-
-          <Zoom in timeout={400}>
             <Tooltip title="Notificaciones">
               <IconButton
                 color="inherit"

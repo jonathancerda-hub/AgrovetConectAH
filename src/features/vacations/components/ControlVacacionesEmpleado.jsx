@@ -91,9 +91,43 @@ const ControlVacacionesEmpleado = () => {
   const getEstadoEmpleado = (empleado) => {
     const diasTotales = empleado.dias_totales || 0;
     const diasDisponibles = empleado.dias_disponibles || 0;
+    const diasProgramados = empleado.dias_programados || 0;
+    const diasSinProgramar = diasDisponibles - diasProgramados;
     
     if (diasTotales === 0) return 'Sin período';
     
+    // Calcular días hasta el próximo aniversario
+    let diasHastaAniversario = null;
+    if (empleado.fecha_ingreso) {
+      const fechaIngreso = new Date(empleado.fecha_ingreso);
+      const hoy = new Date();
+      
+      // Próximo aniversario en el año actual o siguiente
+      let proximoAniversario = new Date(hoy.getFullYear(), fechaIngreso.getMonth(), fechaIngreso.getDate());
+      if (proximoAniversario < hoy) {
+        proximoAniversario = new Date(hoy.getFullYear() + 1, fechaIngreso.getMonth(), fechaIngreso.getDate());
+      }
+      
+      diasHastaAniversario = Math.ceil((proximoAniversario - hoy) / (1000 * 60 * 60 * 24));
+    }
+    
+    // Lógica mejorada considerando días sin programar Y proximidad al aniversario
+    // 🔴 CRÍTICO: Muchos días sin programar Y cerca del aniversario (< 60 días)
+    if (diasSinProgramar >= 15 && diasHastaAniversario !== null && diasHastaAniversario <= 60) {
+      return 'Crítico';
+    }
+    
+    // 🟡 ADVERTENCIA: Días acumulados sin programar Y quedan varios meses (< 120 días)
+    if (diasSinProgramar >= 10 && diasHastaAniversario !== null && diasHastaAniversario <= 120) {
+      return 'Moderado';
+    }
+    
+    // 🟡 ADVERTENCIA: Muchos días sin programar (independiente del tiempo)
+    if (diasSinProgramar >= 20) {
+      return 'Moderado';
+    }
+    
+    // Lógica anterior por porcentaje disponible (fallback)
     const porcentaje = (diasDisponibles / diasTotales) * 100;
     
     if (porcentaje === 0) return 'Agotado';
@@ -315,11 +349,11 @@ const ControlVacacionesEmpleado = () => {
                   <MenuItem value="">
                     <em>Todos los estados</em>
                   </MenuItem>
-                  <MenuItem value="Disponible">Disponible</MenuItem>
-                  <MenuItem value="Moderado">Moderado</MenuItem>
-                  <MenuItem value="Crítico">Crítico</MenuItem>
-                  <MenuItem value="Agotado">Agotado</MenuItem>
-                  <MenuItem value="Sin período">Sin período</MenuItem>
+                  <MenuItem value="Crítico">🔴 Crítico</MenuItem>
+                  <MenuItem value="Moderado">🟡 Moderado</MenuItem>
+                  <MenuItem value="Disponible">🟢 Disponible</MenuItem>
+                  <MenuItem value="Agotado">⚫ Agotado</MenuItem>
+                  <MenuItem value="Sin período">⚪ Sin período</MenuItem>
                 </Select>
               </FormControl>
             </Grid>

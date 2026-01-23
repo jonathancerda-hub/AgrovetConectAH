@@ -3,10 +3,12 @@ import { Box, Tabs, Tab } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
 import HistoryIcon from '@mui/icons-material/History';
+import EventIcon from '@mui/icons-material/Event';
 
 import DashboardRRHH from './DashboardRRHH';
 import ControlVacacionesEmpleado from './ControlVacacionesEmpleado';
 import HistorialVacaciones from './HistorialVacaciones';
+import GestionFeriados from './GestionFeriados';
 
 function TabPanel({ children, value, index }) {
   return (
@@ -63,6 +65,11 @@ export default function RRHHPage() {
             iconPosition="start" 
             label="Historial" 
           />
+          <Tab 
+            icon={<EventIcon />} 
+            iconPosition="start" 
+            label="Gestión de Feriados" 
+          />
         </Tabs>
       </Box>
 
@@ -77,6 +84,10 @@ export default function RRHHPage() {
 
       <TabPanel value={currentTab} index={2}>
         <HistorialVacaciones />
+      </TabPanel>
+
+      <TabPanel value={currentTab} index={3}>
+        <GestionFeriados />
       </TabPanel>
     </Box>
   );

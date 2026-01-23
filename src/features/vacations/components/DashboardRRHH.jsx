@@ -165,14 +165,43 @@ export default function DashboardRRHH() {
     return 'success';
   };
 
-  const getAlertaChip = (diasRestantes, diasTomados) => {
-    if (diasRestantes === 0) {
-      return <Chip label="Días agotados" color="error" size="small" icon={<WarningAmberIcon />} />;
-    } else if (diasRestantes < 5) {
-      return <Chip label="Pocos días" color="warning" size="small" icon={<WarningAmberIcon />} />;
-    } else if (diasTomados === 0) {
-      return <Chip label="OK" color="success" size="small" icon={<CheckCircleIcon />} />;
+  const getAlertaChip = (empleado) => {
+    const diasDisponibles = empleado.dias_disponibles || 0;
+    const diasProgramados = empleado.dias_programados || 0;
+    const diasSinProgramar = diasDisponibles - diasProgramados;
+    
+    // Calcular días hasta el próximo aniversario
+    let diasHastaAniversario = null;
+    if (empleado.fecha_ingreso) {
+      const fechaIngreso = new Date(empleado.fecha_ingreso);
+      const hoy = new Date();
+      
+      // Próximo aniversario en el año actual o siguiente
+      let proximoAniversario = new Date(hoy.getFullYear(), fechaIngreso.getMonth(), fechaIngreso.getDate());
+      if (proximoAniversario < hoy) {
+        proximoAniversario = new Date(hoy.getFullYear() + 1, fechaIngreso.getMonth(), fechaIngreso.getDate());
+      }
+      
+      diasHastaAniversario = Math.ceil((proximoAniversario - hoy) / (1000 * 60 * 60 * 24));
     }
+    
+    // Lógica de alertas:
+    // 🔴 CRÍTICO: Muchos días sin programar Y cerca del aniversario (< 60 días)
+    if (diasSinProgramar >= 15 && diasHastaAniversario !== null && diasHastaAniversario <= 60) {
+      return <Chip label="Crítico" color="error" size="small" icon={<WarningAmberIcon />} />;
+    }
+    
+    // 🟡 ADVERTENCIA: Días acumulados sin programar Y quedan varios meses
+    if (diasSinProgramar >= 10 && diasHastaAniversario !== null && diasHastaAniversario <= 120) {
+      return <Chip label="Pendiente" color="warning" size="small" icon={<PendingActionsIcon />} />;
+    }
+    
+    // 🟡 ADVERTENCIA: Muchos días sin programar (independiente del tiempo)
+    if (diasSinProgramar >= 20) {
+      return <Chip label="Acumulado" color="warning" size="small" icon={<WarningAmberIcon />} />;
+    }
+    
+    // 🟢 OK: Tiene todo programado o pocos días pendientes
     return <Chip label="OK" color="success" size="small" icon={<CheckCircleIcon />} />;
   };
 
@@ -298,6 +327,62 @@ export default function DashboardRRHH() {
         />
       </Box>
 
+      {/* Contadores de Alertas - Compacto */}
+      <Box sx={{ 
+        display: 'flex', 
+        gap: 1.5, 
+        mb: 2, 
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        bgcolor: 'grey.50',
+        p: 1.5,
+        borderRadius: 1
+      }}>
+        <Typography variant="body2" fontWeight={600} sx={{ color: 'text.secondary', mr: 1 }}>
+          Resumen de Alertas:
+        </Typography>
+        <Chip 
+          icon={<WarningAmberIcon />}
+          label={`Crítico: ${filteredEmpleados.filter(emp => {
+            const chip = getAlertaChip(emp);
+            return chip.props.label === 'Crítico';
+          }).length}`}
+          color="error" 
+          size="small"
+          sx={{ fontWeight: 600 }}
+        />
+        <Chip 
+          icon={<WarningAmberIcon />}
+          label={`Pendiente: ${filteredEmpleados.filter(emp => {
+            const chip = getAlertaChip(emp);
+            return chip.props.label === 'Pendiente';
+          }).length}`}
+          color="warning" 
+          size="small"
+          sx={{ fontWeight: 600 }}
+        />
+        <Chip 
+          icon={<WarningAmberIcon />}
+          label={`Acumulado: ${filteredEmpleados.filter(emp => {
+            const chip = getAlertaChip(emp);
+            return chip.props.label === 'Acumulado';
+          }).length}`}
+          color="warning" 
+          size="small"
+          sx={{ fontWeight: 600 }}
+        />
+        <Chip 
+          icon={<CheckCircleIcon />}
+          label={`OK: ${filteredEmpleados.filter(emp => {
+            const chip = getAlertaChip(emp);
+            return chip.props.label === 'OK';
+          }).length}`}
+          color="success" 
+          size="small"
+          sx={{ fontWeight: 600 }}
+        />
+      </Box>
+
       {/* Tabla de Empleados */}
       <Paper sx={{ width: '100%', overflow: 'hidden' }}>
         <TableContainer sx={{ maxHeight: 600 }}>
@@ -395,7 +480,7 @@ export default function DashboardRRHH() {
                         </Box>
                       </TableCell>
                       <TableCell>
-                        {getAlertaChip(diasRestantes, diasTomados)}
+                        {getAlertaChip(empleado)}
                       </TableCell>
                       <TableCell>
                         <Tooltip title="Enviar recordatorio">

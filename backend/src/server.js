@@ -60,6 +60,10 @@ app.use('/api/empleados', empleadosRoutes);
 app.use('/api/vacaciones', vacacionesRoutes);
 app.use('/api/aprobacion', aprobacionRoutes);
 
+// Importar rutas de feriados
+import feriadosRoutes from './routes/feriados.routes.js';
+app.use('/api/feriados', feriadosRoutes);
+
 // Ruta 404
 app.use((req, res) => {
   res.status(404).json({ error: 'Ruta no encontrada' });

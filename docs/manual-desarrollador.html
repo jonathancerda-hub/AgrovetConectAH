@@ -1713,6 +1713,331 @@ export default function GestionNomina() {
                         <p><strong>Documentación:</strong> /docs en el repositorio</p>
                     </div>
                 </div>
+
+                <!-- SECCIÓN NUEVA: LÓGICA DE REGLAS Y ESTADOS -->
+                <div class="content">
+                    <h2>🧮 Lógica de Reglas de Vacaciones y Estados</h2>
+                    
+                    <h3>Sistema de Alertas y Estados</h3>
+                    <div class="info-box">
+                        <h4>🎯 Objetivo del Sistema</h4>
+                        <p>El sistema de alertas está diseñado para garantizar que los empleados programen sus vacaciones <strong>ANTES</strong> de cumplir otro año laboral (cuando generan 30 días adicionales). Esto evita acumulación excesiva y problemas de planificación.</p>
+                    </div>
+
+                    <h3>Cálculo de Días Sin Programar</h3>
+                    <div class="code-block">
+<pre><code class="language-javascript">// backend/src/controllers/vacaciones.controller.js
+// Control RRHH - Query SQL
+
+SELECT 
+  e.id as empleado_id,
+  e.fecha_ingreso,  // CLAVE para calcular aniversario
+  e.nombres || ' ' || e.apellidos as nombre_completo,
+  COALESCE(SUM(pv.dias_disponibles), 0) as dias_disponibles,
+  COALESCE(
+    (SELECT SUM(dias_solicitados) 
+     FROM solicitudes_vacaciones sv 
+     WHERE sv.empleado_id = e.id 
+       AND sv.estado = 'aprobada'
+       AND sv.fecha_fin >= CURRENT_DATE
+    ), 0
+  ) as dias_programados
+FROM empleados e
+LEFT JOIN periodos_vacacionales pv ON e.id = pv.empleado_id 
+  AND pv.estado = 'activo'
+WHERE e.activo = true
+GROUP BY e.id, e.fecha_ingreso, e.nombres, e.apellidos;
+
+// Días sin programar = dias_disponibles - dias_programados</code></pre>
+                    </div>
+
+                    <h3>Algoritmo de Estados (Frontend)</h3>
+                    <div class="code-block">
+<pre><code class="language-javascript">// DashboardRRHH.jsx & ControlVacacionesEmpleado.jsx
+// Función getAlertaChip() / getEstadoEmpleado()
+
+const getAlertaChip = (empleado) => {
+  const diasDisponibles = empleado.dias_disponibles || 0;
+  const diasProgramados = empleado.dias_programados || 0;
+  const diasSinProgramar = diasDisponibles - diasProgramados;
+  
+  // 1. Calcular días hasta próximo aniversario
+  let diasHastaAniversario = null;
+  if (empleado.fecha_ingreso) {
+    const fechaIngreso = new Date(empleado.fecha_ingreso);
+    const hoy = new Date();
+    
+    // Próximo aniversario en el año actual o siguiente
+    let proximoAniversario = new Date(
+      hoy.getFullYear(), 
+      fechaIngreso.getMonth(), 
+      fechaIngreso.getDate()
+    );
+    
+    if (proximoAniversario < hoy) {
+      proximoAniversario = new Date(
+        hoy.getFullYear() + 1, 
+        fechaIngreso.getMonth(), 
+        fechaIngreso.getDate()
+      );
+    }
+    
+    diasHastaAniversario = Math.ceil(
+      (proximoAniversario - hoy) / (1000 * 60 * 60 * 24)
+    );
+  }
+  
+  // 2. Evaluar urgencia combinando días sin programar + tiempo
+  
+  // 🔴 CRÍTICO: ≥15 días sin programar Y ≤60 días hasta aniversario
+  if (diasSinProgramar >= 15 && diasHastaAniversario !== null && diasHastaAniversario <= 60) {
+    return &lt;Chip label="Crítico" color="error" /&gt;;
+  }
+  
+  // 🟡 ADVERTENCIA: ≥10 días sin programar Y ≤120 días hasta aniversario
+  if (diasSinProgramar >= 10 && diasHastaAniversario !== null && diasHastaAniversario <= 120) {
+    return &lt;Chip label="Pendiente" color="warning" /&gt;;
+  }
+  
+  // 🟡 ACUMULADO: ≥20 días sin programar (sin importar tiempo)
+  if (diasSinProgramar >= 20) {
+    return &lt;Chip label="Acumulado" color="warning" /&gt;;
+  }
+  
+  // 🟢 OK: Todo programado o pocos días pendientes
+  return &lt;Chip label="OK" color="success" /&gt;;
+};</code></pre>
+                    </div>
+
+                    <h3>Tabla de Estados y Criterios</h3>
+                    <div class="warning-box">
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                            <thead>
+                                <tr style="background: rgba(233, 69, 96, 0.2);">
+                                    <th style="padding: 10px; border: 1px solid #0f3460;">Estado</th>
+                                    <th style="padding: 10px; border: 1px solid #0f3460;">Color</th>
+                                    <th style="padding: 10px; border: 1px solid #0f3460;">Condición</th>
+                                    <th style="padding: 10px; border: 1px solid #0f3460;">Significado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="padding: 10px; border: 1px solid #0f3460;"><strong>🔴 Crítico</strong></td>
+                                    <td style="padding: 10px; border: 1px solid #0f3460;">Rojo (error)</td>
+                                    <td style="padding: 10px; border: 1px solid #0f3460;">≥15 días sin programar Y ≤60 días hasta aniversario</td>
+                                    <td style="padding: 10px; border: 1px solid #0f3460;"><strong>Urgente:</strong> Debe programar INMEDIATAMENTE o acumulará 30 días más</td>
+                                </tr>
+                                <tr style="background: rgba(255, 255, 255, 0.05);">
+                                    <td style="padding: 10px; border: 1px solid #0f3460;"><strong>🟡 Pendiente</strong></td>
+                                    <td style="padding: 10px; border: 1px solid #0f3460;">Amarillo (warning)</td>
+                                    <td style="padding: 10px; border: 1px solid #0f3460;">≥10 días sin programar Y ≤120 días hasta aniversario</td>
+                                    <td style="padding: 10px; border: 1px solid #0f3460;"><strong>Advertencia:</strong> Tiene 2-4 meses para programar, debe empezar a planificar</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; border: 1px solid #0f3460;"><strong>🟡 Acumulado</strong></td>
+                                    <td style="padding: 10px; border: 1px solid #0f3460;">Amarillo (warning)</td>
+                                    <td style="padding: 10px; border: 1px solid #0f3460;">≥20 días sin programar (independiente del tiempo)</td>
+                                    <td style="padding: 10px; border: 1px solid #0f3460;"><strong>Acumulación alta:</strong> Demasiados días pendientes, riesgo de perderlos</td>
+                                </tr>
+                                <tr style="background: rgba(255, 255, 255, 0.05);">
+                                    <td style="padding: 10px; border: 1px solid #0f3460;"><strong>🟢 OK / Disponible</strong></td>
+                                    <td style="padding: 10px; border: 1px solid #0f3460;">Verde (success)</td>
+                                    <td style="padding: 10px; border: 1px solid #0f3460;">&lt;10 días sin programar o todo programado</td>
+                                    <td style="padding: 10px; border: 1px solid #0f3460;"><strong>Normal:</strong> Está gestionando correctamente sus vacaciones</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; border: 1px solid #0f3460;"><strong>⚫ Agotado</strong></td>
+                                    <td style="padding: 10px; border: 1px solid #0f3460;">Rojo (error)</td>
+                                    <td style="padding: 10px; border: 1px solid #0f3460;">0 días disponibles</td>
+                                    <td style="padding: 10px; border: 1px solid #0f3460;"><strong>Sin días:</strong> Ya usó todos sus días del período</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3>Cálculo de Fines de Semana</h3>
+                    <div class="code-block">
+<pre><code class="language-javascript">// backend/src/controllers/vacaciones.controller.js
+// Función: contarDiasEspeciales()
+
+const contarDiasEspeciales = (fechaInicio, fechaFin) => {
+  const inicio = new Date(fechaInicio + 'T00:00:00');
+  const fin = new Date(fechaFin + 'T00:00:00');
+  
+  let viernes = 0;
+  let sabados = 0;
+  let domingos = 0;
+  
+  let fecha = new Date(inicio);
+  while (fecha <= fin) {
+    const diaSemana = fecha.getDay(); // 0=Domingo, 6=Sábado
+    if (diaSemana === 5) viernes++;
+    else if (diaSemana === 6) sabados++;
+    else if (diaSemana === 0) domingos++;
+    fecha.setDate(fecha.getDate() + 1);
+  }
+  
+  // REGLA: Un fin de semana = Sábado + Domingo juntos
+  // Se cuenta el mínimo entre sábados y domingos
+  const finesDeSemana = Math.min(sabados, domingos);
+  
+  return { viernes, sabados, domingos, finesDeSemana };
+};
+
+// EJEMPLO:
+// Solicitud: 4/2/2026 (viernes) - 7/2/2026 (domingo)
+// Resultado: { viernes: 1, sabados: 1, domingos: 1, finesDeSemana: 1 }
+// NO se cuenta como 2 días de fin de semana, sino como 1 fin de semana completo</code></pre>
+                    </div>
+
+                    <h3>Sistema de Feriados Dinámicos</h3>
+                    <div class="info-box">
+                        <h4>📅 Gestión de Feriados</h4>
+                        <p>El sistema permite gestionar feriados nacionales, regionales y festivos desde el Dashboard RRHH:</p>
+                        <ul>
+                            <li><strong>Tabla:</strong> <code class="code-inline">feriados</code></li>
+                            <li><strong>Campos:</strong> id, fecha (unique), nombre, tipo (nacional/regional/festivo), pais, anio, fecha_creacion</li>
+                            <li><strong>Endpoints:</strong> GET/POST/PUT/DELETE /api/feriados</li>
+                            <li><strong>Validación:</strong> Previene puente de feriados (≤7 días entre solicitudes)</li>
+                        </ul>
+                    </div>
+
+                    <div class="code-block">
+<pre><code class="language-javascript">// backend/src/services/vacaciones.service.js
+// Validar puenteo de feriados
+
+export const validarPuenteoFeriados = async (solicitudData) => {
+  const { empleado_id, fecha_inicio, fecha_fin } = solicitudData;
+  
+  // Buscar solicitudes aprobadas cercanas (≤7 días de separación)
+  const query = `
+    SELECT fecha_inicio, fecha_fin 
+    FROM solicitudes_vacaciones 
+    WHERE empleado_id = $1 
+      AND estado = 'aprobada'
+      AND (
+        fecha_fin >= $2 - INTERVAL '7 days' AND fecha_fin < $2
+        OR fecha_inicio > $3 AND fecha_inicio <= $3 + INTERVAL '7 days'
+      )
+  `;
+  
+  const solicitudesCercanas = await db.query(query, [empleado_id, fecha_inicio, fecha_fin]);
+  
+  if (solicitudesCercanas.rows.length > 0) {
+    // Verificar si hay feriados entre las solicitudes
+    const feriadosQuery = `
+      SELECT fecha, nombre 
+      FROM feriados 
+      WHERE fecha > $1 AND fecha < $2
+    `;
+    
+    const feriados = await db.query(feriadosQuery, [fecha_fin_anterior, fecha_inicio]);
+    
+    if (feriados.rows.length > 0) {
+      return {
+        valida: false,
+        mensaje: `No se permite puentear feriados (${feriados.rows[0].nombre}). 
+                 Debe incluir estos días en su solicitud o esperar.`
+      };
+    }
+  }
+  
+  return { valida: true };
+};</code></pre>
+                    </div>
+
+                    <h3>Contador de Alertas en Dashboard</h3>
+                    <div class="code-block">
+<pre><code class="language-javascript">// DashboardRRHH.jsx - Resumen de alertas
+
+&lt;Box sx={{ display: 'flex', gap: 1.5, mb: 2, bgcolor: 'grey.50', p: 1.5 }}&gt;
+  &lt;Typography variant="body2" fontWeight={600}&gt;
+    Resumen de Alertas:
+  &lt;/Typography&gt;
+  
+  &lt;Chip 
+    icon={&lt;WarningAmberIcon /&gt;}
+    label={`Crítico: ${filteredEmpleados.filter(emp => {
+      const chip = getAlertaChip(emp);
+      return chip.props.label === 'Crítico';
+    }).length}`}
+    color="error" 
+    size="small"
+  /&gt;
+  
+  &lt;Chip 
+    label={`Pendiente: ${/* contador */}`}
+    color="warning"
+  /&gt;
+  
+  &lt;Chip 
+    label={`Acumulado: ${/* contador */}`}
+    color="warning"
+  /&gt;
+  
+  &lt;Chip 
+    label={`OK: ${/* contador */}`}
+    color="success"
+  /&gt;
+&lt;/Box&gt;
+
+// Muestra contadores dinámicos según empleados filtrados</code></pre>
+                    </div>
+
+                    <h3>Reglas de Negocio Implementadas</h3>
+                    <div class="warning-box">
+                        <h4>📋 Reglas Activas del Sistema</h4>
+                        <ol style="margin-left: 20px; margin-top: 10px;">
+                            <li><strong>Días Mínimos:</strong> Mínimo 3 días consecutivos por solicitud (salida anticipada)</li>
+                            <li><strong>Días Disponibles:</strong> No puede solicitar más días de los disponibles</li>
+                            <li><strong>Cruces de Fechas:</strong> No permite solapamiento con solicitudes existentes del mismo empleado</li>
+                            <li><strong>Fin de Semana Completo:</strong> Sábado + Domingo = 1 fin de semana (no 2)</li>
+                            <li><strong>Anti-Puente Feriados:</strong> Si solicitudes están a ≤7 días con feriados entre medio, debe incluirlos</li>
+                            <li><strong>Fecha Ingreso:</strong> Nuevos empleados (&lt;1 año) tienen período proporcional</li>
+                            <li><strong>Alertas Temporales:</strong> Aumenta urgencia según proximidad a aniversario laboral</li>
+                            <li><strong>Feriados Dinámicos:</strong> Se cargan desde BD, no hardcodeados</li>
+                        </ol>
+                    </div>
+
+                    <h3>Flujo de Estados de Solicitud</h3>
+                    <div class="info-box">
+<pre style="color: #00d9ff; font-size: 0.9em; line-height: 1.8;">
+┌─────────────┐
+│  Pendiente  │ ← Estado inicial al crear solicitud
+└──────┬──────┘
+       │
+       ├──────→ ┌────────────┐
+       │        │  Aprobada  │ ← Jefe/RRHH aprueba
+       │        └──────┬─────┘
+       │               │
+       │               └──→ Cuenta para "Programados" si fecha_fin >= hoy
+       │
+       └──────→ ┌─────────────┐
+                │  Rechazada  │ ← Jefe/RRHH rechaza (con motivo)
+                └─────────────┘
+
+Estados adicionales:
+- Completada: Fecha fin ya pasó (histórico)
+- Cancelada: Empleado cancela antes de gozar
+</pre>
+                    </div>
+
+                    <h3>Optimizaciones Recientes</h3>
+                    <div class="tech-card" style="margin-top: 20px;">
+                        <h4>🚀 Mejoras Implementadas</h4>
+                        <ul>
+                            <li><strong>Sistema de Alertas Inteligente:</strong> Considera tiempo hasta aniversario + días acumulados</li>
+                            <li><strong>Cálculo Correcto de Fines de Semana:</strong> Pareja sábado-domingo = 1 fin de semana</li>
+                            <li><strong>Feriados Dinámicos:</strong> Gestionables desde UI, no requiere código</li>
+                            <li><strong>Contador de Alertas:</strong> Resumen visual en Dashboard RRHH</li>
+                            <li><strong>Excel Export Profesional:</strong> Control + Historial con 2 hojas</li>
+                            <li><strong>Filtros Mejorados:</strong> Por estado, área, nombre con emojis visuales</li>
+                            <li><strong>Columnas Programados/Pendientes:</strong> Con tooltips explicativos</li>
+                            <li><strong>Botón Búsqueda Eliminado:</strong> Funcionalidad no implementada removida</li>
+                        </ul>
+                    </div>
+                </div>
+
             </main>
         </div>
 
@@ -1720,7 +2045,7 @@ export default function GestionNomina() {
             <p><strong>AgrovetConectAH</strong> | Technical Documentation</p>
             <p>Desarrollado por el Equipo de TI | Stack: React + Node.js + PostgreSQL</p>
             <p style="margin-top: 15px; font-size: 0.9em;">
-                Build: 2025.11.17 | v1.0.0 | Environment: Development
+                Build: 2026.01.23 | v1.2.0 | Environment: Production
             </p>
         </footer>
     </div>
