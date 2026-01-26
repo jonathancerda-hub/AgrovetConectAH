@@ -155,12 +155,33 @@ export const aprobarRechazarSolicitud = async (req, res) => {
 
     // Si se aprueba, descontar días del período vacacional
     if (accion === 'aprobar' && solicitud.periodo_id) {
+      // Calcular viernes y fines de semana en el rango de fechas
+      const fechaInicio = new Date(solicitud.fecha_inicio);
+      const fechaFin = new Date(solicitud.fecha_fin);
+      let viernesCount = 0;
+      let sabadosCount = 0;
+      let domingosCount = 0;
+      
+      for (let d = new Date(fechaInicio); d <= fechaFin; d.setDate(d.getDate() + 1)) {
+        const diaSemana = d.getDay();
+        if (diaSemana === 5) viernesCount++;
+        if (diaSemana === 6) sabadosCount++;
+        if (diaSemana === 0) domingosCount++;
+      }
+      
+      const finesSemanaCount = Math.min(sabadosCount, domingosCount);
+      
       await dbQuery(
         `UPDATE periodos_vacacionales 
-         SET dias_disponibles = dias_disponibles - $1
-         WHERE id = $2`,
-        [solicitud.dias_solicitados, solicitud.periodo_id]
+         SET dias_disponibles = dias_disponibles - $1,
+             dias_usados = dias_usados + $1,
+             viernes_usados = viernes_usados + $2,
+             fines_semana_usados = fines_semana_usados + $3
+         WHERE id = $4`,
+        [solicitud.dias_solicitados, viernesCount, finesSemanaCount, solicitud.periodo_id]
       );
+      
+      console.log(`📊 Descontados: ${solicitud.dias_solicitados} días, ${viernesCount} viernes, ${finesSemanaCount} fines de semana`);
     }
 
     // Crear notificación para el empleado sobre la decisión

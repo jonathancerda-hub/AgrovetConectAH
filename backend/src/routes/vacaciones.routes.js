@@ -37,5 +37,6 @@ router.get('/control-rrhh', vacacionesController.obtenerControlRRHH);
 router.get('/dashboard-rrhh', vacacionesController.obtenerDashboardRRHH);
 router.get('/historial', vacacionesController.obtenerHistorialVacaciones);
 router.get('/detalle-empleado/:empleadoId', vacacionesController.obtenerDetalleEmpleado);
+router.get('/periodos-empleado/:empleadoId', vacacionesController.obtenerPeriodosEmpleado);
 
 export default router;

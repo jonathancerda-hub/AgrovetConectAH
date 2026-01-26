@@ -128,7 +128,8 @@ class VacacionesService {
 
     // Obtener períodos disponibles ordenados por antigüedad
     const query = `
-      SELECT id, anio_generacion, dias_disponibles, viernes_usados
+      SELECT id, anio_generacion, dias_disponibles, viernes_usados, 
+             COALESCE(fines_semana_usados, 0) as fines_semana_usados
       FROM periodos_vacacionales
       WHERE empleado_id = $1 AND estado = 'activo' AND dias_disponibles > 0
       ORDER BY anio_generacion ASC
@@ -489,24 +490,26 @@ class VacacionesService {
       // 5. NO descontar aquí - se descuenta al aprobar la solicitud
       // El descuento se hace en aprobacion.controller.js al aprobar
       
-      // 6. Crear notificación para el jefe inmediato
+      // 6. Crear notificaciones para el jefe inmediato y TODOS los usuarios de RRHH
       try {
         // Obtener datos del empleado y su supervisor
         const empleadoQuery = `
           SELECT 
             e.supervisor_id,
             e.nombres || ' ' || e.apellidos as nombre_empleado,
+            e.codigo_empleado,
+            a.nombre as area_nombre,
             s.id as supervisor_empleado_id
           FROM empleados e
           LEFT JOIN empleados s ON e.supervisor_id = s.id
+          LEFT JOIN areas a ON e.area_id = a.id
           WHERE e.id = $1
         `;
         const empleadoData = await dbQuery(empleadoQuery, [solicitudData.empleado_id]);
         
-        if (empleadoData.rows.length > 0 && empleadoData.rows[0].supervisor_empleado_id) {
-          const { nombre_empleado, supervisor_empleado_id } = empleadoData.rows[0];
+        if (empleadoData.rows.length > 0) {
+          const { nombre_empleado, codigo_empleado, area_nombre, supervisor_empleado_id } = empleadoData.rows[0];
           
-          // Crear notificación para el supervisor
           const notificacionQuery = `
             INSERT INTO notificaciones_vacaciones (
               solicitud_id,
@@ -518,22 +521,51 @@ class VacacionesService {
             ) VALUES ($1, $2, $3, $4, $5, $6)
           `;
           
-          await dbQuery(notificacionQuery, [
-            solicitudId,
-            supervisor_empleado_id,
-            'nueva_solicitud',
-            'Nueva solicitud de vacaciones',
-            `${nombre_empleado} ha solicitado vacaciones del ${solicitudData.fecha_inicio} al ${solicitudData.fecha_fin} (${detalles.diasCalendario} días)`,
-            false
-          ]);
+          // Notificación para el supervisor (si existe)
+          if (supervisor_empleado_id) {
+            await dbQuery(notificacionQuery, [
+              solicitudId,
+              supervisor_empleado_id,
+              'nueva_solicitud',
+              'Nueva solicitud de vacaciones',
+              `${nombre_empleado} ha solicitado vacaciones del ${solicitudData.fecha_inicio} al ${solicitudData.fecha_fin} (${detalles.diasCalendario} días)`,
+              false
+            ]);
+            console.log(`✅ Notificación enviada al supervisor (ID: ${supervisor_empleado_id})`);
+          }
           
-          console.log(`✅ Notificación enviada al supervisor (ID: ${supervisor_empleado_id})`);
+          // Notificaciones para TODOS los usuarios de RRHH
+          const rrhhQuery = `
+            SELECT id, nombres || ' ' || apellidos as nombre_rrhh
+            FROM empleados
+            WHERE es_rrhh = true AND activo = true
+          `;
+          const rrhhData = await dbQuery(rrhhQuery, []);
+          
+          if (rrhhData.rows.length > 0) {
+            const codigoInfo = codigo_empleado ? ` (Cód. ${codigo_empleado})` : '';
+            const areaInfo = area_nombre ? ` - ${area_nombre}` : '';
+            
+            for (const rrhh of rrhhData.rows) {
+              await dbQuery(notificacionQuery, [
+                solicitudId,
+                rrhh.id,
+                'nueva_solicitud_rrhh',
+                `📋 Nueva solicitud: ${nombre_empleado}`,
+                `El empleado ${nombre_empleado}${codigoInfo}${areaInfo} ha solicitado vacaciones del ${solicitudData.fecha_inicio} al ${solicitudData.fecha_fin} (${detalles.diasCalendario} días). Requiere revisión.`,
+                false
+              ]);
+            }
+            console.log(`✅ Notificaciones enviadas a ${rrhhData.rows.length} usuarios de RRHH`);
+          } else {
+            console.log('⚠️ No se encontraron usuarios de RRHH para notificar');
+          }
         } else {
-          console.log('⚠️ El empleado no tiene supervisor asignado, no se envió notificación');
+          console.log('⚠️ No se pudo obtener información del empleado');
         }
       } catch (notifError) {
         // No fallar la solicitud si falla la notificación
-        console.error('⚠️ Error al crear notificación para supervisor:', notifError.message);
+        console.error('⚠️ Error al crear notificaciones:', notifError.message);
       }
 
       return {
@@ -577,6 +609,8 @@ class VacacionesService {
     const detallesDias = [];
     let diasCalendario = 0;
     let viernesIncluidos = 0;
+    let sabadosIncluidos = 0;
+    let domingosIncluidos = 0;
     let incluyeFinesSemana = false;
 
     for (let d = new Date(fechaInicio); d <= fechaFin; d.setDate(d.getDate() + 1)) {
@@ -604,14 +638,26 @@ class VacacionesService {
       if (esViernes) {
         viernesIncluidos++;
       }
+      if (esSabado) {
+        sabadosIncluidos++;
+      }
+      if (esDomingo) {
+        domingosIncluidos++;
+      }
       if (esFinSemana) {
         incluyeFinesSemana = true;
       }
     }
 
+    // Calcular fines de semana completos (Sábado + Domingo = 1 fin de semana)
+    const finesSemanaCompletos = Math.min(sabadosIncluidos, domingosIncluidos);
+
     return {
       diasCalendario, // Todos los días se descuentan del saldo
       viernesIncluidos,
+      finesSemanaCompletos,
+      sabadosIncluidos,
+      domingosIncluidos,
       incluyeFinesSemana,
       detallesDias
     };
@@ -647,19 +693,20 @@ class VacacionesService {
   /**
    * Aplicar descuento al período vacacional
    */
-  async aplicarDescuentoPeriodo(periodoId, diasUsados, viernesUsados, client) {
+  async aplicarDescuentoPeriodo(periodoId, diasUsados, viernesUsados, finesSemanaUsados, client) {
     const query = `
       UPDATE periodos_vacacionales
       SET dias_disponibles = dias_disponibles - $1,
           dias_usados = dias_usados + $1,
           viernes_usados = viernes_usados + $2,
+          fines_semana_usados = fines_semana_usados + $3,
           estado = CASE 
             WHEN dias_disponibles - $1 <= 0 THEN 'consumido'
             ELSE estado
           END
-      WHERE id = $3
+      WHERE id = $4
     `;
-    await client.query(query, [diasUsados, viernesUsados, periodoId]);
+    await client.query(query, [diasUsados, viernesUsados, finesSemanaUsados, periodoId]);
   }
 
   /**

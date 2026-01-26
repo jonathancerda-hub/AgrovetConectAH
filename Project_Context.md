@@ -19,9 +19,10 @@ AgrovetConectAH es una aplicación web empresarial diseñada para gestionar las 
 -   **@mui/x-data-grid:** Tablas avanzadas con paginación
 
 ### Backend (Integración)
--   **API REST:** Comunicación con backend en Node.js
+-   **API REST:** Comunicación con backend en Node.js (Express)
 -   **JWT:** Autenticación basada en tokens
--   **PostgreSQL/Supabase:** Base de datos relacional
+-   **PostgreSQL/Supabase:** Base de datos relacional (Render)
+-   **Node.js:** Runtime de backend (puerto 3001)
 
 ## Características Principales
 
@@ -34,9 +35,9 @@ AgrovetConectAH es una aplicación web empresarial diseñada para gestionar las 
 ### 2. Portal Principal
 -   **Dashboard Personalizado:** Vista según rol del usuario
 -   **Navegación Lateral:** Sidebar con menús contextuales
--   **Mi Ficha:** Información personal del empleado
+-   **Mi Ficha:** Información personal del empleado (nombre completo, código, DNI, email)
 -   **Notificaciones:** Sistema de alertas en tiempo real
--   **Búsqueda Global:** Búsqueda de empleados y contenido
+-   **TopBar Simplificado:** Notificaciones y perfil de usuario (búsqueda eliminada)
 
 ### 3. Gestión de Vacaciones
 
@@ -61,11 +62,14 @@ AgrovetConectAH es una aplicación web empresarial diseñada para gestionar las 
 -   **Tipos de Eventos:**
     - Mis vacaciones (verde)
     - Vacaciones del equipo (azul)
-    - Feriados nacionales de Perú 2025 (rojo)
-    - Días festivos (naranja)
+    - Feriados nacionales/regionales (rojo) - **DINÁMICOS desde API**
+    - Días festivos (naranja) - **DINÁMICOS desde API**
+-   **Feriados 2026:** 13 feriados nacionales de Perú cargados
+-   **Gestión de Feriados:** CRUD completo desde Dashboard RRHH
 -   **Contador de Eventos:** Badges con cantidad por tipo
 -   **Navegación:** Cambio de mes y año
 -   **Sin Duplicados:** Eventos únicos por ID
+-   **Próximos Feriados:** Lista de los 6 próximos feriados oficiales
 
 #### Aprobación de Solicitudes
 -   **Flujo Multinivel:** Supervisor → RRHH
@@ -108,7 +112,26 @@ AgrovetConectAH es una aplicación web empresarial diseñada para gestionar las 
 -   **Publicaciones:** Sistema de comunicación interna
 -   **Gestión de Contenido:** Crear, editar y eliminar boletines
 
-### 7. Sistema de Notificaciones
+### 7. Dashboard RRHH
+-   **Control de Vacaciones:**
+    - Tabla completa de empleados con días disponibles/programados/pendientes
+    - **Sistema de Alertas Inteligente:** Basado en días sin programar + proximidad a aniversario
+    - **Contador de Alertas:** Chips con totales por estado (Crítico, Pendiente, Acumulado, OK)
+    - **Filtros con Emojis:** 🔴 Crítico, 🟡 Moderado, 🟢 Disponible, ⚫ Agotado, ⚪ Sin período
+    - **Exportación Excel:** Reporte con 2 hojas (Control + Historial)
+-   **Gestión de Feriados:**
+    - CRUD completo de feriados nacionales, regionales y festivos
+    - Filtro por año
+    - Validación de fechas duplicadas
+-   **Gestión de Empleados:**
+    - Visualización completa de plantilla
+    - Toggle RRHH por empleado
+    - Botón "Nuevo Empleado" deshabilitado (control de acceso)
+-   **Historial de Vacaciones:**
+    - Registro completo de todas las solicitudes
+    - Filtros por empleado, estado, fechas
+
+### 8. Sistema de Notificaciones
 -   **Tipos de Notificaciones:**
     - Aprobación de solicitudes
     - Rechazo de solicitudes
@@ -130,12 +153,20 @@ reac/
 │   │           ├── VacacionesPage.jsx          # Hub principal vacaciones
 │   │           ├── RequestForm.jsx             # Formulario solicitud + validación cruces
 │   │           ├── RequestsList.jsx            # Lista mis solicitudes
-│   │           ├── VacationCalendar.jsx        # Calendario eventos (sin duplicados)
+│   │           ├── VacationCalendar.jsx        # Calendario eventos dinámicos (API feriados)
 │   │           ├── ProcessRequestPage.jsx      # Aprobación solicitudes
 │   │           ├── DirectorioPage.jsx          # Directorio empleados (tarjetas 400px)
 │   │           ├── EquipoPage.jsx              # Gestión equipos (default: Mi Equipo)
 │   │           ├── TeamDashboard.jsx           # Dashboard equipo + vacaciones activas
-│   │           └── NewCollaboratorForm.jsx     # Solicitud colaborador
+│   │           ├── NewCollaboratorForm.jsx     # Solicitud colaborador
+│   │           ├── DashboardRRHH.jsx           # Dashboard RRHH con alertas inteligentes
+│   │           ├── ControlVacacionesEmpleado.jsx # Control RRHH con filtros emoji
+│   │           ├── HistorialVacaciones.jsx     # Historial completo
+│   │           ├── GestionEmpleados.jsx        # CRUD empleados (Nuevo deshabilitado)
+│   │           ├── GestionFeriados.jsx         # CRUD feriados (nuevo)
+│   │           ├── MiFicha.jsx                 # Ficha personal simplificada
+│   │           ├── TopBar.jsx                  # Barra superior sin búsqueda
+│   │           └── RRHHPage.jsx                # Container pestañas RRHH
 │   ├── services/
 │   │   ├── api.js                       # Axios instance con interceptors
 │   │   ├── auth.service.js              # Login, logout, getCurrentUser
@@ -143,19 +174,30 @@ reac/
 │   │   ├── empleados.service.js         # API empleados
 │   │   ├── aprobacion.service.js        # API aprobaciones
 │   │   ├── notificaciones.service.js    # API notificaciones
-│   │   └── publicaciones.service.js     # API boletines
+│   │   ├── publicaciones.service.js     # API boletines
+│   │   └── feriados.service.js          # API feriados (nuevo - CRUD completo)
 │   └── index.html                       # HTML con favicon WiFi SVG
 ├── backend/
 │   ├── src/
-│   │   ├── server.js                    # Express server
-│   │   ├── db.js                        # PostgreSQL connection
+│   │   ├── server.js                    # Express server (puerto 3001)
+│   │   ├── db.js                        # PostgreSQL connection (Supabase)
 │   │   ├── controllers/                 # Lógica de negocio
+│   │   │   ├── vacaciones.controller.js # Incluye cálculo de fines de semana
+│   │   │   ├── feriados.controller.js   # CRUD feriados (nuevo)
+│   │   │   └── ...                      # Otros controladores
 │   │   ├── routes/                      # Endpoints API
+│   │   │   ├── feriados.routes.js       # Rutas feriados (nuevo)
+│   │   │   └── ...                      # Otras rutas
 │   │   ├── middleware/                  # Auth, validación
 │   │   └── services/                    # Servicios backend
 │   └── database/
 │       └── migrations/                  # SQL migrations
+│           ├── 12_feriados_2026.sql     # Feriados Perú 2026 (nuevo)
+│           └── ...                      # Otras migraciones
 ├── docs/                                # Documentación HTML
+│   ├── manual-desarrollador.html       # Manual técnico v1.2.0 (actualizado)
+│   ├── manual-usuario.html             # Manual de usuario
+│   └── guides/                         # Guías adicionales
 ├── public/img/                          # Assets estáticos
 ├── package.json                         # Dependencies frontend
 ├── vite.config.js                       # Vite config
@@ -163,6 +205,75 @@ reac/
 ```
 
 ## Reglas de Negocio Implementadas
+
+### Sistema de Alertas Inteligente (Nuevo - Enero 2026)
+
+**Objetivo:** Garantizar que empleados programen vacaciones ANTES de cumplir otro año laboral y ganar 30 días adicionales.
+
+**Estados de Alerta:**
+
+1. **🔴 Crítico:**
+   - Condición: ≥15 días sin programar Y ≤60 días hasta aniversario
+   - Significado: Urgente - debe programar INMEDIATAMENTE o acumulará más días
+
+2. **🟡 Pendiente:**
+   - Condición: ≥10 días sin programar Y ≤120 días hasta aniversario
+   - Significado: Advertencia - tiene 2-4 meses para programar
+
+3. **🟡 Acumulado:**
+   - Condición: ≥20 días sin programar (independiente del tiempo)
+   - Significado: Acumulación alta - riesgo de perder días
+
+4. **🟢 OK/Disponible:**
+   - Condición: <10 días sin programar o todo bien gestionado
+   - Significado: Normal - está gestionando correctamente sus vacaciones
+
+5. **⚫ Agotado:**
+   - Condición: 0 días disponibles
+   - Significado: Ya usó todos sus días del período
+
+6. **⚪ Sin período:**
+   - Condición: No tiene período vacacional activo
+   - Significado: Empleado nuevo (<1 año)
+
+**Cálculos:**
+```javascript
+diasSinProgramar = dias_disponibles - dias_programados
+diasHastaAniversario = Math.ceil((proximoAniversario - hoy) / (1000*60*60*24))
+```
+
+**Implementación:**
+- Backend: Query SQL incluye `fecha_ingreso` para cálculo de aniversario
+- Frontend: Funciones `getAlertaChip()` y `getEstadoEmpleado()` aplican lógica
+- Dashboard RRHH: Contador de alertas con chips de resumen
+
+### Cálculo de Fines de Semana (Corregido - Enero 2026)
+
+**Regla Empresarial:** Un fin de semana = Sábado + Domingo juntos (NO por separado)
+
+**Implementación:**
+```javascript
+// backend/src/controllers/vacaciones.controller.js
+const finesDeSemana = Math.min(sabados, domingos);
+```
+
+**Ejemplo:**
+- Solicitud: 4/2/2026 (viernes) - 7/2/2026 (domingo)
+- Resultado: 1 fin de semana (NO 2)
+- Lógica: Si hay 1 sábado y 1 domingo = 1 fin de semana completo
+
+### Sistema de Feriados Dinámicos (Nuevo - Enero 2026)
+
+**Gestión desde UI:**
+- Tabla `feriados` con campos: id, fecha (unique), nombre, tipo, pais, anio
+- Tipos: nacional, regional, festivo
+- Endpoints: GET/POST/PUT/DELETE /api/feriados
+- Calendario carga feriados desde API (no hardcodeados)
+
+**Validaciones:**
+- Fecha única (constraint en BD)
+- Año extraído automáticamente de fecha
+- Anti-puenteo: ≤7 días entre solicitudes con feriados intermedios debe incluirlos
 
 ### Validación de Solicitudes
 1. **Días Disponibles:** Verificar saldo suficiente
@@ -189,6 +300,52 @@ reac/
 4. Cualquier rechazo → Estado: Rechazada (con motivo)
 
 ## Mejoras UX Recientes
+
+### Enero 2026 - Sistema de Alertas y Gestión Mejorada ✅
+
+**Dashboard RRHH:**
+- ✅ Sistema de alertas inteligente basado en aniversario laboral
+- ✅ Contador de alertas con chips (Crítico, Pendiente, Acumulado, OK)
+- ✅ Cambio de firma de función: `getAlertaChip(empleado)` en vez de `(diasRestantes, diasTomados)`
+- ✅ Tooltips explicativos en columnas Programados/Pendientes
+
+**Control de Vacaciones:**
+- ✅ Filtros reordenados con emojis: 🔴🟡🟢⚫⚪
+- ✅ Estados priorizados: Crítico → Moderado → Disponible → Agotado → Sin período
+- ✅ Lógica de estados mejorada con cálculo de aniversario
+
+**Sistema de Feriados:**
+- ✅ CRUD completo de feriados desde UI (GestionFeriados.jsx)
+- ✅ Calendario carga feriados dinámicamente desde API
+- ✅ Migración 2026: 13 feriados nacionales de Perú
+- ✅ Filtro por año en gestión
+- ✅ Validación de fechas duplicadas
+
+**Mi Ficha:**
+- ✅ Nombre completo en un solo campo (`${nombres} ${apellidos}`)
+- ✅ Eliminados: fecha_nacimiento y genero
+- ✅ Solo 4 campos esenciales: Nombre Completo, Código, DNI, Email
+
+**TopBar:**
+- ✅ Eliminada funcionalidad de búsqueda (no implementada)
+- ✅ Removidos: searchOpen, searchValue, handleSearchToggle, Ctrl+K
+- ✅ Interfaz más limpia: solo notificaciones + menú de usuario
+
+**Gestión de Empleados:**
+- ✅ Botón "NUEVO EMPLEADO" deshabilitado (control de acceso)
+
+**Backend:**
+- ✅ Cálculo correcto de fines de semana: `Math.min(sabados, domingos)`
+- ✅ Query SQL incluye `fecha_ingreso` para alertas
+- ✅ Controlador y rutas de feriados implementados
+- ✅ Servicio de feriados con CRUD completo
+
+**Documentación:**
+- ✅ Manual de desarrollador actualizado con lógica completa de reglas
+- ✅ Sección detallada: Sistema de Alertas, Estados, Fines de Semana
+- ✅ Tabla de estados con criterios exactos
+- ✅ Código de ejemplo de algoritmos
+- ✅ Versión actualizada: v1.2.0 (2026.01.23)
 
 ### DirectorioPage
 -   ✅ Tarjetas uniformes 400px altura fija
@@ -244,14 +401,60 @@ reac/
 
 ## Próximas Mejoras Potenciales
 -   [ ] Notificaciones push en tiempo real
--   [ ] Exportación de reportes a PDF/Excel
--   [ ] Dashboard analytics para RRHH
+-   [ ] Exportación de reportes a PDF
+-   [ ] Dashboard analytics para RRHH con gráficos
 -   [ ] Integración con calendario externo (Google Calendar)
 -   [ ] Gestión de permisos y licencias médicas
 -   [ ] Firma digital de aprobaciones
--   [ ] Historial de cambios de solicitudes
+-   [ ] Historial de cambios de solicitudes con log de auditoría
+-   [ ] Cálculo automático de días proporcionales para nuevos empleados
+-   [ ] Alertas automáticas por email para estados críticos
+-   [ ] Reporte de acumulación de vacaciones por área
 
-## Datos de Perú 2025
--   **Feriados Nacionales:** 13 días (incluye Fiestas Patrias, Navidad, Año Nuevo)
--   **Días Festivos:** 6 adicionales (San Valentín, Día de la Madre, Padre, etc.)
+## Datos de Perú 2026
+-   **Feriados Nacionales:** 13 días (Año Nuevo, Semana Santa, Trabajo, San Pedro, Fiestas Patrias x2, Santa Rosa, Angamos, Santos, Inmaculada, Navidad)
+-   **Feriados Cargados:** Migración 12_feriados_2026.sql aplicada
+-   **Gestión Dinámica:** CRUD completo desde Dashboard RRHH
+-   **Tipos:** Nacional, Regional, Festivo
 -   **Localización:** moment.js configurado en español peruano
+
+## Estado Actual del Proyecto - 26 de enero de 2026
+
+### Versión: 1.2.0
+
+**Componentes Funcionales:**
+- ✅ Sistema de autenticación JWT
+- ✅ Gestión completa de vacaciones
+- ✅ Sistema de alertas inteligente
+- ✅ Dashboard RRHH con métricas en tiempo real
+- ✅ Gestión de feriados dinámicos
+- ✅ Calendario interactivo con eventos múltiples
+- ✅ Aprobación multinivel de solicitudes
+- ✅ Directorio de empleados
+- ✅ Gestión de equipos
+- ✅ Boletines internos (RRHH)
+- ✅ Sistema de notificaciones
+
+**Backend:**
+- ✅ API REST completa en Express
+- ✅ Base de datos PostgreSQL/Supabase
+- ✅ Autenticación y autorización
+- ✅ Controladores de feriados
+- ✅ Lógica de alertas y validaciones
+- ✅ Puerto 3001 en producción
+
+**Seguridad:**
+- ✅ Secrets de Supabase migradas a variables de entorno
+- ✅ JWT tokens con expiración
+- ✅ Middleware de autenticación en todas las rutas protegidas
+- ✅ Roles y permisos implementados
+- ✅ Legacy keys deshabilitadas
+
+**Documentación:**
+- ✅ Manual de desarrollador completo (v1.2.0)
+- ✅ Lógica de reglas documentada
+- ✅ Algoritmos de cálculo explicados
+- ✅ Guías de setup y deployment
+- ✅ Contexto de proyecto actualizado
+
+**Última Actualización:** 26 de enero de 2026

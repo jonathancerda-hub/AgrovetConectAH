@@ -145,9 +145,12 @@ const RequestForm = ({ onSuccess }) => {
       }
       
       // 2. VALIDACIÓN BACKEND: Reglas de negocio
+      const diasSolicitados = fin.diff(inicio, 'days') + 1;
+      
       const resultado = await vacacionesService.validarSolicitud({
         fecha_inicio: fechaInicio.format('YYYY-MM-DD'),
-        fecha_fin: fechaFin.format('YYYY-MM-DD')
+        fecha_fin: fechaFin.format('YYYY-MM-DD'),
+        dias_solicitados: diasSolicitados
       });
       setValidacion(resultado);
     } catch (error) {
@@ -235,6 +238,38 @@ const RequestForm = ({ onSuccess }) => {
     return fechaFin.diff(fechaInicio, 'days') + 1;
   };
   
+  const contarViernesEnSeleccion = () => {
+    if (!fechaInicio || !fechaFin || !fechaInicio.isSameOrBefore(fechaFin)) {
+      return 0;
+    }
+    
+    let count = 0;
+    let current = fechaInicio.clone();
+    while (current.isSameOrBefore(fechaFin)) {
+      if (current.day() === 5) { // 5 = Viernes
+        count++;
+      }
+      current.add(1, 'days');
+    }
+    return count;
+  };
+  
+  const contarFinesSemanaEnSeleccion = () => {
+    if (!fechaInicio || !fechaFin || !fechaInicio.isSameOrBefore(fechaFin)) {
+      return 0;
+    }
+    
+    let sabados = 0;
+    let domingos = 0;
+    let current = fechaInicio.clone();
+    while (current.isSameOrBefore(fechaFin)) {
+      if (current.day() === 6) sabados++; // 6 = Sábado
+      if (current.day() === 0) domingos++; // 0 = Domingo
+      current.add(1, 'days');
+    }
+    return Math.min(sabados, domingos); // Fines de semana completos
+  };
+  
   return (
     <LocalizationProvider dateAdapter={AdapterMoment} adapterLocale="es">
       <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
@@ -284,22 +319,86 @@ const RequestForm = ({ onSuccess }) => {
                   
                   {/* Días calculados */}
                   {fechaInicio && fechaFin && fechaInicio.isSameOrBefore(fechaFin) && (
-                    <Card variant="outlined" sx={{ bgcolor: 'primary.50' }}>
-                      <CardContent sx={{ py: 1.5 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                          <CalendarIcon color="primary" />
-                          <Box>
-                            <Typography variant="body2" color="text.secondary">
-                              Días solicitados
-                            </Typography>
-                            <Typography variant="h6" color="primary">
-                              {calcularDias()} días
-                            </Typography>
+                    <>
+                      <Card variant="outlined" sx={{ bgcolor: 'primary.50' }}>
+                        <CardContent sx={{ py: 1.5 }}>
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                              <CalendarIcon color="primary" />
+                              <Box sx={{ flex: 1 }}>
+                                <Typography variant="body2" color="text.secondary">
+                                  Días solicitados
+                                </Typography>
+                                <Typography variant="h6" color="primary">
+                                  {calcularDias()} días
+                                </Typography>
+                              </Box>
+                              {validando && <CircularProgress size={20} />}
+                            </Box>
+                            
+                            {/* Contador de viernes */}
+                            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, pt: 1, borderTop: 1, borderColor: 'divider' }}>
+                              <Box>
+                                <Typography variant="caption" color="text.secondary">
+                                  🗓️ Viernes incluidos
+                                </Typography>
+                                <Typography variant="body1" fontWeight="medium" color={contarViernesEnSeleccion() > 0 ? 'warning.main' : 'text.primary'}>
+                                  {contarViernesEnSeleccion()}
+                                </Typography>
+                              </Box>
+                              <Box>
+                                <Typography variant="caption" color="text.secondary">
+                                  📅 Fines de semana
+                                </Typography>
+                                <Typography variant="body1" fontWeight="medium" color={contarFinesSemanaEnSeleccion() > 0 ? 'info.main' : 'text.primary'}>
+                                  {contarFinesSemanaEnSeleccion()}
+                                </Typography>
+                              </Box>
+                            </Box>
                           </Box>
-                          {validando && <CircularProgress size={20} sx={{ ml: 'auto' }} />}
-                        </Box>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
+                      
+                      {/* Alerta de exceso de viernes */}
+                      {(() => {
+                        const viernesActuales = contarViernesEnSeleccion();
+                        if (viernesActuales > 0 && periodos.length > 0) {
+                          const periodoActivo = periodos.find(p => p.estado === 'activo');
+                          if (periodoActivo) {
+                            const viernesUsados = periodoActivo.viernes_usados || 0;
+                            const viernesTotal = viernesUsados + viernesActuales;
+                            if (viernesTotal > 5) {
+                              return (
+                                <Alert severity="error" icon={<ErrorIcon />}>
+                                  <AlertTitle>⚠️ Límite de viernes excedido</AlertTitle>
+                                  Ya tienes <strong>{viernesUsados} viernes usados</strong> en el período {periodoActivo.anio_generacion}.
+                                  Esta solicitud incluye <strong>{viernesActuales} viernes más</strong>, lo que totalizaría <strong>{viernesTotal} viernes</strong>.
+                                  <br />
+                                  <strong>Máximo permitido: 5 viernes por período de 30 días.</strong>
+                                </Alert>
+                              );
+                            } else if (viernesTotal === 5) {
+                              return (
+                                <Alert severity="warning" icon={<WarningIcon />}>
+                                  <AlertTitle>📊 Alcanzando límite de viernes</AlertTitle>
+                                  Con esta solicitud alcanzarás el límite de <strong>5 viernes</strong> permitidos en el período {periodoActivo.anio_generacion}
+                                  (actualmente tienes {viernesUsados} viernes usados).
+                                </Alert>
+                              );
+                            } else if (viernesActuales > 0) {
+                              return (
+                                <Alert severity="info" icon={<InfoIcon />}>
+                                  <AlertTitle>ℹ️ Viernes incluidos</AlertTitle>
+                                  Esta solicitud incluye <strong>{viernesActuales} viernes</strong>. 
+                                  Después de esta solicitud tendrás <strong>{viernesTotal} de 5 viernes usados</strong> en el período {periodoActivo.anio_generacion}.
+                                </Alert>
+                              );
+                            }
+                          }
+                        }
+                        return null;
+                      })()}
+                    </>
                   )}
                   
                   {/* Resultados de validación */}
@@ -464,7 +563,15 @@ const RequestForm = ({ onSuccess }) => {
                               Viernes usados:
                             </Typography>
                             <Typography variant="caption" fontWeight={600}>
-                              {periodo.viernes_usados} de 5
+                              {periodo.viernes_usados || 0} de 5
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <Typography variant="caption" color="text.secondary">
+                              Fines de semana:
+                            </Typography>
+                            <Typography variant="caption" fontWeight={600}>
+                              {periodo.fines_semana_usados || 0} usados
                             </Typography>
                           </Box>
                         </Box>

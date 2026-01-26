@@ -60,6 +60,7 @@ const ControlVacacionesEmpleado = () => {
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null);
   const [detalleVacaciones, setDetalleVacaciones] = useState(null);
   const [loadingDetalle, setLoadingDetalle] = useState(false);
+  const [periodoSeleccionado, setPeriodoSeleccionado] = useState(null);
 
   useEffect(() => {
     cargarDatos();
@@ -195,6 +196,8 @@ const ControlVacacionesEmpleado = () => {
           'Días Totales': emp.dias_totales,
           'Disponibles': emp.dias_disponibles,
           'Usados': emp.dias_usados,
+          'Viernes Usados': `${emp.viernes_usados || 0}/5`,
+          'Fines Semana': emp.fines_semana_usados || 0,
           'Programados': emp.dias_programados || 0,
           'Pendientes': emp.dias_pendientes || 0,
           '% Uso': `${(100 - porcentajeDisponible).toFixed(1)}%`,
@@ -216,6 +219,8 @@ const ControlVacacionesEmpleado = () => {
         { wch: 12 }, // Días Totales
         { wch: 12 }, // Disponibles
         { wch: 10 }, // Usados
+        { wch: 14 }, // Viernes Usados
+        { wch: 13 }, // Fines Semana
         { wch: 13 }, // Programados
         { wch: 12 }, // Pendientes
         { wch: 10 }, // % Uso
@@ -245,10 +250,15 @@ const ControlVacacionesEmpleado = () => {
     setOpenDetalle(true);
     setLoadingDetalle(true);
     setDetalleVacaciones(null);
+    setPeriodoSeleccionado(null);
 
     try {
-      const response = await api.get(`/vacaciones/detalle-empleado/${empleado.empleado_id}`);
+      const response = await api.get(`/vacaciones/periodos-empleado/${empleado.empleado_id}`);
       setDetalleVacaciones(response.data);
+      // Seleccionar el primer período por defecto (más reciente)
+      if (response.data.periodos && response.data.periodos.length > 0) {
+        setPeriodoSeleccionado(response.data.periodos[0].id);
+      }
     } catch (err) {
       console.error('Error al cargar detalle:', err);
       setError('Error al cargar el detalle de vacaciones');
@@ -261,6 +271,7 @@ const ControlVacacionesEmpleado = () => {
     setOpenDetalle(false);
     setEmpleadoSeleccionado(null);
     setDetalleVacaciones(null);
+    setPeriodoSeleccionado(null);
   };
 
   if (loading) {
@@ -549,12 +560,12 @@ const ControlVacacionesEmpleado = () => {
         </Typography>
       </Box>
 
-      {/* Dialog de Detalle */}
+      {/* Dialog de Detalle - Períodos Vacacionales */}
       <Dialog open={openDetalle} onClose={cerrarDetalle} maxWidth="md" fullWidth>
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <CalendarIcon color="primary" />
-            <Box>
+            <Box sx={{ flex: 1 }}>
               <Typography variant="h6">Detalle de Vacaciones</Typography>
               {empleadoSeleccionado && (
                 <Typography variant="body2" color="text.secondary">
@@ -571,105 +582,137 @@ const ControlVacacionesEmpleado = () => {
             </Box>
           ) : detalleVacaciones ? (
             <Box>
-              <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
-                <Chip 
-                  label={`Total tomado: ${detalleVacaciones.total_dias_tomados} días`}
-                  color="primary"
-                />
-                <Chip 
-                  label={`${detalleVacaciones.total_registros} períodos`}
-                  color="info"
-                />
-              </Stack>
-
-              <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
-                Vacaciones por Mes/Año:
-              </Typography>
-
-              {detalleVacaciones.detalle_por_mes && detalleVacaciones.detalle_por_mes.length > 0 ? (
-                detalleVacaciones.detalle_por_mes.map((mes, index) => (
-                  <Accordion key={index} defaultExpanded={index === 0}>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Stack direction="row" spacing={2} alignItems="center" sx={{ width: '100%' }}>
-                        <Typography variant="body1" fontWeight={600}>
-                          {mes.mes_nombre}
-                        </Typography>
-                        <Chip 
-                          size="small" 
-                          label={`${mes.total_dias} días`} 
-                          color="success"
-                        />
-                        {mes.total_viernes > 0 && (
-                          <Chip 
-                            size="small" 
-                            label={`${mes.total_viernes} viernes`} 
-                            color="info"
-                            variant="outlined"
-                          />
-                        )}
-                        {mes.total_fines_semana > 0 && (
-                          <Chip 
-                            size="small" 
-                            label={`${mes.total_fines_semana} fin de semana`} 
-                            color="warning"
-                            variant="outlined"
-                          />
-                        )}
-                        <Typography variant="caption" color="text.secondary">
-                          ({mes.solicitudes.length} período{mes.solicitudes.length !== 1 ? 's' : ''})
-                        </Typography>
-                      </Stack>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      {mes.solicitudes.map((solicitud, idx) => (
-                        <Box key={solicitud.id} sx={{ mb: idx < mes.solicitudes.length - 1 ? 2 : 0 }}>
-                          <Stack spacing={1}>
-                            <Stack direction="row" spacing={2} alignItems="center">
-                              <Typography variant="body2" fontWeight={500}>
-                                📅 {new Date(solicitud.fecha_inicio).toLocaleDateString('es-ES')} - {new Date(solicitud.fecha_fin).toLocaleDateString('es-ES')}
-                              </Typography>
-                              <Chip size="small" label={`${solicitud.dias_solicitados} días`} />
-                            </Stack>
-                            
-                            {solicitud.dias_especiales && (
-                              <Stack direction="row" spacing={1} sx={{ ml: 3 }}>
-                                {solicitud.dias_especiales.viernes > 0 && (
-                                  <Typography variant="caption" color="info.main">
-                                    🗓️ {solicitud.dias_especiales.viernes} viernes
-                                  </Typography>
-                                )}
-                                {solicitud.dias_especiales.sabados > 0 && (
-                                  <Typography variant="caption" color="warning.main">
-                                    📆 {solicitud.dias_especiales.sabados} sábados
-                                  </Typography>
-                                )}
-                                {solicitud.dias_especiales.domingos > 0 && (
-                                  <Typography variant="caption" color="warning.main">
-                                    📆 {solicitud.dias_especiales.domingos} domingos
-                                  </Typography>
-                                )}
-                                {(solicitud.dias_especiales.sabados + solicitud.dias_especiales.domingos) > 0 && (
-                                  <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                                    (Total fin de semana: {solicitud.dias_especiales.finesDeSemana})
-                                  </Typography>
-                                )}
-                              </Stack>
-                            )}
-                            
-                            {solicitud.motivo && (
-                              <Typography variant="caption" color="text.secondary" sx={{ ml: 3, display: 'block' }}>
-                                💬 Motivo: {solicitud.motivo}
-                              </Typography>
-                            )}
-                          </Stack>
-                          {idx < mes.solicitudes.length - 1 && <Divider sx={{ mt: 2 }} />}
-                        </Box>
+              {/* Selector de Período */}
+              {detalleVacaciones.periodos && detalleVacaciones.periodos.length > 0 ? (
+                <>
+                  <FormControl fullWidth sx={{ mb: 2 }}>
+                    <Select
+                      value={periodoSeleccionado || ''}
+                      onChange={(e) => setPeriodoSeleccionado(e.target.value)}
+                      displayEmpty
+                    >
+                      {detalleVacaciones.periodos.map((periodo) => (
+                        <MenuItem key={periodo.id} value={periodo.id}>
+                          Período {periodo.anio_generacion}
+                          {periodo.fecha_inicio_periodo && periodo.fecha_fin_periodo && (
+                            ` (${new Date(periodo.fecha_inicio_periodo).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })} - ${new Date(periodo.fecha_fin_periodo).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })})`
+                          )}
+                        </MenuItem>
                       ))}
-                    </AccordionDetails>
-                  </Accordion>
-                ))
+                    </Select>
+                  </FormControl>
+
+                  {/* Detalle del Período Seleccionado */}
+                  {(() => {
+                    const periodo = detalleVacaciones.periodos.find(p => p.id === periodoSeleccionado);
+                    if (!periodo) return null;
+
+                    return (
+                      <Box>
+                        {/* Resumen del Período */}
+                        <Paper variant="outlined" sx={{ p: 1.5, mb: 2, bgcolor: 'background.default' }}>
+                          <Grid container spacing={1.5} alignItems="center">
+                            <Grid item xs={2}>
+                              <Typography variant="caption" color="text.secondary" display="block">Días Totales</Typography>
+                              <Typography variant="h6" color="primary">{periodo.dias_totales}</Typography>
+                            </Grid>
+                            <Grid item xs={2}>
+                              <Typography variant="caption" color="text.secondary" display="block">Disponibles</Typography>
+                              <Typography variant="h6" color="success.main">{periodo.dias_disponibles}</Typography>
+                            </Grid>
+                            <Grid item xs={1.5}>
+                              <Typography variant="caption" color="text.secondary" display="block">Usados</Typography>
+                              <Typography variant="h6" color="error.main">{periodo.dias_usados}</Typography>
+                            </Grid>
+                            <Grid item xs={2}>
+                              <Typography variant="caption" color="text.secondary" display="block">Viernes usados</Typography>
+                              <Typography variant="body2" fontWeight="medium">
+                                {periodo.viernes_usados || 0} de 5
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={2}>
+                              <Typography variant="caption" color="text.secondary" display="block">Fines de semana</Typography>
+                              <Typography variant="body2" fontWeight="medium">
+                                {periodo.fines_semana_usados || 0} usados
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={1.5}>
+                              <Typography variant="caption" color="text.secondary" display="block">Estado</Typography>
+                              <Chip 
+                                label={periodo.estado} 
+                                size="small" 
+                                color={periodo.estado === 'activo' ? 'success' : 'default'}
+                              />
+                            </Grid>
+                            {periodo.tiene_bloque_7dias && (
+                              <Grid item xs={1}>
+                                <Chip 
+                                  label="✓ 7d" 
+                                  size="small" 
+                                  color="success" 
+                                  variant="outlined"
+                                />
+                              </Grid>
+                            )}
+                          </Grid>
+                        </Paper>
+
+                        {/* Solicitudes del Período */}
+                        <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
+                          Solicitudes de este período:
+                        </Typography>
+
+                        {periodo.solicitudes && periodo.solicitudes.length > 0 ? (
+                          <Stack spacing={1}>
+                            {periodo.solicitudes.map((solicitud) => (
+                              <Paper key={solicitud.id} variant="outlined" sx={{ p: 1.5 }}>
+                                <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+                                  <Stack direction="row" spacing={2} alignItems="center" flex={1}>
+                                    <Typography variant="body2" fontWeight={500}>
+                                      📅 {new Date(solicitud.fecha_inicio).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })} - 
+                                      {new Date(solicitud.fecha_fin).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                    </Typography>
+                                    <Chip size="small" label={`${solicitud.dias_solicitados} días`} color="primary" />
+                                    {solicitud.dias_especiales && solicitud.dias_especiales.viernes > 0 && (
+                                      <Typography variant="caption" color="info.main">
+                                        🗓️ {solicitud.dias_especiales.viernes} viernes
+                                      </Typography>
+                                    )}
+                                    {solicitud.dias_especiales && solicitud.dias_especiales.fines_semana > 0 && (
+                                      <Typography variant="caption" color="warning.main">
+                                        📅 {solicitud.dias_especiales.fines_semana} f.s.
+                                      </Typography>
+                                    )}
+                                  </Stack>
+                                  <Chip 
+                                    size="small" 
+                                    label={solicitud.estado} 
+                                    color={
+                                      solicitud.estado === 'aprobada' ? 'success' :
+                                      solicitud.estado === 'pendiente' ? 'warning' :
+                                      solicitud.estado === 'rechazada' ? 'error' : 'default'
+                                    }
+                                  />
+                                </Stack>
+                              </Paper>
+                            ))}
+                          </Stack>
+                        ) : (
+                          <Alert severity="info">No hay solicitudes registradas en este período</Alert>
+                        )}
+                      </Box>
+                    );
+                  })()}
+                </>
               ) : (
-                <Alert severity="info">No hay vacaciones registradas</Alert>
+                <Alert severity="info">
+                  Este empleado aún no tiene períodos vacacionales generados.
+                  {detalleVacaciones.empleado?.fecha_ingreso && (
+                    <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                      Fecha de ingreso: {new Date(detalleVacaciones.empleado.fecha_ingreso).toLocaleDateString('es-ES')}
+                    </Typography>
+                  )}
+                </Alert>
               )}
             </Box>
           ) : (

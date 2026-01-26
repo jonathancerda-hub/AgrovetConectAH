@@ -495,6 +495,8 @@ export const obtenerControlRRHH = async (req, res) => {
         COALESCE(SUM(pv.dias_disponibles), 0) as dias_disponibles,
         COALESCE(SUM(pv.dias_usados), 0) as dias_usados,
         COALESCE(SUM(pv.dias_usados), 0) as dias_tomados,
+        COALESCE(SUM(pv.viernes_usados), 0) as viernes_usados,
+        COALESCE(SUM(pv.fines_semana_usados), 0) as fines_semana_usados,
         COALESCE(
           (SELECT COUNT(*) 
            FROM solicitudes_vacaciones sv 
@@ -809,5 +811,120 @@ export const obtenerDetalleEmpleado = async (req, res) => {
   } catch (error) {
     console.error('Error al obtener detalle del empleado:', error);
     res.status(500).json({ error: 'Error al obtener el detalle' });
+  }
+};
+
+// Obtener períodos vacacionales de un empleado con sus solicitudes
+export const obtenerPeriodosEmpleado = async (req, res) => {
+  try {
+    const { empleadoId } = req.params;
+
+    // Obtener información del empleado
+    const empleadoQuery = `
+      SELECT id, nombres, apellidos, fecha_ingreso
+      FROM empleados
+      WHERE id = $1
+    `;
+    const empleadoResult = await dbQuery(empleadoQuery, [empleadoId]);
+    
+    if (empleadoResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Empleado no encontrado' });
+    }
+
+    const empleado = empleadoResult.rows[0];
+
+    // Obtener períodos vacacionales del empleado
+    // Solo mostrar períodos que ya se hayan cumplido (fecha_inicio_periodo <= hoy)
+    const periodosQuery = `
+      SELECT 
+        pv.id,
+        pv.anio_generacion,
+        pv.dias_totales,
+        pv.dias_disponibles,
+        pv.dias_usados,
+        pv.viernes_usados,
+        pv.fines_semana_usados,
+        pv.tiene_bloque_7dias,
+        pv.estado,
+        pv.fecha_inicio_periodo,
+        pv.fecha_fin_periodo
+      FROM periodos_vacacionales pv
+      WHERE pv.empleado_id = $1
+        AND pv.fecha_inicio_periodo <= CURRENT_DATE
+      ORDER BY pv.anio_generacion DESC
+    `;
+    const periodosResult = await dbQuery(periodosQuery, [empleadoId]);
+
+    // Para cada período, obtener sus solicitudes
+    const periodos = await Promise.all(
+      periodosResult.rows.map(async (periodo) => {
+        // Obtener solicitudes que corresponden a este período
+        const solicitudesQuery = `
+          SELECT 
+            sv.id,
+            sv.fecha_inicio,
+            sv.fecha_fin,
+            sv.dias_solicitados,
+            sv.motivo,
+            sv.estado,
+            sv.fecha_creacion,
+            sv.fecha_aprobacion,
+            sv.periodo_id
+          FROM solicitudes_vacaciones sv
+          WHERE sv.empleado_id = $1
+            AND sv.periodo_id = $2
+          ORDER BY sv.fecha_inicio DESC
+        `;
+        const solicitudesResult = await dbQuery(solicitudesQuery, [empleadoId, periodo.id]);
+
+        // Calcular días especiales para cada solicitud
+        const solicitudesConDetalles = solicitudesResult.rows.map(solicitud => {
+          const inicio = new Date(solicitud.fecha_inicio + 'T00:00:00');
+          const fin = new Date(solicitud.fecha_fin + 'T00:00:00');
+          
+          let viernes = 0;
+          let sabados = 0;
+          let domingos = 0;
+          
+          let fecha = new Date(inicio);
+          while (fecha <= fin) {
+            const diaSemana = fecha.getDay();
+            if (diaSemana === 5) viernes++;
+            else if (diaSemana === 6) sabados++;
+            else if (diaSemana === 0) domingos++;
+            fecha.setDate(fecha.getDate() + 1);
+          }
+          
+          const fines_semana = Math.min(sabados, domingos);
+          
+          return {
+            ...solicitud,
+            dias_especiales: {
+              viernes,
+              sabados,
+              domingos,
+              fines_semana
+            }
+          };
+        });
+
+        return {
+          ...periodo,
+          solicitudes: solicitudesConDetalles
+        };
+      })
+    );
+
+    res.json({
+      empleado: {
+        id: empleado.id,
+        nombre_completo: `${empleado.nombres} ${empleado.apellidos}`,
+        fecha_ingreso: empleado.fecha_ingreso
+      },
+      periodos: periodos
+    });
+  } catch (error) {
+    console.error('Error al obtener períodos del empleado:', error);
+    res.status(500).json({ error: 'Error al obtener los períodos' });
   }
 };

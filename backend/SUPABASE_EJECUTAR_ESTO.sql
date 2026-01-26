@@ -139,6 +139,7 @@ CREATE TABLE periodos_vacacionales (
     dias_disponibles INT NOT NULL,
     dias_usados INT DEFAULT 0,
     viernes_usados INT DEFAULT 0,
+    fines_semana_usados INT DEFAULT 0,
     tiene_bloque_7dias BOOLEAN DEFAULT false,
     estado VARCHAR(20) DEFAULT 'activo' CHECK (estado IN ('activo', 'vencido', 'consumido')),
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
