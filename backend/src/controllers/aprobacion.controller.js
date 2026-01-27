@@ -1,6 +1,66 @@
 import { query as dbQuery } from '../db.js';
 
 /**
+ * Verificar si hay conflictos de vacaciones con otros miembros del equipo
+ */
+const verificarConflictosEquipo = async (solicitudId, empleadoId, fechaInicio, fechaFin) => {
+  try {
+    // Obtener el supervisor_id y area_id del empleado
+    const empleadoResult = await dbQuery(
+      `SELECT supervisor_id, area_id FROM empleados WHERE id = $1`,
+      [empleadoId]
+    );
+
+    if (!empleadoResult.rows || empleadoResult.rows.length === 0) {
+      return [];
+    }
+
+    const { supervisor_id, area_id } = empleadoResult.rows[0];
+
+    // Buscar otras solicitudes del mismo equipo (mismo supervisor o misma área) 
+    // en fechas superpuestas, excluyendo la solicitud actual
+    const conflictosQuery = `
+      SELECT 
+        sv.id,
+        sv.fecha_inicio,
+        sv.fecha_fin,
+        sv.dias_solicitados,
+        sv.estado,
+        e.nombres || ' ' || e.apellidos as nombre_empleado,
+        e.codigo_empleado,
+        p.nombre as puesto
+      FROM solicitudes_vacaciones sv
+      JOIN empleados e ON sv.empleado_id = e.id
+      LEFT JOIN puestos p ON e.puesto_id = p.id
+      WHERE sv.id != $1
+        AND e.id != $2
+        AND (e.supervisor_id = $3 OR e.area_id = $4)
+        AND sv.estado IN ('pendiente', 'aprobada')
+        AND (
+          (sv.fecha_inicio BETWEEN $5 AND $6)
+          OR (sv.fecha_fin BETWEEN $5 AND $6)
+          OR (sv.fecha_inicio <= $5 AND sv.fecha_fin >= $6)
+        )
+      ORDER BY sv.fecha_inicio
+    `;
+
+    const result = await dbQuery(conflictosQuery, [
+      solicitudId,
+      empleadoId,
+      supervisor_id,
+      area_id,
+      fechaInicio,
+      fechaFin
+    ]);
+
+    return result.rows;
+  } catch (error) {
+    console.error('Error al verificar conflictos:', error);
+    return [];
+  }
+};
+
+/**
  * Obtener solicitudes de vacaciones según el rol del usuario
  * - Si es RRHH: ve todas las solicitudes
  * - Si es supervisor: ve solo las de sus subordinados directos
@@ -58,6 +118,7 @@ export const getSolicitudesParaAprobacion = async (req, res) => {
           sv.fecha_aprobacion,
           sv.observaciones_aprobador,
           e.nombres || ' ' || e.apellidos as nombre_empleado,
+          e.codigo_empleado,
           e.email,
           p.nombre as puesto,
           a.nombre as area,
@@ -77,10 +138,33 @@ export const getSolicitudesParaAprobacion = async (req, res) => {
     const result = await dbQuery(query, params);
     console.log('📋 Solicitudes encontradas:', result.rows.length);
     
+    // Para cada solicitud pendiente, verificar conflictos con el equipo
+    const solicitudesConConflictos = await Promise.all(
+      result.rows.map(async (solicitud) => {
+        // Solo verificar conflictos para solicitudes pendientes
+        if (solicitud.estado === 'pendiente') {
+          const conflictos = await verificarConflictosEquipo(
+            solicitud.id,
+            solicitud.empleado_id,
+            solicitud.fecha_inicio,
+            solicitud.fecha_fin
+          );
+          return {
+            ...solicitud,
+            conflictos_equipo: conflictos
+          };
+        }
+        return {
+          ...solicitud,
+          conflictos_equipo: []
+        };
+      })
+    );
+    
     res.json({
-      solicitudes: result.rows,
+      solicitudes: solicitudesConConflictos,
       esRRHH,
-      total: result.rows.length
+      total: solicitudesConConflictos.length
     });
   } catch (error) {
     console.error('Error al obtener solicitudes:', error);
@@ -283,17 +367,96 @@ export const getSubordinados = async (req, res) => {
       [empleado_id]
     );
 
+    // Enriquecer cada subordinado con información de vacaciones
+    const subordinadosConVacaciones = await Promise.all(
+      result.rows.map(async (subordinado) => {
+        try {
+          // Obtener período actual del empleado
+          const periodoQuery = await dbQuery(
+            `SELECT 
+              pv.id,
+              pv.dias_totales,
+              pv.dias_usados,
+              pv.dias_disponibles,
+              pv.viernes_usados,
+              pv.fines_semana_usados
+            FROM periodos_vacacionales pv
+            WHERE pv.empleado_id = $1
+            AND pv.estado = 'activo'
+            ORDER BY pv.anio_generacion DESC
+            LIMIT 1`,
+            [subordinado.id]
+          );
+
+          const periodo = periodoQuery.rows[0];
+
+          // Obtener días efectivos (solicitudes aprobadas cuya fecha ya pasó o está en curso)
+          const efectivosQuery = await dbQuery(
+            `SELECT COALESCE(SUM(dias_solicitados), 0) as dias_efectivos
+            FROM solicitudes_vacaciones
+            WHERE empleado_id = $1
+            AND estado IN ('aprobada', 'Aprobado')
+            AND fecha_inicio <= CURRENT_DATE`,
+            [subordinado.id]
+          );
+
+          // Obtener días programados (solicitudes aprobadas/pendientes cuya fecha AÚN NO ha llegado)
+          const programadosQuery = await dbQuery(
+            `SELECT 
+              COALESCE(SUM(CASE WHEN estado IN ('aprobada', 'Aprobado') THEN dias_solicitados ELSE 0 END), 0) as dias_aprobados_futuros,
+              COALESCE(SUM(CASE WHEN estado IN ('pendiente', 'Pendiente') THEN dias_solicitados ELSE 0 END), 0) as dias_pendientes
+            FROM solicitudes_vacaciones
+            WHERE empleado_id = $1
+            AND fecha_inicio > CURRENT_DATE`,
+            [subordinado.id]
+          );
+
+          const diasEfectivos = parseInt(efectivosQuery.rows[0]?.dias_efectivos || 0);
+          const diasAprobadosFuturos = parseInt(programadosQuery.rows[0]?.dias_aprobados_futuros || 0);
+          const diasPendientes = parseInt(programadosQuery.rows[0]?.dias_pendientes || 0);
+          const diasProgramados = diasAprobadosFuturos + diasPendientes;
+
+          console.log(`👤 ${subordinado.nombres}: Efectivos=${diasEfectivos}, Programados=${diasProgramados} (Aprobados futuros=${diasAprobadosFuturos}, Pendientes=${diasPendientes})`);
+
+          const diasProgramadosNum = parseInt(diasProgramados || 0);
+
+          return {
+            ...subordinado,
+            vacaciones: {
+              dias_totales: periodo?.dias_totales || 0,
+              dias_usados: diasEfectivos,
+              dias_disponibles: periodo?.dias_disponibles || 0,
+              dias_programados: diasProgramados,
+              dias_realmente_disponibles: Math.max(0, periodo?.dias_disponibles || 0)
+            }
+          };
+        } catch (error) {
+          console.error(`Error al obtener vacaciones de empleado ${subordinado.id}:`, error);
+          return {
+            ...subordinado,
+            vacaciones: {
+              dias_totales: 0,
+              dias_usados: 0,
+              dias_disponibles: 0,
+              dias_programados: 0,
+              dias_realmente_disponibles: 0
+            }
+          };
+        }
+      })
+    );
+
     // Estadísticas adicionales
     const stats = {
-      directos: result.rows.filter(e => e.nivel_jerarquico === 1).length,
-      indirectos: result.rows.filter(e => e.nivel_jerarquico > 1).length,
-      total: result.rows.length,
-      niveles: Math.max(...result.rows.map(e => e.nivel_jerarquico), 0)
+      directos: subordinadosConVacaciones.filter(e => e.nivel_jerarquico === 1).length,
+      indirectos: subordinadosConVacaciones.filter(e => e.nivel_jerarquico > 1).length,
+      total: subordinadosConVacaciones.length,
+      niveles: Math.max(...subordinadosConVacaciones.map(e => e.nivel_jerarquico), 0)
     };
 
     res.json({
-      subordinados: result.rows,
-      total: result.rows.length,
+      subordinados: subordinadosConVacaciones,
+      total: subordinadosConVacaciones.length,
       estadisticas: stats
     });
   } catch (error) {

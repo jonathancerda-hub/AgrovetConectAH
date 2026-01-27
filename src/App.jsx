@@ -128,6 +128,7 @@ function App() {
   const [publishedBulletins, setPublishedBulletins] = useState(initialPublicaciones); // Lista de todos los boletines publicados
   const [calendarEvents, setCalendarEvents] = useState([]); // Eventos del calendario
   const [availableDaysData, setAvailableDaysData] = useState({ available: 0, taken: 0 }); // Datos de vacaciones del usuario
+  const [vacacionesTab, setVacacionesTab] = useState(0); // Tab activo en VacacionesPage
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -334,6 +335,7 @@ function App() {
         availableDaysData={availableDaysData}
         calendarEvents={calendarEvents}
         onNewRequest={handleNewRequest}
+        initialTab={vacacionesTab}
       />
     );
     pageTitle = 'Vacaciones';
@@ -344,7 +346,13 @@ function App() {
     mainContent = <GestionEmpleados />;
     pageTitle = 'Gestión de Empleados';
   } else if (selectedMenu === 'notificaciones') {
-    mainContent = <NotificationsPage />;
+    mainContent = <NotificationsPage onNavigate={(menu, tab) => {
+      setSelectedMenu(menu);
+      if (menu === 'vacaciones') {
+        setActiveView('vacaciones');
+        setVacacionesTab(tab || 0);
+      }
+    }} />;
     pageTitle = 'Notificaciones';
   } else if (selectedMenu === 'directorio') {
     mainContent = <DirectorioPage />;

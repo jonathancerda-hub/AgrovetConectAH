@@ -424,24 +424,25 @@ const VacationCalendar = ({ events: propEvents }) => {
   };
 
   return (
-    <Card>
-      <CardContent>
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <>
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="h5" fontWeight={700} gutterBottom>
-                📅 Calendario de Vacaciones y Feriados
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {vacacionesEquipo.length > 0 
-                  ? 'Tus vacaciones y las de tu equipo' 
-                  : 'Planifica tu tiempo libre y consulta los días feriados de Perú'}
-              </Typography>
+    <>
+      <Card>
+        <CardContent>
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+              <CircularProgress />
             </Box>
+          ) : (
+            <>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="h5" fontWeight={700} gutterBottom>
+                  📅 Calendario de Vacaciones y Feriados
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {vacacionesEquipo.length > 0 
+                    ? 'Tus vacaciones y las de tu equipo' 
+                    : 'Planifica tu tiempo libre y consulta los días feriados de Perú'}
+                </Typography>
+              </Box>
             
             {error && (
               <Alert severity="warning" sx={{ mb: 2 }}>
@@ -584,49 +585,67 @@ const VacationCalendar = ({ events: propEvents }) => {
             showMultiDayTimes
           />
         </Box>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
-        {/* Próximos feriados */}
-        <Box sx={{ mt: 3 }}>
-          <Typography variant="h6" fontWeight={700} gutterBottom>
-            🎉 Próximos Feriados de Perú
+      {/* Próximos feriados - Fuera del calendario */}
+      <Box sx={{ mt: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <CelebrationIcon sx={{ color: 'error.main', fontSize: 28 }} />
+          <Typography variant="h6" fontWeight={700}>
+            Próximos Feriados
           </Typography>
-          <Divider sx={{ mb: 2 }} />
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 1 }}>
-            {feriadosData
-              .filter(f => 
-                (f.tipo === 'nacional' || f.tipo === 'regional') && 
-                moment(f.fecha).isAfter(moment())
-              )
-              .slice(0, 6)
-              .map((feriado) => (
-                <Tooltip key={feriado.id} title={`Feriado ${feriado.tipo === 'nacional' ? 'Nacional' : 'Regional'}`} arrow>
-                  <Box sx={{ 
-                    p: 1.5, 
+        </Box>
+        <Divider sx={{ mb: 2 }} />
+        <Box sx={{ 
+          display: 'grid', 
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, 
+          gap: 2 
+        }}>
+          {feriadosData
+            .filter(f => 
+              (f.tipo === 'nacional' || f.tipo === 'regional') && 
+              moment(f.fecha).isAfter(moment())
+            )
+            .slice(0, 6)
+            .map((feriado) => (
+              <Tooltip key={feriado.id} title={`Feriado ${feriado.tipo === 'nacional' ? 'Nacional' : 'Regional'}`} arrow>
+                <Paper 
+                  elevation={0}
+                  sx={{ 
+                    p: 2, 
                     bgcolor: '#ffebee', 
-                    borderRadius: 1,
-                    border: '1px solid #ef5350',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}>
-                    <Box>
-                      <Typography variant="body2" fontWeight={600}>
+                    borderRadius: 2,
+                    borderLeft: 4,
+                    borderColor: 'error.main',
+                    transition: 'all 0.2s',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      boxShadow: 3,
+                      transform: 'translateY(-2px)',
+                      bgcolor: '#ffcdd2'
+                    }
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="body1" fontWeight={600} color="error.dark" gutterBottom>
                         {feriado.nombre}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
                         {moment(feriado.fecha).format('dddd, D [de] MMMM')}
                       </Typography>
                     </Box>
-                    <CelebrationIcon sx={{ color: '#d32f2f' }} />
+                    <CelebrationIcon sx={{ color: 'error.main', fontSize: 28, ml: 1 }} />
                   </Box>
-                </Tooltip>
-              ))}
-          </Box>
+                </Paper>
+              </Tooltip>
+            ))}
         </Box>
-          </>
-        )}
-      </CardContent>
-    </Card>
+      </Box>
+    </>
   );
 };
 

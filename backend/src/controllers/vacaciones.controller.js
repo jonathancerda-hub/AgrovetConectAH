@@ -106,10 +106,29 @@ export const obtenerSolicitudes = async (req, res) => {
     
     let query = `
       SELECT 
-        sv.*,
-        e.nombres || ' ' || e.apellidos as nombre_empleado
+        sv.id,
+        sv.empleado_id,
+        sv.periodo_id,
+        sv.fecha_inicio,
+        sv.fecha_fin,
+        sv.dias_solicitados,
+        sv.comentarios,
+        sv.estado,
+        sv.fecha_creacion as created_at,
+        sv.fecha_aprobacion,
+        sv.observaciones_aprobador as observaciones,
+        sv.aprobador_id,
+        e.nombres || ' ' || e.apellidos as nombre_completo,
+        e.codigo_empleado,
+        e.email,
+        p.nombre as puesto,
+        a.nombre as area,
+        aprobador.nombres || ' ' || aprobador.apellidos as aprobador_nombre
       FROM solicitudes_vacaciones sv
       JOIN empleados e ON sv.empleado_id = e.id
+      LEFT JOIN puestos p ON e.puesto_id = p.id
+      LEFT JOIN areas a ON e.area_id = a.id
+      LEFT JOIN empleados aprobador ON sv.aprobador_id = aprobador.id
       WHERE sv.empleado_id = $1
     `;
     

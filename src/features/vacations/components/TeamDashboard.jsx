@@ -62,6 +62,11 @@ export default function TeamDashboard() {
       console.log('📊 Subordinados:', data.subordinados);
       console.log('📊 Estadísticas:', data.estadisticas);
       
+      // DEBUG: Verificar estructura de vacaciones
+      if (data.subordinados && data.subordinados.length > 0) {
+        console.log('🔍 Ejemplo de subordinado con vacaciones:', data.subordinados[0]);
+      }
+      
       const subordinados = data.subordinados || [];
       setTeamMembers(subordinados);
 
@@ -226,6 +231,90 @@ export default function TeamDashboard() {
       headerName: 'Área', 
       flex: 1,
       minWidth: 180
+    },
+    {
+      field: 'dias_disponibles',
+      headerName: 'Disponibles',
+      width: 140,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: (params) => {
+        const vacaciones = params.row.vacaciones;
+        console.log(`📊 ${params.row.nombres}: Vacaciones =`, vacaciones);
+        
+        if (!vacaciones) return <Typography variant="body2">-</Typography>;
+        
+        const disponibles = Math.max(0, vacaciones.dias_realmente_disponibles || 0);
+        const total = vacaciones.dias_totales || 0;
+        const color = disponibles > 10 ? 'success' : disponibles > 5 ? 'warning' : 'error';
+        
+        return (
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+            py: 1
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
+              <Typography variant="h5" fontWeight={700} color={`${color}.main`}>
+                {disponibles}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                / {total}
+              </Typography>
+            </Box>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem', mt: -0.5 }}>
+              días
+            </Typography>
+          </Box>
+        );
+      }
+    },
+    {
+      field: 'dias_usados',
+      headerName: 'Efectivos',
+      width: 100,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: (params) => {
+        const vacaciones = params.row.vacaciones;
+        if (!vacaciones) return <Typography variant="body2">-</Typography>;
+        
+        return (
+          <Chip 
+            label={vacaciones.dias_usados || 0}
+            size="small"
+            color="default"
+            sx={{ fontWeight: 600, minWidth: 45 }}
+          />
+        );
+      }
+    },
+    {
+      field: 'dias_programados',
+      headerName: 'Programados',
+      width: 120,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: (params) => {
+        const vacaciones = params.row.vacaciones;
+        if (!vacaciones) return <Typography variant="body2">-</Typography>;
+        
+        const programados = vacaciones.dias_programados || 0;
+        
+        return programados > 0 ? (
+          <Chip 
+            label={programados}
+            size="small"
+            color="info"
+            sx={{ fontWeight: 600, minWidth: 45 }}
+          />
+        ) : (
+          <Typography variant="body2" color="text.secondary">-</Typography>
+        );
+      }
     },
     {
       field: 'nivel_jerarquico',

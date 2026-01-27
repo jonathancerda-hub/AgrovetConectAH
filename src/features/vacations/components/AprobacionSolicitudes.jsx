@@ -27,7 +27,9 @@ import {
   CheckCircle as ApprobarIcon,
   Cancel as RechazarIcon,
   Visibility as VerIcon,
-  Person as PersonIcon
+  Person as PersonIcon,
+  Warning as WarningIcon,
+  Group as GroupIcon
 } from '@mui/icons-material';
 import aprobacionService from '../../../services/aprobacion.service';
 
@@ -36,6 +38,7 @@ export default function AprobacionSolicitudes() {
   const [loading, setLoading] = useState(true);
   const [esRRHH, setEsRRHH] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
+  const [openDetalleDialog, setOpenDetalleDialog] = useState(false); // Modal de detalles
   const [solicitudSeleccionada, setSolicitudSeleccionada] = useState(null);
   const [accion, setAccion] = useState(null); // 'aprobar' o 'rechazar'
   const [comentarios, setComentarios] = useState('');
@@ -73,6 +76,16 @@ export default function AprobacionSolicitudes() {
     setSolicitudSeleccionada(null);
     setAccion(null);
     setComentarios('');
+  };
+
+  const handleOpenDetalle = (solicitud) => {
+    setSolicitudSeleccionada(solicitud);
+    setOpenDetalleDialog(true);
+  };
+
+  const handleCloseDetalle = () => {
+    setOpenDetalleDialog(false);
+    setSolicitudSeleccionada(null);
   };
 
   const handleSubmit = async () => {
@@ -190,9 +203,25 @@ export default function AprobacionSolicitudes() {
                         {solicitud.nombre_empleado?.charAt(0) || <PersonIcon />}
                       </Avatar>
                       <Box>
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                          {solicitud.nombre_empleado}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            {solicitud.nombre_empleado}
+                          </Typography>
+                          {solicitud.conflictos_equipo && solicitud.conflictos_equipo.length > 0 && (
+                            <Tooltip 
+                              title={`${solicitud.conflictos_equipo.length} miembro(s) del equipo con vacaciones superpuestas`}
+                              arrow
+                            >
+                              <Chip
+                                icon={<WarningIcon />}
+                                label={solicitud.conflictos_equipo.length}
+                                size="small"
+                                color="warning"
+                                sx={{ height: 20, fontSize: '0.7rem', ml: 0.5 }}
+                              />
+                            </Tooltip>
+                          )}
+                        </Box>
                         <Typography variant="caption" color="text.secondary">
                           Código: {solicitud.codigo_empleado || '-'}
                         </Typography>
@@ -241,10 +270,10 @@ export default function AprobacionSolicitudes() {
                         </Tooltip>
                       </Box>
                     ) : (
-                      <Tooltip title={solicitud.estado !== 'Pendiente' ? 'Ver detalles' : 'Solo supervisores pueden aprobar'}>
+                      <Tooltip title="Ver detalles">
                         <IconButton
                           size="small"
-                          disabled={esRRHH && solicitud.estado === 'Pendiente'}
+                          onClick={() => handleOpenDetalle(solicitud)}
                         >
                           <VerIcon />
                         </IconButton>
@@ -310,6 +339,192 @@ export default function AprobacionSolicitudes() {
           >
             {submitting ? 'Procesando...' : (accion === 'aprobar' ? 'Aprobar' : 'Rechazar')}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog de Detalles */}
+      <Dialog open={openDetalleDialog} onClose={handleCloseDetalle} maxWidth="md" fullWidth>
+        <DialogTitle>
+          Detalles de la Solicitud
+        </DialogTitle>
+        <DialogContent>
+          {solicitudSeleccionada && (
+            <Box sx={{ pt: 2 }}>
+              {/* Información del Empleado */}
+              <Paper elevation={0} sx={{ p: 2, mb: 2, bgcolor: 'grey.50' }}>
+                <Typography variant="subtitle2" color="primary" gutterBottom>
+                  👤 Información del Empleado
+                </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Nombre</Typography>
+                    <Typography variant="body2" fontWeight="medium">{solicitudSeleccionada.nombre_empleado}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Código</Typography>
+                    <Typography variant="body2" fontWeight="medium">{solicitudSeleccionada.codigo_empleado || 'N/A'}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Puesto</Typography>
+                    <Typography variant="body2">{solicitudSeleccionada.puesto || 'N/A'}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Área</Typography>
+                    <Typography variant="body2">{solicitudSeleccionada.area || 'N/A'}</Typography>
+                  </Box>
+                </Box>
+              </Paper>
+
+              {/* Detalles de la Solicitud */}
+              <Paper elevation={0} sx={{ p: 2, mb: 2, bgcolor: 'grey.50' }}>
+                <Typography variant="subtitle2" color="primary" gutterBottom>
+                  📅 Detalles de Vacaciones
+                </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Fecha de Inicio</Typography>
+                    <Typography variant="body2" fontWeight="medium">{formatFecha(solicitudSeleccionada.fecha_inicio)}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Fecha de Fin</Typography>
+                    <Typography variant="body2" fontWeight="medium">{formatFecha(solicitudSeleccionada.fecha_fin)}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Total de Días</Typography>
+                    <Typography variant="body2" fontWeight="medium">{solicitudSeleccionada.dias_solicitados} días</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Estado</Typography>
+                    <Chip 
+                      label={capitalizeEstado(solicitudSeleccionada.estado)} 
+                      color={getEstadoColor(solicitudSeleccionada.estado)}
+                      size="small"
+                    />
+                  </Box>
+                </Box>
+              </Paper>
+
+              {/* Motivo */}
+              {solicitudSeleccionada.motivo && (
+                <Paper elevation={0} sx={{ p: 2, mb: 2, bgcolor: 'grey.50' }}>
+                  <Typography variant="subtitle2" color="primary" gutterBottom>
+                    💬 Motivo de la Solicitud
+                  </Typography>
+                  <Typography variant="body2">{solicitudSeleccionada.motivo}</Typography>
+                </Paper>
+              )}
+
+              {/* Conflictos con el Equipo */}
+              {solicitudSeleccionada.conflictos_equipo && solicitudSeleccionada.conflictos_equipo.length > 0 && (
+                <Paper elevation={0} sx={{ p: 2, mb: 2, bgcolor: 'warning.50', borderLeft: 4, borderColor: 'warning.main' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                    <WarningIcon color="warning" />
+                    <Typography variant="subtitle2" color="warning.dark" fontWeight={600}>
+                      ⚠️ Conflictos de Vacaciones Detectados
+                    </Typography>
+                  </Box>
+                  <Alert severity="warning" sx={{ mb: 2 }}>
+                    <Typography variant="body2" fontWeight={500}>
+                      Los siguientes miembros del equipo también tienen vacaciones en fechas superpuestas:
+                    </Typography>
+                  </Alert>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {solicitudSeleccionada.conflictos_equipo.map((conflicto, index) => (
+                      <Paper key={index} elevation={1} sx={{ p: 2, bgcolor: 'background.paper' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                          <GroupIcon fontSize="small" color="action" />
+                          <Typography variant="body2" fontWeight={600}>
+                            {conflicto.nombre_empleado}
+                          </Typography>
+                          <Chip 
+                            label={conflicto.estado === 'aprobada' ? 'Aprobada' : 'Pendiente'} 
+                            size="small"
+                            color={conflicto.estado === 'aprobada' ? 'success' : 'warning'}
+                            sx={{ ml: 'auto' }}
+                          />
+                        </Box>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 1, mt: 1 }}>
+                          <Box>
+                            <Typography variant="caption" color="text.secondary">Código</Typography>
+                            <Typography variant="body2">{conflicto.codigo_empleado}</Typography>
+                          </Box>
+                          <Box>
+                            <Typography variant="caption" color="text.secondary">Puesto</Typography>
+                            <Typography variant="body2">{conflicto.puesto || 'N/A'}</Typography>
+                          </Box>
+                          <Box>
+                            <Typography variant="caption" color="text.secondary">Días</Typography>
+                            <Typography variant="body2">{conflicto.dias_solicitados} días</Typography>
+                          </Box>
+                        </Box>
+                        <Box sx={{ mt: 1 }}>
+                          <Typography variant="caption" color="text.secondary">Fechas de vacaciones</Typography>
+                          <Typography variant="body2">
+                            Del {formatFecha(conflicto.fecha_inicio)} al {formatFecha(conflicto.fecha_fin)}
+                          </Typography>
+                        </Box>
+                      </Paper>
+                    ))}
+                  </Box>
+                </Paper>
+              )}
+
+              {/* Información de Aprobación */}
+              {solicitudSeleccionada.estado !== 'pendiente' && solicitudSeleccionada.estado !== 'Pendiente' && (
+                <Paper elevation={0} sx={{ p: 2, mb: 2, bgcolor: 'grey.50' }}>
+                  <Typography variant="subtitle2" color="primary" gutterBottom>
+                    ✅ Información de {solicitudSeleccionada.estado === 'aprobada' || solicitudSeleccionada.estado === 'Aprobada' ? 'Aprobación' : 'Rechazo'}
+                  </Typography>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                    {solicitudSeleccionada.nombre_aprobador && (
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          {solicitudSeleccionada.estado === 'aprobada' || solicitudSeleccionada.estado === 'Aprobada' ? 'Aprobado por' : 'Rechazado por'}
+                        </Typography>
+                        <Typography variant="body2" fontWeight="medium">{solicitudSeleccionada.nombre_aprobador}</Typography>
+                      </Box>
+                    )}
+                    {solicitudSeleccionada.fecha_aprobacion && (
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">Fecha</Typography>
+                        <Typography variant="body2" fontWeight="medium">{formatFecha(solicitudSeleccionada.fecha_aprobacion)}</Typography>
+                      </Box>
+                    )}
+                  </Box>
+                  {solicitudSeleccionada.observaciones_aprobador && (
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="caption" color="text.secondary">Observaciones</Typography>
+                      <Typography variant="body2">{solicitudSeleccionada.observaciones_aprobador}</Typography>
+                    </Box>
+                  )}
+                </Paper>
+              )}
+
+              {/* Fechas del Sistema */}
+              <Paper elevation={0} sx={{ p: 2, bgcolor: 'grey.50' }}>
+                <Typography variant="subtitle2" color="primary" gutterBottom>
+                  📆 Fechas del Sistema
+                </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                  {solicitudSeleccionada.fecha_creacion && (
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">Fecha de Solicitud</Typography>
+                      <Typography variant="body2">{formatFecha(solicitudSeleccionada.fecha_creacion)}</Typography>
+                    </Box>
+                  )}
+                  {solicitudSeleccionada.fecha_aprobacion && (
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">Fecha de Decisión</Typography>
+                      <Typography variant="body2">{formatFecha(solicitudSeleccionada.fecha_aprobacion)}</Typography>
+                    </Box>
+                  )}
+                </Box>
+              </Paper>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDetalle}>Cerrar</Button>
         </DialogActions>
       </Dialog>
 

@@ -23,9 +23,10 @@ function TabPanel({ children, value, index }) {
 export default function VacacionesPage({ 
   availableDaysData, 
   calendarEvents, 
-  onNewRequest 
+  onNewRequest,
+  initialTab = 0
 }) {
-  const [currentTab, setCurrentTab] = useState(0);
+  const [currentTab, setCurrentTab] = useState(initialTab);
 
   const handleTabChange = (event, newValue) => {
     setCurrentTab(newValue);

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -28,8 +27,7 @@ import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import { notificacionesService } from '../../../services/notificaciones.service';
 
-export default function NotificationsPage() {
-  const navigate = useNavigate();
+export default function NotificationsPage({ onNavigate }) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -145,18 +143,20 @@ export default function NotificationsPage() {
       await handleMarkAsRead(notif.id);
     }
 
-    // Navegar según el tipo de notificación
+    // Navegar según el tipo de notificación solo si onNavigate está disponible
+    if (!onNavigate) return;
+
     const tipo = notif.originalType || notif.type;
 
     if (tipo === 'nueva_solicitud_rrhh' || tipo === 'nueva_solicitud') {
       // Notificación para supervisor/RRHH -> ir a aprobar solicitudes
-      navigate('/vacaciones', { state: { activeTab: 4 } }); // Tab 4 = Aprobar Solicitudes
+      onNavigate('vacaciones', 4); // Tab 4 = Aprobar Solicitudes
     } else if (tipo === 'solicitud_aprobada' || tipo === 'solicitud_rechazada') {
       // Notificación para empleado -> ir a mis solicitudes
-      navigate('/vacaciones', { state: { activeTab: 2 } }); // Tab 2 = Mis Solicitudes
+      onNavigate('vacaciones', 2); // Tab 2 = Mis Solicitudes
     } else {
       // Otros tipos -> ir al dashboard
-      navigate('/vacaciones');
+      onNavigate('vacaciones', 0); // Tab 0 = Dashboard
     }
   };
 

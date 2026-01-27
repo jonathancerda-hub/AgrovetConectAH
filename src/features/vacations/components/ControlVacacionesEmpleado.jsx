@@ -195,7 +195,7 @@ const ControlVacacionesEmpleado = () => {
           'Puesto': emp.puesto || '-',
           'Días Totales': emp.dias_totales,
           'Disponibles': emp.dias_disponibles,
-          'Usados': emp.dias_usados,
+          'Efectivos': emp.dias_usados,
           'Viernes Usados': `${emp.viernes_usados || 0}/5`,
           'Fines Semana': emp.fines_semana_usados || 0,
           'Programados': emp.dias_programados || 0,
@@ -218,7 +218,7 @@ const ControlVacacionesEmpleado = () => {
         { wch: 35 }, // Puesto
         { wch: 12 }, // Días Totales
         { wch: 12 }, // Disponibles
-        { wch: 10 }, // Usados
+        { wch: 10 }, // Efectivos
         { wch: 14 }, // Viernes Usados
         { wch: 13 }, // Fines Semana
         { wch: 13 }, // Programados
@@ -396,7 +396,7 @@ const ControlVacacionesEmpleado = () => {
               <TableCell sx={{ fontWeight: 600, width: '12%', maxWidth: 150 }}>Puesto</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="center">Días Totales</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="center">Disponibles</TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="center">Usados</TableCell>
+              <TableCell sx={{ fontWeight: 600 }} align="center">Efectivos</TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="center">
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
                   Programados
@@ -621,7 +621,7 @@ const ControlVacacionesEmpleado = () => {
                               <Typography variant="h6" color="success.main">{periodo.dias_disponibles}</Typography>
                             </Grid>
                             <Grid item xs={1.5}>
-                              <Typography variant="caption" color="text.secondary" display="block">Usados</Typography>
+                              <Typography variant="caption" color="text.secondary" display="block">Efectivos</Typography>
                               <Typography variant="h6" color="error.main">{periodo.dias_usados}</Typography>
                             </Grid>
                             <Grid item xs={2}>
