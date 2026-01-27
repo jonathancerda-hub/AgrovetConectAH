@@ -123,9 +123,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState(null); // Estado para el usuario logueado
   const [requestToProcess, setRequestToProcess] = useState(null); // Solicitud seleccionada para procesar
-  const [stagedBulletins, setStagedBulletins] = useState([]); // Boletines en espera de revisión
   const [vacationRequests, setVacationRequests] = useState(initialVacationRequests); // Estado para las solicitudes de vacaciones
-  const [publishedBulletins, setPublishedBulletins] = useState(initialPublicaciones); // Lista de todos los boletines publicados
   const [calendarEvents, setCalendarEvents] = useState([]); // Eventos del calendario
   const [availableDaysData, setAvailableDaysData] = useState({ available: 0, taken: 0 }); // Datos de vacaciones del usuario
   const [vacacionesTab, setVacacionesTab] = useState(0); // Tab activo en VacacionesPage
@@ -324,7 +322,7 @@ function App() {
     />;
     pageTitle = `Procesando Solicitud #${requestToProcess.id}`;
   } else if (selectedMenu === 'portal') {
-    mainContent = <Portal publicaciones={publishedBulletins} onNavigate={handleMenuClick} />; // Pasamos toda la lista de publicaciones
+    mainContent = <Portal onNavigate={handleMenuClick} />;
     pageTitle = 'Portal';
   } else if (selectedMenu === 'ficha') {
     mainContent = <MiFicha currentUser={currentUser} />;
@@ -363,9 +361,6 @@ function App() {
   } else if (selectedMenu === 'boletines') {
     mainContent = (
       <BoletinesPage 
-        stagedBulletins={stagedBulletins}
-        onAddBulletin={handleAddBulletin}
-        onPublish={handlePublishBulletin}
         onGoToPortal={() => handleMenuClick('portal')}
       />
     );

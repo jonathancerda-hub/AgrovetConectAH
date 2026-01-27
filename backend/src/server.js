@@ -5,7 +5,7 @@ import { query as dbQuery } from './db.js';
 
 // Rutas
 import authRoutes from './routes/auth.routes.js';
-// import publicacionesRoutes from './routes/publicaciones.routes.js'; // Tabla no existe en Supabase
+import publicacionesRoutes from './routes/publicaciones.routes.js';
 // import notificacionesRoutes from './routes/notificaciones.routes.js'; // Tabla no existe en Supabase
 import empleadosRoutes from './routes/empleados.routes.js';
 import vacacionesRoutes from './routes/vacaciones.routes.js';
@@ -54,7 +54,7 @@ app.get('/health', async (req, res) => {
 
 // Rutas API
 app.use('/api/auth', authRoutes);
-// app.use('/api/publicaciones', publicacionesRoutes); // Tabla no existe en Supabase
+app.use('/api/publicaciones', publicacionesRoutes);
 // app.use('/api/notificaciones', notificacionesRoutes); // Tabla no existe en Supabase
 app.use('/api/empleados', empleadosRoutes);
 app.use('/api/vacaciones', vacacionesRoutes);
