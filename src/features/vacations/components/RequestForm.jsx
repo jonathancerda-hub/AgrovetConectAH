@@ -63,19 +63,39 @@ const RequestForm = ({ onSuccess }) => {
   const cargarDatos = async () => {
     try {
       const [periodosData, resumenData, solicitudesData] = await Promise.all([
-        vacacionesService.obtenerPeriodos().catch(() => []),
-        vacacionesService.obtenerResumen().catch(() => ({
-          dias_disponibles: 0,
-          dias_usados: 0,
-          dias_pendientes: 0
-        })),
-        vacacionesService.obtenerMisSolicitudes().catch(() => [])
+        vacacionesService.obtenerPeriodos().catch((err) => {
+          console.error('Error al cargar períodos:', err);
+          return [];
+        }),
+        vacacionesService.obtenerResumen().catch((err) => {
+          console.error('Error al cargar resumen:', err);
+          return {
+            dias_disponibles: 0,
+            dias_usados: 0,
+            dias_pendientes: 0
+          };
+        }),
+        vacacionesService.obtenerMisSolicitudes().catch((err) => {
+          console.error('Error al cargar solicitudes:', err);
+          setSnackbar({
+            open: true,
+            message: 'No se pudieron cargar las solicitudes existentes. Verifica las fechas cuidadosamente.',
+            severity: 'warning'
+          });
+          return [];
+        })
       ]);
       setPeriodos(periodosData);
       setResumen(resumenData);
       setSolicitudesExistentes(solicitudesData || []);
+      
+      // Log para diagnóstico
+      console.log('📋 Solicitudes cargadas:', solicitudesData?.length || 0);
+      if (solicitudesData && solicitudesData.length > 0) {
+        console.log('Primeras solicitudes:', solicitudesData.slice(0, 3));
+      }
     } catch (error) {
-      console.error('Error al cargar datos:', error);
+      console.error('Error general al cargar datos:', error);
       // Datos por defecto si falla
       setPeriodos([]);
       setResumen({
@@ -84,6 +104,12 @@ const RequestForm = ({ onSuccess }) => {
         dias_pendientes: 0
       });
       setSolicitudesExistentes([]);
+      
+      setSnackbar({
+        open: true,
+        message: 'Error al cargar información de vacaciones. Intenta recargar la página.',
+        severity: 'error'
+      });
     }
   };
   
@@ -156,9 +182,22 @@ const RequestForm = ({ onSuccess }) => {
     } catch (error) {
       console.error('Error al validar:', error);
       console.error('Error response:', error.response?.data);
+      
+      // Extraer mensaje de error más específico
+      let mensajeError = 'Error al validar la solicitud. Intente nuevamente.';
+      
+      if (error.response?.data) {
+        const data = error.response.data;
+        if (data.error) mensajeError = data.error;
+        else if (data.detalles) mensajeError = data.detalles;
+        else if (data.message) mensajeError = data.message;
+      } else if (error.message) {
+        mensajeError = error.message;
+      }
+      
       setValidacion({
         valida: false,
-        errores: [error.response?.data?.detalles || error.message || 'Error al validar la solicitud. Intente nuevamente.'],
+        errores: [mensajeError],
         advertencias: [],
         alertas: []
       });
@@ -171,13 +210,9 @@ const RequestForm = ({ onSuccess }) => {
     e.preventDefault();
     
     if (!validacion || !validacion.valida) {
-      return;
-    }
-    
-    if (!motivo.trim()) {
       setDialogError({
         open: true,
-        message: 'Debe ingresar un motivo para la solicitud'
+        message: 'La solicitud no es válida. Por favor revisa los errores indicados.'
       });
       return;
     }
@@ -192,7 +227,7 @@ const RequestForm = ({ onSuccess }) => {
       await vacacionesService.crearSolicitud({
         fecha_inicio: fechaInicio.format('YYYY-MM-DD'),
         fecha_fin: fechaFin.format('YYYY-MM-DD'),
-        motivo: motivo.trim()
+        motivo: motivo.trim() || null // Enviar null si está vacío
       });
       
       // Limpiar formulario
@@ -252,6 +287,27 @@ const RequestForm = ({ onSuccess }) => {
       current.add(1, 'days');
     }
     return count;
+  };
+  
+  // Calcular viernes en solicitudes existentes (pendientes + aprobadas)
+  const contarViernesExistentes = () => {
+    if (!solicitudesExistentes || solicitudesExistentes.length === 0) return 0;
+    
+    return solicitudesExistentes.reduce((total, sol) => {
+      // Solo contar solicitudes pendientes o aprobadas
+      if (sol.estado !== 'pendiente' && sol.estado !== 'aprobada') return total;
+      
+      let viernesCount = 0;
+      let current = moment(sol.fecha_inicio);
+      const fin = moment(sol.fecha_fin);
+      
+      while (current.isSameOrBefore(fin)) {
+        if (current.day() === 5) viernesCount++;
+        current.add(1, 'days');
+      }
+      
+      return total + viernesCount;
+    }, 0);
   };
   
   const contarFinesSemanaEnSeleccion = () => {
@@ -361,39 +417,38 @@ const RequestForm = ({ onSuccess }) => {
                       
                       {/* Alerta de exceso de viernes */}
                       {(() => {
-                        const viernesActuales = contarViernesEnSeleccion();
-                        if (viernesActuales > 0 && periodos.length > 0) {
-                          const periodoActivo = periodos.find(p => p.estado === 'activo');
-                          if (periodoActivo) {
-                            const viernesUsados = periodoActivo.viernes_usados || 0;
-                            const viernesTotal = viernesUsados + viernesActuales;
-                            if (viernesTotal > 5) {
-                              return (
-                                <Alert severity="error" icon={<ErrorIcon />}>
-                                  <AlertTitle>⚠️ Límite de viernes excedido</AlertTitle>
-                                  Ya tienes <strong>{viernesUsados} viernes usados</strong> en el período {periodoActivo.anio_generacion}.
-                                  Esta solicitud incluye <strong>{viernesActuales} viernes más</strong>, lo que totalizaría <strong>{viernesTotal} viernes</strong>.
-                                  <br />
-                                  <strong>Máximo permitido: 5 viernes por período de 30 días.</strong>
-                                </Alert>
-                              );
-                            } else if (viernesTotal === 5) {
-                              return (
-                                <Alert severity="warning" icon={<WarningIcon />}>
-                                  <AlertTitle>📊 Alcanzando límite de viernes</AlertTitle>
-                                  Con esta solicitud alcanzarás el límite de <strong>5 viernes</strong> permitidos en el período {periodoActivo.anio_generacion}
-                                  (actualmente tienes {viernesUsados} viernes usados).
-                                </Alert>
-                              );
-                            } else if (viernesActuales > 0) {
-                              return (
-                                <Alert severity="info" icon={<InfoIcon />}>
-                                  <AlertTitle>ℹ️ Viernes incluidos</AlertTitle>
-                                  Esta solicitud incluye <strong>{viernesActuales} viernes</strong>. 
-                                  Después de esta solicitud tendrás <strong>{viernesTotal} de 5 viernes usados</strong> en el período {periodoActivo.anio_generacion}.
-                                </Alert>
-                              );
-                            }
+                        const viernesNuevos = contarViernesEnSeleccion();
+                        if (viernesNuevos > 0) {
+                          // Contar viernes de solicitudes existentes (pendientes + aprobadas)
+                          const viernesEnSolicitudes = contarViernesExistentes();
+                          const viernesTotal = viernesEnSolicitudes + viernesNuevos;
+                          
+                          if (viernesTotal > 5) {
+                            return (
+                              <Alert severity="error" icon={<ErrorIcon />}>
+                                <AlertTitle>⚠️ Límite de viernes excedido</AlertTitle>
+                                Ya tienes <strong>{viernesEnSolicitudes} viernes programados</strong> en solicitudes pendientes/aprobadas.
+                                Esta solicitud incluye <strong>{viernesNuevos} viernes más</strong>, lo que totalizaría <strong>{viernesTotal} viernes</strong>.
+                                <br />
+                                <strong>Máximo permitido: 5 viernes por período de 30 días.</strong>
+                              </Alert>
+                            );
+                          } else if (viernesTotal === 5) {
+                            return (
+                              <Alert severity="warning" icon={<WarningIcon />}>
+                                <AlertTitle>📊 Alcanzando límite de viernes</AlertTitle>
+                                Con esta solicitud alcanzarás el límite de <strong>5 viernes</strong> permitidos
+                                (actualmente tienes {viernesEnSolicitudes} viernes programados).
+                              </Alert>
+                            );
+                          } else if (viernesNuevos > 0) {
+                            return (
+                              <Alert severity="info" icon={<InfoIcon />}>
+                                <AlertTitle>ℹ️ Viernes incluidos</AlertTitle>
+                                Esta solicitud incluye <strong>{viernesNuevos} viernes</strong>. 
+                                Después de esta solicitud tendrás <strong>{viernesTotal} de 5 viernes programados</strong>.
+                              </Alert>
+                            );
                           }
                         }
                         return null;
@@ -452,14 +507,14 @@ const RequestForm = ({ onSuccess }) => {
                   
                   {/* Motivo */}
                   <TextField
-                    label="Motivo de la solicitud"
+                    label="Motivo de la solicitud (opcional)"
                     multiline
                     rows={4}
                     fullWidth
-                    required
                     value={motivo}
                     onChange={(e) => setMotivo(e.target.value)}
-                    placeholder="Describa el motivo de su solicitud de vacaciones..."
+                    placeholder="Describa el motivo de su solicitud de vacaciones (opcional)..."
+                    helperText="Este campo es opcional"
                   />
                   
                   <Divider />
@@ -470,7 +525,7 @@ const RequestForm = ({ onSuccess }) => {
                     variant="contained"
                     size="large"
                     startIcon={enviando ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
-                    disabled={!validacion || !validacion.valida || enviando || !motivo.trim()}
+                    disabled={!validacion || !validacion.valida || enviando}
                     sx={{ alignSelf: 'flex-start' }}
                   >
                     {enviando ? 'Enviando...' : 'Enviar Solicitud'}
@@ -576,6 +631,58 @@ const RequestForm = ({ onSuccess }) => {
                           </Box>
                         </Box>
                       ))}
+                    </Stack>
+                  </CardContent>
+                </Card>
+              )}
+              
+              {/* Días ya programados */}
+              {solicitudesExistentes && solicitudesExistentes.filter(s => s.estado === 'aprobada' || s.estado === 'pendiente').length > 0 && (
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      📅 Días Programados
+                    </Typography>
+                    <Divider sx={{ my: 1 }} />
+                    <Stack spacing={1}>
+                      {solicitudesExistentes
+                        .filter(s => s.estado === 'aprobada' || s.estado === 'pendiente')
+                        .sort((a, b) => moment(a.fecha_inicio).diff(moment(b.fecha_inicio)))
+                        .map((sol) => {
+                          const inicio = moment(sol.fecha_inicio);
+                          const fin = moment(sol.fecha_fin);
+                          const dias = fin.diff(inicio, 'days') + 1;
+                          const estadoColor = sol.estado === 'aprobada' ? 'success' : 'warning';
+                          const estadoLabel = sol.estado === 'aprobada' ? 'Aprobada' : 'Pendiente';
+                          
+                          return (
+                            <Box 
+                              key={sol.id}
+                              sx={{ 
+                                p: 1, 
+                                bgcolor: sol.estado === 'aprobada' ? 'success.50' : 'warning.50', 
+                                borderRadius: 1,
+                                border: '1px solid',
+                                borderColor: sol.estado === 'aprobada' ? 'success.200' : 'warning.200'
+                              }}
+                            >
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                                <Typography variant="caption" fontWeight={600}>
+                                  {inicio.format('DD/MMM')} - {fin.format('DD/MMM')}
+                                </Typography>
+                                <Chip 
+                                  label={estadoLabel} 
+                                  color={estadoColor} 
+                                  size="small" 
+                                  sx={{ height: 18, fontSize: '0.65rem' }}
+                                />
+                              </Box>
+                              <Typography variant="caption" color="text.secondary">
+                                {dias} {dias === 1 ? 'día' : 'días'}
+                              </Typography>
+                            </Box>
+                          );
+                        })}
                     </Stack>
                   </CardContent>
                 </Card>

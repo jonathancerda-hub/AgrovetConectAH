@@ -171,15 +171,55 @@ export const aprobarRechazarSolicitud = async (req, res) => {
       
       const finesSemanaCount = Math.min(sabadosCount, domingosCount);
       
-      await dbQuery(
-        `UPDATE periodos_vacacionales 
-         SET dias_disponibles = dias_disponibles - $1,
-             dias_usados = dias_usados + $1,
-             viernes_usados = viernes_usados + $2,
-             fines_semana_usados = fines_semana_usados + $3
-         WHERE id = $4`,
-        [solicitud.dias_solicitados, viernesCount, finesSemanaCount, solicitud.periodo_id]
-      );
+      // Verificar si esta solicitud cumple el bloque de 7 días
+      const cumpleBloque7Dias = solicitud.dias_solicitados >= 7;
+      let yaTieneBloque = false;
+      
+      // Obtener el período para saber si ya tiene bloque cumplido
+      try {
+        const periodoResult = await dbQuery(
+          'SELECT tiene_bloque_7dias FROM periodos_vacacionales WHERE id = $1',
+          [solicitud.periodo_id]
+        );
+        
+        if (periodoResult.rows.length > 0) {
+          yaTieneBloque = periodoResult.rows[0].tiene_bloque_7dias || false;
+        }
+      } catch (periodoError) {
+        console.error('⚠️ Error al consultar período:', periodoError.message);
+      }
+      
+      // Actualizar el período con o sin marcar el bloque
+      try {
+        if (cumpleBloque7Dias && !yaTieneBloque) {
+          // Marcar que ya cumplió el bloque de 7 días
+          await dbQuery(
+            `UPDATE periodos_vacacionales 
+             SET dias_disponibles = dias_disponibles - $1,
+                 dias_usados = dias_usados + $1,
+                 viernes_usados = viernes_usados + $2,
+                 fines_semana_usados = fines_semana_usados + $3,
+                 tiene_bloque_7dias = true
+             WHERE id = $4`,
+            [solicitud.dias_solicitados, viernesCount, finesSemanaCount, solicitud.periodo_id]
+          );
+          
+          console.log(`✅ Bloque de 7 días cumplido para período ${solicitud.periodo_id}`);
+        } else {
+          // Actualización normal sin marcar bloque
+          await dbQuery(
+            `UPDATE periodos_vacacionales 
+             SET dias_disponibles = dias_disponibles - $1,
+                 dias_usados = dias_usados + $1,
+                 viernes_usados = viernes_usados + $2,
+                 fines_semana_usados = fines_semana_usados + $3
+             WHERE id = $4`,
+            [solicitud.dias_solicitados, viernesCount, finesSemanaCount, solicitud.periodo_id]
+          );
+        }
+      } catch (updateError) {
+        console.error('⚠️ Error al actualizar período:', updateError.message);
+      }
       
       console.log(`📊 Descontados: ${solicitud.dias_solicitados} días, ${viernesCount} viernes, ${finesSemanaCount} fines de semana`);
     }

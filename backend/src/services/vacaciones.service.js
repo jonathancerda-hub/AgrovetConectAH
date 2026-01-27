@@ -58,10 +58,14 @@ class VacacionesService {
         validaciones.advertencias.push(finesSemana.mensaje);
       }
 
-      // 5. Validar bloque continuo de 7 días
-      const bloqueContinuo = await this.validarBloqueContinuo(solicitudData.empleado_id);
+      // 5. Validar bloque continuo de 7 días (OBLIGATORIO en primera solicitud)
+      const bloqueContinuo = await this.validarBloqueContinuo(solicitudData);
       if (!bloqueContinuo.valida) {
-        validaciones.advertencias.push(bloqueContinuo.mensaje);
+        validaciones.errores.push(bloqueContinuo.mensaje);
+        validaciones.valida = false;
+      } else if (bloqueContinuo.mensaje) {
+        // Mensaje informativo cuando cumple el bloque
+        validaciones.alertas.push(bloqueContinuo.mensaje);
       }
 
       // 6. Validar prohibición de puenteo de feriados
@@ -79,10 +83,7 @@ class VacacionesService {
 
       // 8. Alertas especiales
       if (diasDisponibles.esVacacionesAdelantadas) {
-        validaciones.alertas.push({
-          tipo: 'vacaciones_adelantadas',
-          mensaje: 'Solicitud de vacaciones adelantadas. Requiere aprobación especial de Talento Humano.'
-        });
+        validaciones.alertas.push('Solicitud de vacaciones adelantadas. Requiere aprobación especial de Talento Humano.');
       }
 
     } catch (error) {
@@ -174,6 +175,7 @@ class VacacionesService {
   /**
    * Regla: Límite de Viernes
    * Máximo 5 viernes por período de 30 días
+   * DEBE CONTAR: viernes en solicitudes aprobadas + pendientes + nueva solicitud
    */
   async validarLimiteViernes(solicitudData) {
     const { empleado_id, fecha_inicio, fecha_fin } = solicitudData;
@@ -183,7 +185,7 @@ class VacacionesService {
 
     // Obtener período más antiguo con días disponibles
     const periodoQuery = `
-      SELECT id, viernes_usados, dias_totales, dias_usados
+      SELECT id, viernes_usados, dias_totales, dias_usados, anio_generacion
       FROM periodos_vacacionales
       WHERE empleado_id = $1 AND estado = 'activo' AND dias_disponibles > 0
       ORDER BY anio_generacion ASC
@@ -197,18 +199,50 @@ class VacacionesService {
     }
 
     const periodo = result.rows[0];
-    const viernesUsados = periodo.viernes_usados || 0;
-    const totalViernes = viernesUsados + viernesEnRango;
 
     // Si ya usó los 30 días del período, se reinicia el contador
     if (periodo.dias_usados >= periodo.dias_totales) {
       return { valida: true };
     }
 
+    // CONTAR VIERNES EN SOLICITUDES PENDIENTES Y APROBADAS del período actual
+    const solicitudesQuery = `
+      SELECT fecha_inicio, fecha_fin
+      FROM solicitudes_vacaciones
+      WHERE empleado_id = $1 
+        AND periodo_id = $2
+        AND estado IN ('pendiente', 'aprobada')
+    `;
+    
+    const solicitudesResult = await dbQuery(solicitudesQuery, [empleado_id, periodo.id]);
+    
+    let viernesEnSolicitudes = 0;
+    for (const sol of solicitudesResult.rows) {
+      const viernesEnSol = this.contarViernes(new Date(sol.fecha_inicio), new Date(sol.fecha_fin));
+      viernesEnSolicitudes += viernesEnSol;
+    }
+
+    const totalViernes = viernesEnSolicitudes + viernesEnRango;
+
+    console.log(`🔍 Validación viernes - Empleado ${empleado_id}:`, {
+      viernesEnSolicitudes,
+      viernesEnRango,
+      totalViernes,
+      limite: 5
+    });
+
+    // REGLA CLAVE: Si la nueva solicitud NO incluye viernes, siempre es válida
+    // Solo validar límite si la nueva solicitud INCLUYE viernes
+    if (viernesEnRango === 0) {
+      console.log(`✅ Solicitud sin viernes - permitida sin importar el total actual`);
+      return { valida: true, viernesUsados: totalViernes };
+    }
+
+    // Si la nueva solicitud SÍ incluye viernes, verificar que no exceda el límite
     if (totalViernes > 5) {
       return {
         valida: false,
-        mensaje: `Límite de viernes excedido. Ya tiene ${viernesUsados} viernes usados en este período. Esta solicitud incluye ${viernesEnRango} viernes más. Máximo permitido: 5 viernes por período de 30 días.`
+        mensaje: `Límite de viernes excedido. Ya tienes ${viernesEnSolicitudes} viernes programados (pendientes + aprobados). Esta solicitud incluye ${viernesEnRango} viernes más, totalizando ${totalViernes} viernes. Máximo permitido: 5 viernes por período de 30 días.`
       };
     }
 
@@ -216,7 +250,7 @@ class VacacionesService {
       return {
         valida: true,
         advertencia: true,
-        mensaje: `Con esta solicitud alcanzará el límite de 5 viernes para este período. Futuras solicitudes solo podrán ser de lunes a jueves hasta completar los 30 días.`
+        mensaje: `Con esta solicitud alcanzarás el límite de 5 viernes para este período. Futuras solicitudes solo podrán ser de lunes a jueves hasta completar los 30 días.`
       };
     }
 
@@ -255,33 +289,67 @@ class VacacionesService {
   }
 
   /**
-   * Regla: Bloque continuo de 7 días
+   * Regla: Bloque continuo de 7 días OBLIGATORIO como primera solicitud
+   * El empleado DEBE tomar un bloque de 7 días continuos como primera solicitud del período
+   * Solo después de cumplir este bloque puede fraccionar las vacaciones
    */
-  async validarBloqueContinuo(empleadoId) {
-    const query = `
-      SELECT 
-        fecha_inicio,
-        fecha_fin,
-        dias_solicitados
-      FROM solicitudes_vacaciones
-      WHERE empleado_id = $1 
-        AND estado = 'Aprobado'
-        AND EXTRACT(YEAR FROM fecha_inicio) = EXTRACT(YEAR FROM CURRENT_DATE)
+  async validarBloqueContinuo(solicitudData) {
+    const { empleado_id, dias_solicitados } = solicitudData;
+    
+    // Obtener el período más antiguo activo con días disponibles
+    const periodoQuery = `
+      SELECT id, tiene_bloque_7dias, anio_generacion
+      FROM periodos_vacacionales
+      WHERE empleado_id = $1 AND estado = 'activo' AND dias_disponibles > 0
+      ORDER BY anio_generacion ASC
+      LIMIT 1
     `;
     
-    const result = await dbQuery(query, [empleadoId]);
+    const periodoResult = await dbQuery(periodoQuery, [empleado_id]);
     
-    // Calcular cuántos bloques continuos de 7 días tiene el empleado
-    const bloquesCumplidos = result.rows.filter(row => row.dias_solicitados >= 7).length;
+    if (periodoResult.rows.length === 0) {
+      return { valida: true }; // No hay períodos activos
+    }
 
-    if (bloquesCumplidos < 2) {
-      return {
+    const periodo = periodoResult.rows[0];
+
+    // Si el período NO tiene el bloque de 7 días cumplido según el flag
+    if (!periodo.tiene_bloque_7dias) {
+      // VERIFICACIÓN ADICIONAL: Revisar si ya existe una solicitud aprobada de 7+ días
+      const solicitudBloque7Query = `
+        SELECT COUNT(*) as count
+        FROM solicitudes_vacaciones
+        WHERE empleado_id = $1 
+          AND periodo_id = $2
+          AND estado = 'aprobada'
+          AND EXTRACT(DAY FROM (fecha_fin - fecha_inicio)) + 1 >= 7
+      `;
+      
+      const bloque7Result = await dbQuery(solicitudBloque7Query, [empleado_id, periodo.id]);
+      const yaExisteBloque7 = parseInt(bloque7Result.rows[0].count) > 0;
+      
+      if (yaExisteBloque7) {
+        // Ya existe una solicitud aprobada de 7+ días, permitir fraccionamiento
+        console.log(`✅ Empleado ${empleado_id} ya tiene bloque de 7 días aprobado para período ${periodo.id}`);
+        return { valida: true };
+      }
+      
+      // No existe bloque de 7 días aprobado, la solicitud DEBE ser de al menos 7 días
+      if (dias_solicitados < 7) {
+        return {
+          valida: false,
+          mensaje: `Primera solicitud del período ${periodo.anio_generacion}: debe ser un bloque continuo de al menos 7 días calendario. Actualmente está solicitando ${dias_solicitados} días. Después de cumplir este bloque, podrá fraccionar sus vacaciones.`
+        };
+      }
+      
+      // Si solicita 7 días o más, es válido y se marcará el bloque como cumplido al aprobar
+      return { 
         valida: true,
-        advertencia: true,
-        mensaje: `Recuerde que debe tomar al menos 2 bloques continuos de 7 días calendario durante el año. Actualmente tiene ${bloquesCumplidos} bloque(s) de 7 días.`
+        mensaje: 'Esta solicitud cumplirá con el bloque mínimo de 7 días requerido para este período.'
       };
     }
 
+    // Si ya cumplió el bloque de 7 días, puede fraccionar libremente
     return { valida: true };
   }
 

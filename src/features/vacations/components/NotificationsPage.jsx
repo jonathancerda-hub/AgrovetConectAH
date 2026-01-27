@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -28,6 +29,7 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import { notificacionesService } from '../../../services/notificaciones.service';
 
 export default function NotificationsPage() {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -45,6 +47,7 @@ export default function NotificationsPage() {
       const formattedData = data.map(notif => ({
         id: notif.id,
         type: mapTipoToType(notif.tipo_notificacion),
+        originalType: notif.tipo_notificacion, // Guardar tipo original
         title: notif.titulo,
         message: notif.mensaje,
         time: formatRelativeTime(notif.fecha_creacion),
@@ -133,6 +136,27 @@ export default function NotificationsPage() {
       setNotifications((prev) => prev.map((notif) => ({ ...notif, read: true })));
     } catch (err) {
       console.error('Error al marcar todas como leídas:', err);
+    }
+  };
+
+  const handleNotificationClick = async (notif) => {
+    // Marcar como leída si no lo está
+    if (!notif.read) {
+      await handleMarkAsRead(notif.id);
+    }
+
+    // Navegar según el tipo de notificación
+    const tipo = notif.originalType || notif.type;
+
+    if (tipo === 'nueva_solicitud_rrhh' || tipo === 'nueva_solicitud') {
+      // Notificación para supervisor/RRHH -> ir a aprobar solicitudes
+      navigate('/vacaciones', { state: { activeTab: 4 } }); // Tab 4 = Aprobar Solicitudes
+    } else if (tipo === 'solicitud_aprobada' || tipo === 'solicitud_rechazada') {
+      // Notificación para empleado -> ir a mis solicitudes
+      navigate('/vacaciones', { state: { activeTab: 2 } }); // Tab 2 = Mis Solicitudes
+    } else {
+      // Otros tipos -> ir al dashboard
+      navigate('/vacaciones');
     }
   };
 
@@ -228,10 +252,12 @@ export default function NotificationsPage() {
             {filteredNotifications.map((notif, index) => (
               <React.Fragment key={notif.id}>
                 <ListItem
+                  onClick={() => handleNotificationClick(notif)}
                   sx={{
                     bgcolor: notif.read ? 'transparent' : 'action.hover',
                     py: 2,
                     px: 3,
+                    cursor: 'pointer',
                     '&:hover': {
                       bgcolor: 'action.selected',
                     },
