@@ -88,7 +88,16 @@ class VacacionesService {
 
     } catch (error) {
       console.error('Error en validación:', error);
-      validaciones.errores.push('Error al validar la solicitud');
+      console.error('Error stack:', error.stack);
+      console.error('Datos de solicitud:', solicitudData);
+      
+      // Mensaje más específico según el tipo de error
+      let mensajeError = 'Error al validar la solicitud. Por favor intente nuevamente.';
+      if (error.message) {
+        mensajeError = `Error de validación: ${error.message}`;
+      }
+      
+      validaciones.errores.push(mensajeError);
       validaciones.valida = false;
     }
 
@@ -147,6 +156,14 @@ class VacacionesService {
         SELECT fecha_ingreso FROM empleados WHERE id = $1
       `;
       const empResult = await dbQuery(empleadoQuery, [empleado_id]);
+      
+      if (!empResult.rows || empResult.rows.length === 0) {
+        return {
+          valida: false,
+          mensaje: `No se encontró información del empleado. Contacte a RRHH.`
+        };
+      }
+      
       const fechaIngreso = new Date(empResult.rows[0].fecha_ingreso);
       const hoy = new Date();
       const antiguedadMeses = (hoy - fechaIngreso) / (1000 * 60 * 60 * 24 * 30);
@@ -315,22 +332,22 @@ class VacacionesService {
 
     // Si el período NO tiene el bloque de 7 días cumplido según el flag
     if (!periodo.tiene_bloque_7dias) {
-      // VERIFICACIÓN ADICIONAL: Revisar si ya existe una solicitud aprobada de 7+ días
+      // VERIFICACIÓN ADICIONAL: Revisar si ya existe una solicitud aprobada O PENDIENTE de 7+ días
       const solicitudBloque7Query = `
         SELECT COUNT(*) as count
         FROM solicitudes_vacaciones
         WHERE empleado_id = $1 
           AND periodo_id = $2
-          AND estado = 'aprobada'
-          AND EXTRACT(DAY FROM (fecha_fin - fecha_inicio)) + 1 >= 7
+          AND estado IN ('pendiente', 'aprobada')
+          AND (fecha_fin::date - fecha_inicio::date) + 1 >= 7
       `;
       
       const bloque7Result = await dbQuery(solicitudBloque7Query, [empleado_id, periodo.id]);
       const yaExisteBloque7 = parseInt(bloque7Result.rows[0].count) > 0;
       
       if (yaExisteBloque7) {
-        // Ya existe una solicitud aprobada de 7+ días, permitir fraccionamiento
-        console.log(`✅ Empleado ${empleado_id} ya tiene bloque de 7 días aprobado para período ${periodo.id}`);
+        // Ya existe una solicitud pendiente o aprobada de 7+ días, permitir fraccionamiento
+        console.log(`✅ Empleado ${empleado_id} ya tiene bloque de 7 días pendiente/aprobado para período ${periodo.id}`);
         return { valida: true };
       }
       
