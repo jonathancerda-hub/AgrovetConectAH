@@ -24,7 +24,9 @@ import {
   Alert,
   Avatar,
   Tooltip,
-  Switch
+  Switch,
+  Stack,
+  Divider
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
@@ -34,6 +36,8 @@ import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
 import BadgeIcon from '@mui/icons-material/Badge';
+import WorkIcon from '@mui/icons-material/Work';
+import LockIcon from '@mui/icons-material/Lock';
 import { empleadosService } from '../../../services/empleados.service';
 
 export default function GestionEmpleados() {
@@ -414,271 +418,306 @@ export default function GestionEmpleados() {
             {editingEmpleado ? 'Editar Empleado' : 'Nuevo Empleado'}
           </Box>
         </DialogTitle>
-        <DialogContent dividers>
-          <Grid container spacing={3} sx={{ mt: 0 }}>
+        <DialogContent dividers sx={{ bgcolor: 'grey.50' }}>
+          <Stack spacing={3}>
             {/* Sección: Datos Personales */}
-            <Grid item xs={12}>
-              <Typography variant="h6" sx={{ color: 'primary.main', mb: 2, fontWeight: 600 }}>
-                📋 Datos Personales
-              </Typography>
-            </Grid>
-            
-            <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                label="DNI"
-                name="dni"
-                value={formData.dni}
-                onChange={handleInputChange}
-                required
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <BadgeIcon />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                label="Nombres"
-                name="nombres"
-                value={formData.nombres}
-                onChange={handleInputChange}
-                required
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                label="Apellidos"
-                name="apellidos"
-                value={formData.apellidos}
-                onChange={handleInputChange}
-                required
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Fecha de Nacimiento"
-                name="fecha_nacimiento"
-                type="date"
-                value={formData.fecha_nacimiento}
-                onChange={handleInputChange}
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Dirección"
-                name="direccion"
-                value={formData.direccion}
-                onChange={handleInputChange}
-                multiline
-                rows={1}
-              />
-            </Grid>
-
-            {/* Sección: Contacto */}
-            <Grid item xs={12}>
-              <Typography variant="h6" sx={{ color: 'primary.main', mb: 2, mt: 2, fontWeight: 600 }}>
-                📞 Contacto
-              </Typography>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                required
-                disabled={!!editingEmpleado}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <EmailIcon />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Teléfono"
-                name="telefono"
-                value={formData.telefono}
-                onChange={handleInputChange}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <PhoneIcon />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-
-            {/* Sección: Información Laboral */}
-            <Grid item xs={12}>
-              <Typography variant="h6" sx={{ color: 'primary.main', mb: 2, mt: 2, fontWeight: 600 }}>
-                💼 Información Laboral
-              </Typography>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                select
-                label="Puesto"
-                name="puesto_id"
-                value={formData.puesto_id}
-                onChange={handleInputChange}
-                required
-              >
-                <MenuItem value="">
-                  <em>Seleccione un puesto</em>
-                </MenuItem>
-                {puestos.map((puesto) => (
-                  <MenuItem key={puesto.id} value={puesto.id}>
-                    {puesto.nombre}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                select
-                label="Área"
-                name="area_id"
-                value={formData.area_id}
-                onChange={handleInputChange}
-                required
-              >
-                <MenuItem value="">
-                  <em>Seleccione un área</em>
-                </MenuItem>
-                {areas.map((area) => (
-                  <MenuItem key={area.id} value={area.id}>
-                    {area.nombre}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                select
-                label="Jefe Directo"
-                name="supervisor_id"
-                value={formData.supervisor_id || ''}
-                onChange={handleInputChange}
-                helperText="Seleccione el supervisor directo del empleado"
-              >
-                <MenuItem value="">
-                  <em>Sin supervisor</em>
-                </MenuItem>
-                {supervisores.map((supervisor) => (
-                  <MenuItem key={supervisor.id} value={supervisor.id}>
-                    {supervisor.nombres} {supervisor.apellidos} - {supervisor.puesto || 'Sin puesto'}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                select
-                label="Tipo de Trabajador"
-                name="tipo_trabajador_id"
-                value={formData.tipo_trabajador_id || 1}
-                onChange={handleInputChange}
-                helperText="Define los días de vacaciones base"
-              >
-                {tiposTrabajador.map((tipo) => (
-                  <MenuItem key={tipo.id} value={tipo.id}>
-                    {tipo.nombre} ({tipo.dias_vacaciones} días)
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-
-            <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                label="Fecha de Ingreso"
-                name="fecha_ingreso"
-                type="date"
-                value={formData.fecha_ingreso}
-                onChange={handleInputChange}
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                label="Días de Vacaciones"
-                name="dias_vacaciones"
-                type="number"
-                value={formData.dias_vacaciones}
-                onChange={handleInputChange}
-                helperText="Días anuales de vacaciones"
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                select
-                label="Estado"
-                name="activo"
-                value={formData.activo ? '1' : '0'}
-                onChange={(e) => setFormData({ ...formData, activo: e.target.value === '1' })}
-              >
-                <MenuItem value="1">Activo</MenuItem>
-                <MenuItem value="0">Inactivo</MenuItem>
-              </TextField>
-            </Grid>
-
-            {!editingEmpleado && (
-              <>
-                <Grid item xs={12}>
-                  <Typography variant="h6" sx={{ color: 'primary.main', mb: 2, mt: 2, fontWeight: 600 }}>
-                    🔐 Credenciales de Acceso
-                  </Typography>
+            <Paper elevation={1} sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+                <BadgeIcon color="primary" />
+                <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                  Datos Personales
+                </Typography>
+              </Box>
+              <Divider sx={{ mb: 3 }} />
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    fullWidth
+                    label="DNI"
+                    name="dni"
+                    value={formData.dni}
+                    onChange={handleInputChange}
+                    required
+                    size="small"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <BadgeIcon fontSize="small" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
                 </Grid>
+                
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    fullWidth
+                    label="Nombres"
+                    name="nombres"
+                    value={formData.nombres}
+                    onChange={handleInputChange}
+                    required
+                    size="small"
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    fullWidth
+                    label="Apellidos"
+                    name="apellidos"
+                    value={formData.apellidos}
+                    onChange={handleInputChange}
+                    required
+                    size="small"
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    fullWidth
+                    label="Fecha de Nacimiento"
+                    name="fecha_nacimiento"
+                    type="date"
+                    value={formData.fecha_nacimiento}
+                    onChange={handleInputChange}
+                    InputLabelProps={{ shrink: true }}
+                    size="small"
+                  />
+                </Grid>
+
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label="Contraseña"
-                    name="password"
-                    type="password"
-                    value={formData.password}
+                    label="Dirección"
+                    name="direccion"
+                    value={formData.direccion}
                     onChange={handleInputChange}
-                    required={!editingEmpleado}
-                    helperText="Mínimo 6 caracteres"
+                    multiline
+                    rows={2}
+                    size="small"
                   />
                 </Grid>
-              </>
+              </Grid>
+            </Paper>
+
+            {/* Sección: Contacto */}
+            <Paper elevation={1} sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+                <PhoneIcon color="primary" />
+                <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                  Contacto
+                </Typography>
+              </Box>
+              <Divider sx={{ mb: 3 }} />
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
+                    disabled={!!editingEmpleado}
+                    size="small"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <EmailIcon fontSize="small" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Teléfono"
+                    name="telefono"
+                    value={formData.telefono}
+                    onChange={handleInputChange}
+                    size="small"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PhoneIcon fontSize="small" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Paper>
+
+            {/* Sección: Información Laboral */}
+            <Paper elevation={1} sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+                <WorkIcon color="primary" />
+                <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                  Información Laboral
+                </Typography>
+              </Box>
+              <Divider sx={{ mb: 3 }} />
+              <Divider sx={{ mb: 3 }} />
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    fullWidth
+                    select
+                    label="Puesto"
+                    name="puesto_id"
+                    value={formData.puesto_id}
+                    onChange={handleInputChange}
+                    required
+                    size="small"
+                  >
+                    <MenuItem value="">
+                      <em>Seleccione un puesto</em>
+                    </MenuItem>
+                    {puestos.map((puesto) => (
+                      <MenuItem key={puesto.id} value={puesto.id}>
+                        {puesto.nombre}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+                
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    fullWidth
+                    select
+                    label="Área"
+                    name="area_id"
+                    value={formData.area_id}
+                    onChange={handleInputChange}
+                    required
+                    size="small"
+                  >
+                    <MenuItem value="">
+                      <em>Seleccione un área</em>
+                    </MenuItem>
+                    {areas.map((area) => (
+                      <MenuItem key={area.id} value={area.id}>
+                        {area.nombre}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    fullWidth
+                    select
+                    label="Jefe Directo"
+                    name="supervisor_id"
+                    value={formData.supervisor_id || ''}
+                    onChange={handleInputChange}
+                    helperText="Seleccione el supervisor directo del empleado"
+                    size="small"
+                  >
+                    <MenuItem value="">
+                      <em>Sin supervisor</em>
+                    </MenuItem>
+                    {supervisores.map((supervisor) => (
+                      <MenuItem key={supervisor.id} value={supervisor.id}>
+                        {supervisor.nombres} {supervisor.apellidos} - {supervisor.puesto || 'Sin puesto'}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    fullWidth
+                    select
+                    label="Tipo de Trabajador"
+                    name="tipo_trabajador_id"
+                    value={formData.tipo_trabajador_id || 1}
+                    onChange={handleInputChange}
+                    helperText="Define los días de vacaciones base"
+                    size="small"
+                  >
+                    {tiposTrabajador.map((tipo) => (
+                      <MenuItem key={tipo.id} value={tipo.id}>
+                        {tipo.nombre} ({tipo.dias_vacaciones} días)
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    fullWidth
+                    label="Fecha de Ingreso"
+                    name="fecha_ingreso"
+                    type="date"
+                    value={formData.fecha_ingreso}
+                    onChange={handleInputChange}
+                    InputLabelProps={{ shrink: true }}
+                    size="small"
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={2}>
+                  <TextField
+                    fullWidth
+                    label="Días de Vacaciones"
+                    name="dias_vacaciones"
+                    type="number"
+                    value={formData.dias_vacaciones}
+                    onChange={handleInputChange}
+                    helperText="Días anuales de vacaciones"
+                    size="small"
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={2}>
+                  <TextField
+                    fullWidth
+                    select
+                    label="Estado"
+                    name="activo"
+                    value={formData.activo ? '1' : '0'}
+                    onChange={(e) => setFormData({ ...formData, activo: e.target.value === '1' })}
+                    size="small"
+                  >
+                    <MenuItem value="1">Activo</MenuItem>
+                    <MenuItem value="0">Inactivo</MenuItem>
+                  </TextField>
+                </Grid>
+              </Grid>
+            </Paper>
+
+            {!editingEmpleado && (
+              <Paper elevation={1} sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+                  <LockIcon color="primary" />
+                  <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                    Credenciales de Acceso
+                  </Typography>
+                </Box>
+                <Divider sx={{ mb: 3 }} />
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Contraseña"
+                      name="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      required={!editingEmpleado}
+                      helperText="Mínimo 6 caracteres"
+                      size="small"
+                    />
+                  </Grid>
+                </Grid>
+              </Paper>
             )}
-          </Grid>
+          </Stack>
         </DialogContent>
         <DialogActions sx={{ p: 2, bgcolor: 'grey.50' }}>
           <Button onClick={handleCloseDialog} variant="outlined">

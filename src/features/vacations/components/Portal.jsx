@@ -346,51 +346,55 @@ export default function Portal({ onNavigate }) {
             </Box>
           </Paper>
 
-          {/* Accesos directos */}
-          <Paper sx={{ p: 2, mb: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <Typography variant="subtitle1" fontWeight={700} sx={{ flex: 1 }}>Accesos directos</Typography>
-              <Chip label="F1" color="success" size="small" />
-            </Box>
-            <List dense>
-              <ListItem sx={{ pl: 0 }}>
-                <ListItemIcon><AssignmentTurnedInIcon color="primary" /></ListItemIcon>
-                <ListItemText primary="Últimas boletas de pago" />
-              </ListItem>
-              {boletas.map((b) => (
-                <ListItem key={b.mes} sx={{ pl: 4 }}>
-                  <ListItemIcon><ArrowForwardIosIcon fontSize="small" /></ListItemIcon>
-                  <ListItemText primary={<Link href={b.url}>{b.mes}</Link>} />
-                </ListItem>
-              ))}
-              <ListItem sx={{ pl: 0 }}>
-                <ListItemIcon><DescriptionIcon color="primary" /></ListItemIcon>
-                <ListItemText primary="Generar certificado o documento" />
-              </ListItem>
-              <ListItem sx={{ pl: 0 }}>
-                <ListItemIcon><CardGiftcardIcon color="warning" /></ListItemIcon>
-                <ListItemText primary="Beneficios" />
-              </ListItem>
-            </List>
-          </Paper>
-          
-          {/* Links de interés */}
-          <Paper sx={{ p: 2, mb: 2 }}>
-            <Typography variant="subtitle1" fontWeight={700}>Links de interés</Typography>
-            <Box sx={{ mt: 2 }}>
-              <Button 
-                fullWidth 
-                variant="contained" 
-                sx={{ 
-                  mb: 1, 
-                  background: 'linear-gradient(135deg, #2a9d8f 0%, #264653 100%) !important',
-                  color: 'white !important'
-                }}>
-                Mi Marcación
-              </Button>
-              <Typography variant="caption" color="text.secondary">¡Ya puedes registrar tu asistencia!</Typography>
-            </Box>
-          </Paper>
+          {/* Accesos directos - OCULTO TEMPORALMENTE */}
+          {false && (
+            <>
+              <Paper sx={{ p: 2, mb: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <Typography variant="subtitle1" fontWeight={700} sx={{ flex: 1 }}>Accesos directos</Typography>
+                  <Chip label="F1" color="success" size="small" />
+                </Box>
+                <List dense>
+                  <ListItem sx={{ pl: 0 }}>
+                    <ListItemIcon><AssignmentTurnedInIcon color="primary" /></ListItemIcon>
+                    <ListItemText primary="Últimas boletas de pago" />
+                  </ListItem>
+                  {boletas.map((b) => (
+                    <ListItem key={b.mes} sx={{ pl: 4 }}>
+                      <ListItemIcon><ArrowForwardIosIcon fontSize="small" /></ListItemIcon>
+                      <ListItemText primary={<Link href={b.url}>{b.mes}</Link>} />
+                    </ListItem>
+                  ))}
+                  <ListItem sx={{ pl: 0 }}>
+                    <ListItemIcon><DescriptionIcon color="primary" /></ListItemIcon>
+                    <ListItemText primary="Generar certificado o documento" />
+                  </ListItem>
+                  <ListItem sx={{ pl: 0 }}>
+                    <ListItemIcon><CardGiftcardIcon color="warning" /></ListItemIcon>
+                    <ListItemText primary="Beneficios" />
+                  </ListItem>
+                </List>
+              </Paper>
+              
+              {/* Links de interés */}
+              <Paper sx={{ p: 2, mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight={700}>Links de interés</Typography>
+                <Box sx={{ mt: 2 }}>
+                  <Button 
+                    fullWidth 
+                    variant="contained" 
+                    sx={{ 
+                      mb: 1, 
+                      background: 'linear-gradient(135deg, #2a9d8f 0%, #264653 100%) !important',
+                      color: 'white !important'
+                    }}>
+                    Mi Marcación
+                  </Button>
+                  <Typography variant="caption" color="text.secondary">¡Ya puedes registrar tu asistencia!</Typography>
+                </Box>
+              </Paper>
+            </>
+          )}
         </Grid>
       </Grid>
     </Box>

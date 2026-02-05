@@ -9,11 +9,13 @@ export const getEmpleados = async (req, res) => {
       `SELECT 
         e.id,
         e.codigo_empleado,
+        e.dni,
         e.nombres,
         e.apellidos,
         e.email,
         e.telefono,
         e.fecha_nacimiento,
+        e.direccion,
         e.fecha_ingreso,
         e.puesto_id,
         e.area_id,
