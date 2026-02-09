@@ -15,7 +15,6 @@ export const getEmpleados = async (req, res) => {
         e.email,
         e.telefono,
         e.fecha_nacimiento,
-        e.direccion,
         e.fecha_ingreso,
         e.puesto_id,
         e.area_id,
@@ -46,7 +45,9 @@ export const getEmpleados = async (req, res) => {
     res.json(result.rows);
   } catch (error) {
     console.error('Error al obtener empleados:', error);
-    res.status(500).json({ error: 'Error en el servidor' });
+    console.error('Detalle del error:', error.message);
+    console.error('Stack:', error.stack);
+    res.status(500).json({ error: 'Error en el servidor', detalle: error.message });
   }
 };
 
@@ -363,7 +364,7 @@ export const setRolRRHH = async (req, res) => {
 
     // Actualizar el rol RRHH
     const result = await query(
-      'UPDATE empleados SET es_rrhh = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+      'UPDATE empleados SET es_rrhh = $1 WHERE id = $2 RETURNING *',
       [es_rrhh, id]
     );
 

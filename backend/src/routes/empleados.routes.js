@@ -25,9 +25,9 @@ router.get('/cumpleaneros', getCumpleaneros);
 router.get('/:id', getEmpleadoById);
 
 // Rutas que requieren rol de RRHH o admin
-router.post('/', requireRole(['admin', 'rrhh']), createEmpleado);
-router.put('/:id', requireRole(['admin', 'rrhh']), updateEmpleado);
-router.patch('/:id/desactivar', requireRole(['admin', 'rrhh']), desactivarEmpleado);
-router.put('/:id/rrhh', requireRole(['admin', 'rrhh']), setRolRRHH);
+router.post('/', requireRole('admin', 'rrhh'), createEmpleado);
+router.put('/:id', requireRole('admin', 'rrhh'), updateEmpleado);
+router.patch('/:id/desactivar', requireRole('admin', 'rrhh'), desactivarEmpleado);
+router.put('/:id/rrhh', requireRole('admin', 'rrhh'), setRolRRHH);
 
 export default router;

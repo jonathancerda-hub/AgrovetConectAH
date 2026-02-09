@@ -45,7 +45,23 @@ export const requireRole = (...roles) => {
       return res.status(401).json({ error: 'No autenticado' });
     }
     
-    if (!roles.includes(req.user.rol)) {
+    // Verificar si el rol está en la lista permitida
+    const hasRole = roles.includes(req.user.rol);
+    
+    // Si el rol 'rrhh' está en la lista, también permitir si el usuario tiene es_rrhh = true
+    const hasRRHHFlag = roles.includes('rrhh') && (req.user.esRRHH === true || req.user.es_rrhh === true);
+    
+    console.log('🔐 Verificación de permisos:', {
+      userId: req.user.id,
+      rol: req.user.rol,
+      esRRHH: req.user.esRRHH,
+      es_rrhh: req.user.es_rrhh,
+      hasRole,
+      hasRRHHFlag,
+      rolesPermitidos: roles
+    });
+    
+    if (!hasRole && !hasRRHHFlag) {
       return res.status(403).json({ error: 'No tienes permisos suficientes' });
     }
     
